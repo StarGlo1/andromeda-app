@@ -1,26 +1,268 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  /* Light mode */
+  --color-bg: #f8fafc;
+  --color-surface: #ffffff;
+  --color-surface-elevated: #ffffff;
+  --color-surface-nav: #ffffff;
+  --color-surface-widget: #ffffff;
+
+  --color-text: #0f172a;
+  --color-text-secondary: #334155;
+  --color-text-muted: #64748b;
+  --color-text-inverse: #f8fafc;
+  --color-text-brand: #4b8d9f;
+
+  --color-border: #e2e8f0;
+  --color-border-subtle: #f1f5f9;
+  --color-border-strong: #cbd5e1;
+  --color-outline-focus: #6bafc2;
+
+  --color-brand: #6bafc2;
+  --color-brand-hover: #5497ab;
+  --color-brand-muted: #e0f2f7;
+  --color-brand-foreground: #ffffff;
+
+  --color-nav-bg: #ffffff;
+  --color-nav-text: #0f172a;
+  --color-nav-text-muted: #64748b;
+  --color-nav-border: #e2e8f0;
+  --color-nav-active: #6bafc2;
+
+  --color-widget-bg: #ffffff;
+  --color-widget-border: #e2e8f0;
+
+  --color-success: #059669;
+  --color-success-muted: #d1fae5;
+  --color-warning: #d97706;
+  --color-warning-muted: #fef3c7;
+  --color-error: #dc2626;
+  --color-error-muted: #fee2e2;
+  --color-info: #0284c7;
+  --color-info-muted: #e0f2fe;
+
+  /* Dark mode tokens */
+  --color-bg-dark: #000000;
+  --color-surface-dark: #0a0a0a;
+  --color-surface-elevated-dark: #171717;
+  --color-surface-nav-dark: #0a0a0a;
+  --color-surface-widget-dark: #171717;
+
+  --color-text-dark: #f8fafc;
+  --color-text-secondary-dark: #e2e8f0;
+  --color-text-muted-dark: #94a3b8;
+  --color-text-inverse-dark: #0f172a;
+  --color-text-brand-dark: #8bc9da;
+
+  --color-border-dark: #262626;
+  --color-border-subtle-dark: #171717;
+  --color-border-strong-dark: #404040;
+  --color-outline-focus-dark: #8bc9da;
+
+  --color-brand-dark: #7abfcf;
+  --color-brand-hover-dark: #8bc9da;
+  --color-brand-muted-dark: #1e3a42;
+  --color-brand-foreground-dark: #000000;
+
+  --color-nav-bg-dark: #0a0a0a;
+  --color-nav-text-dark: #f8fafc;
+  --color-nav-text-muted-dark: #94a3b8;
+  --color-nav-border-dark: #262626;
+  --color-nav-active-dark: #8bc9da;
+
+  --color-widget-bg-dark: #171717;
+  --color-widget-border-dark: #262626;
+
+  --color-success-dark: #34d399;
+  --color-success-muted-dark: #064e3b;
+  --color-warning-dark: #fbbf24;
+  --color-warning-muted-dark: #78350f;
+  --color-error-dark: #f87171;
+  --color-error-muted-dark: #7f1d1d;
+  --color-info-dark: #38bdf8;
+  --color-info-muted-dark: #0c4a6e;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* ----- BROWSER-LEVEL FIX for mobile auto-darkening ----- */
+html { color-scheme: light dark; }
+html.dark { color-scheme: dark; }
+html:not(.dark) { color-scheme: light; }
+/* --------------------------------------------------------- */
+
+/* ============================================================
+   THE REAL DARK-MODE FIX
+   ============================================================
+   Every class below (.text-text, .bg-surface-elevated, etc.) reads
+   its color from a variable like var(--color-text). Until now, only
+   the BASE state of each class had a hand-written override telling it
+   to use the "-dark" version of that variable in dark mode. Any
+   hover/focus state Tailwind generates on its own (e.g. hover:text-text)
+   was never told about the dark variant, so it silently kept using the
+   light-mode value — this is why hover states looked wrong/invisible
+   specifically in dark mode.
+
+   Fix: redefine the SAME variable names here, scoped to html.dark, so
+   every consumer of that variable — base classes, hover, focus, group-
+   hover, anything, now or in the future — automatically gets the right
+   color. Nothing else below needs to change; this block alone fixes it
+   app-wide, not just in one component. */
+html.dark {
+  --color-bg: var(--color-bg-dark);
+  --color-surface: var(--color-surface-dark);
+  --color-surface-elevated: var(--color-surface-elevated-dark);
+  --color-surface-nav: var(--color-surface-nav-dark);
+  --color-surface-widget: var(--color-surface-widget-dark);
+
+  --color-text: var(--color-text-dark);
+  --color-text-secondary: var(--color-text-secondary-dark);
+  --color-text-muted: var(--color-text-muted-dark);
+  --color-text-inverse: var(--color-text-inverse-dark);
+  --color-text-brand: var(--color-text-brand-dark);
+
+  --color-border: var(--color-border-dark);
+  --color-border-subtle: var(--color-border-subtle-dark);
+  --color-border-strong: var(--color-border-strong-dark);
+  --color-outline-focus: var(--color-outline-focus-dark);
+
+  --color-brand: var(--color-brand-dark);
+  --color-brand-hover: var(--color-brand-hover-dark);
+  --color-brand-muted: var(--color-brand-muted-dark);
+  --color-brand-foreground: var(--color-brand-foreground-dark);
+
+  --color-nav-bg: var(--color-nav-bg-dark);
+  --color-nav-text: var(--color-nav-text-dark);
+  --color-nav-text-muted: var(--color-nav-text-muted-dark);
+  --color-nav-border: var(--color-nav-border-dark);
+  --color-nav-active: var(--color-nav-active-dark);
+
+  --color-widget-bg: var(--color-widget-bg-dark);
+  --color-widget-border: var(--color-widget-border-dark);
+
+  --color-success: var(--color-success-dark);
+  --color-success-muted: var(--color-success-muted-dark);
+  --color-warning: var(--color-warning-dark);
+  --color-warning-muted: var(--color-warning-muted-dark);
+  --color-error: var(--color-error-dark);
+  --color-error-muted: var(--color-error-muted-dark);
+  --color-info: var(--color-info-dark);
+  --color-info-muted: var(--color-info-muted-dark);
+}
+/* ============================================================ */
+
+/* ----- Global application ----- */
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  transition: background-color 0.2s, color 0.2s;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+html.dark body {
+  background-color: var(--color-bg-dark);
+  color: var(--color-text-dark);
+}
+
+/* ----- Utility classes for every role ----- */
+.bg-bg { background-color: var(--color-bg); }
+html.dark .bg-bg { background-color: var(--color-bg-dark); }
+
+.text-text { color: var(--color-text); }
+html.dark .text-text { color: var(--color-text-dark); }
+
+.bg-surface { background-color: var(--color-surface); }
+html.dark .bg-surface { background-color: var(--color-surface-dark); }
+
+.bg-surface-elevated { background-color: var(--color-surface-elevated); }
+html.dark .bg-surface-elevated { background-color: var(--color-surface-elevated-dark); }
+
+.bg-surface-nav { background-color: var(--color-surface-nav); }
+html.dark .bg-surface-nav { background-color: var(--color-surface-nav-dark); }
+
+.bg-surface-widget { background-color: var(--color-surface-widget); }
+html.dark .bg-surface-widget { background-color: var(--color-surface-widget-dark); }
+
+.text-text-secondary { color: var(--color-text-secondary); }
+html.dark .text-text-secondary { color: var(--color-text-secondary-dark); }
+
+.text-text-muted { color: var(--color-text-muted); }
+html.dark .text-text-muted { color: var(--color-text-muted-dark); }
+
+.text-text-brand { color: var(--color-text-brand); }
+html.dark .text-text-brand { color: var(--color-text-brand-dark); }
+
+.border-default { border-color: var(--color-border); }
+html.dark .border-default { border-color: var(--color-border-dark); }
+
+.bg-brand { background-color: var(--color-brand); color: var(--color-brand-foreground); }
+html.dark .bg-brand { background-color: var(--color-brand-dark); color: var(--color-brand-foreground-dark); }
+
+.bg-brand-muted { background-color: var(--color-brand-muted); }
+html.dark .bg-brand-muted { background-color: var(--color-brand-muted-dark); }
+
+.text-success { color: var(--color-success); }
+html.dark .text-success { color: var(--color-success-dark); }
+
+.text-warning { color: var(--color-warning); }
+html.dark .text-warning { color: var(--color-warning-dark); }
+
+.text-error { color: var(--color-error); }
+html.dark .text-error { color: var(--color-error-dark); }
+
+/* ----- Inputs in dark mode ----- */
+html.dark input,
+html.dark textarea,
+html.dark select {
+  background-color: #262626 !important;
+  border-color: var(--color-border-dark) !important;
+  color: var(--color-text-dark) !important;
+}
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: var(--color-text-muted-dark) !important;
+}
+
+/* Remove number input spinners */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* ----- Transitions ----- */
+body, .bg-bg, .bg-surface, .bg-surface-nav, .bg-surface-widget, input, textarea, select, button, a {
+  transition: background-color 0.2s, color 0.2s;
+}
+
+/* ─── Toast animation ─── */
+@keyframes slideUp {
+  from {
+    transform: translateY(1rem);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
   }
 }
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+.animate-slide-up {
+  animation: slideUp 0.3s ease-out;
+}
+/* ─── Dropdown slide-down animation ─── */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-slide-down {
+  animation: slideDown 0.2s ease-out;
 }

@@ -1,0 +1,271 @@
+import { prisma } from "@/lib/prisma";
+import { revalidatePath } from "next/cache";
+import { notFound } from "next/navigation";
+import UnitConverter from "@/app/components/UnitConverter";
+import { AddRecipeForm } from "./AddRecipeForm";
+import { RecipeTableClient } from "./RecipeTableClient";
+import { convertToPricingUnit } from "@/app/lib/units";
+
+// ─── Helper: recalculate COGS (recursive) ───
+async function recalcCogs(finishedGoodId: string): Promise<number> {
+  const recipeItems = await prisma.recipeItem.findMany({
+    where: { finishedGoodId },
+    include: {
+      rawMaterial: true,
+      subAssembly: true,
+    },
+  });
+
+  let totalCogs = 0;
+
+  for (const item of recipeItems) {
+    if (item.rawMaterialId && item.rawMaterial) {
+      // Raw material – convert to pricing unit and multiply by cost
+      const convertedQty = convertToPricingUnit(
+        item.requiredQuantity,
+        item.unit,
+        item.rawMaterial.unit
+      );
+      totalCogs += convertedQty * (item.rawMaterial.costPerUnit ?? 0);
+    } else if (item.subAssemblyId && item.subAssembly) {
+      // Sub‑assembly – recursively calculate its COGS
+      const subCogs = await recalcCogs(item.subAssemblyId);
+      totalCogs += item.requiredQuantity * subCogs;
+    }
+  }
+
+  return totalCogs;
+}
+
+// ─── Server Actions ───
+async function addRecipeItem(formData: FormData) {
+  "use server";
+  const finishedGoodId = formData.get("finishedGoodId") as string;
+  const rawMaterialId = formData.get("rawMaterialId") as string;
+  const subAssemblyId = formData.get("subAssemblyId") as string;
+  const requiredQuantity = parseFloat(formData.get("requiredQuantity") as string) || 0;
+  const unit = formData.get("unit") as string;
+  const ingredientType = formData.get("ingredientType") as string;
+
+  if (!finishedGoodId || !unit) return;
+
+  // Validate: must have either raw material OR sub‑assembly
+  if (ingredientType === "raw" && !rawMaterialId) return;
+  if (ingredientType === "sub" && !subAssemblyId) return;
+
+  // Check for duplicate
+  if (rawMaterialId) {
+    const existing = await prisma.recipeItem.findFirst({
+      where: {
+        finishedGoodId,
+        rawMaterialId,
+      },
+    });
+    if (existing) {
+      throw new Error("This raw material is already in the recipe.");
+    }
+  }
+
+  if (subAssemblyId) {
+    const existing = await prisma.recipeItem.findFirst({
+      where: {
+        finishedGoodId,
+        subAssemblyId,
+      },
+    });
+    if (existing) {
+      throw new Error("This sub‑assembly is already in the recipe.");
+    }
+  }
+
+  await prisma.recipeItem.create({
+    data: {
+      finishedGoodId,
+      rawMaterialId: ingredientType === "raw" ? rawMaterialId : null,
+      subAssemblyId: ingredientType === "sub" ? subAssemblyId : null,
+      requiredQuantity,
+      unit,
+    },
+  });
+
+  const newCogs = await recalcCogs(finishedGoodId);
+  await prisma.finishedGood.update({
+    where: { id: finishedGoodId },
+    data: { calculatedCogs: newCogs },
+  });
+
+  revalidatePath(`/finished-goods/${finishedGoodId}/recipe`);
+}
+
+async function updateRecipeItem(formData: FormData) {
+  "use server";
+  const id = formData.get("id") as string;
+  const requiredQuantity = parseFloat(formData.get("requiredQuantity") as string) || 0;
+  const unit = formData.get("unit") as string;
+  const finishedGoodId = formData.get("finishedGoodId") as string;
+
+  if (!id || !unit) return;
+
+  await prisma.recipeItem.update({
+    where: { id },
+    data: { requiredQuantity, unit },
+  });
+
+  if (finishedGoodId) {
+    const newCogs = await recalcCogs(finishedGoodId);
+    await prisma.finishedGood.update({
+      where: { id: finishedGoodId },
+      data: { calculatedCogs: newCogs },
+    });
+  }
+  revalidatePath(`/finished-goods/${finishedGoodId}/recipe`);
+}
+
+async function deleteRecipeItem(formData: FormData) {
+  "use server";
+  const id = formData.get("id") as string;
+  const finishedGoodId = formData.get("finishedGoodId") as string;
+
+  if (!id) return;
+
+  await prisma.recipeItem.delete({ where: { id } });
+
+  if (finishedGoodId) {
+    const newCogs = await recalcCogs(finishedGoodId);
+    await prisma.finishedGood.update({
+      where: { id: finishedGoodId },
+      data: { calculatedCogs: newCogs },
+    });
+  }
+  revalidatePath(`/finished-goods/${finishedGoodId}/recipe`);
+}
+
+// ─── Page Component ───
+export default async function RecipePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+
+  let finishedGood = await prisma.finishedGood.findUnique({
+    where: { id },
+    include: {
+      recipeItems: {
+        include: {
+          rawMaterial: true,
+          subAssembly: true,
+        },
+        orderBy: { createdAt: "asc" },
+      },
+    },
+  });
+
+  if (!finishedGood) notFound();
+
+  // Recalculate and update COGS
+  if (finishedGood.recipeItems.length > 0) {
+    const newCogs = await recalcCogs(finishedGood.id);
+    if (newCogs !== finishedGood.calculatedCogs) {
+      await prisma.finishedGood.update({
+        where: { id },
+        data: { calculatedCogs: newCogs },
+      });
+      const updated = await prisma.finishedGood.findUnique({
+        where: { id },
+        include: {
+          recipeItems: {
+            include: {
+              rawMaterial: true,
+              subAssembly: true,
+            },
+            orderBy: { createdAt: "asc" },
+          },
+        },
+      });
+      if (updated) finishedGood = updated;
+    }
+  }
+
+  const allMaterials = await prisma.rawMaterial.findMany({
+    orderBy: { name: "asc" },
+  });
+
+  const subAssemblies = await prisma.finishedGood.findMany({
+    where: {
+      isSubAssembly: true,
+      id: { not: id }, // Don't allow self‑reference
+    },
+    orderBy: { name: "asc" },
+  });
+
+  return (
+    <main className="min-h-screen bg-bg text-text p-8">
+      <div className="max-w-6xl mx-auto space-y-8">
+        <a
+          href="/finished-goods"
+          className="text-text-brand hover:underline text-sm font-medium inline-block"
+        >
+          ← Back to Finished Goods
+        </a>
+
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-text">
+              Recipe: {finishedGood.name}
+              {finishedGood.isSubAssembly && (
+                <span className="ml-2 text-xs bg-brand-muted dark:bg-brand-muted-dark text-text-brand px-2 py-1 rounded-full">
+                  Sub‑Assembly
+                </span>
+              )}
+            </h1>
+            <p className="text-text-muted text-sm">
+              COGS:{" "}
+              <span className="text-warning font-semibold">
+                {finishedGood.calculatedCogs != null
+                  ? `$${finishedGood.calculatedCogs.toFixed(2)}`
+                  : "—"}
+              </span>
+            </p>
+          </div>
+        </div>
+
+        {finishedGood.vesselSizeOz != null && (
+          <div className="flex flex-wrap items-center gap-4 text-sm text-text-muted">
+            <span>
+              Vessel Size: <span className="font-medium text-text">{finishedGood.vesselSizeOz} oz</span>
+            </span>
+            {finishedGood.fragranceLoadPercent != null && (
+              <span>
+                Fragrance Load: <span className="font-medium text-text">{finishedGood.fragranceLoadPercent}%</span>
+              </span>
+            )}
+          </div>
+        )}
+
+        <UnitConverter />
+
+        <AddRecipeForm
+          finishedGoodId={finishedGood.id}
+          materials={allMaterials}
+          subAssemblies={subAssemblies}
+          addAction={addRecipeItem}
+        />
+
+        <div className="bg-surface-widget border border-default rounded-xl overflow-hidden">
+          <div className="p-5 border-b border-default">
+            <h2 className="text-lg font-semibold text-text text-center">Current Recipe</h2>
+          </div>
+          {finishedGood.recipeItems.length === 0 ? (
+            <div className="text-center py-12 text-text-muted">
+              No ingredients yet. Add your first ingredient above.
+            </div>
+          ) : (
+            <RecipeTableClient
+              items={finishedGood.recipeItems}
+              finishedGoodId={finishedGood.id}
+              updateAction={updateRecipeItem}
+              deleteAction={deleteRecipeItem}
+            />
+          )}
+        </div>
+      </div>
+    </main>
+  );
+}

@@ -1,0 +1,78 @@
+"use client";
+
+import { useTransition } from "react";
+import { useToast } from "@/app/context/ToastContext";
+
+interface AddProductFormProps {
+  addAction: (formData: FormData) => Promise<void>;
+}
+
+export function AddProductForm({ addAction }: AddProductFormProps) {
+  const { showToast } = useToast();
+  const [isPending, startTransition] = useTransition();
+
+  const handleSubmit = async (formData: FormData) => {
+    startTransition(async () => {
+      try {
+        await addAction(formData);
+        showToast("Product added successfully!", "success");
+        // Reset form fields manually if needed
+        const form = document.getElementById("add-product-form") as HTMLFormElement;
+        form?.reset();
+      } catch (error: any) {
+        showToast(error.message || "Failed to add product.", "error");
+      }
+    });
+  };
+
+  return (
+    <form id="add-product-form" action={handleSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+      {/* ... same fields as before ... */}
+      <div>
+        <label className="block text-text-muted text-xs font-medium uppercase mb-1">Product Name</label>
+        <input type="text" name="name" required placeholder="e.g. 8oz Spiced Vanilla Candle" className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm" />
+      </div>
+      <div>
+        <label className="block text-text-muted text-xs font-medium uppercase mb-1">SKU</label>
+        <input type="text" name="sku" placeholder="e.g. CAN-SV-8" className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm" />
+      </div>
+      <div>
+        <label className="block text-text-muted text-xs font-medium uppercase mb-1">Batch Code</label>
+        <input type="text" name="batchCode" required placeholder="e.g. B001-2026" className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm" />
+      </div>
+      <div>
+        <label className="block text-text-muted text-xs font-medium uppercase mb-1">Retail Price</label>
+        <input type="number" step="any" name="retailPrice" placeholder="0.00" className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm" />
+      </div>
+      <div>
+        <label className="block text-text-muted text-xs font-medium uppercase mb-1">Qty on Hand</label>
+        <input type="number" name="quantityOnHand" placeholder="0" className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm" />
+      </div>
+      <div>
+        <label className="block text-text-muted text-xs font-medium uppercase mb-1">Labor $/unit</label>
+        <input type="number" step="any" name="laborCostPerUnit" placeholder="0.00" className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm" />
+      </div>
+      <div>
+        <label className="block text-text-muted text-xs font-medium uppercase mb-1">Overhead Flat $</label>
+        <input type="number" step="any" name="overheadFlat" placeholder="0.00" className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm" />
+      </div>
+      <div>
+        <label className="block text-text-muted text-xs font-medium uppercase mb-1">Overhead %</label>
+        <input type="number" step="any" name="overheadPercent" placeholder="0" className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm" />
+      </div>
+      <div className="flex items-center gap-2">
+        <input type="checkbox" name="isSubAssembly" id="isSubAssembly" className="rounded border-default accent-brand" />
+        <label htmlFor="isSubAssembly" className="text-text-muted text-xs font-medium uppercase">Is Sub‑Assembly</label>
+      </div>
+      <div>
+        <button
+          type="submit"
+          disabled={isPending}
+          className="w-full bg-brand hover:bg-brand-hover text-white font-medium px-4 py-2 rounded-lg transition-colors text-sm h-[40px] disabled:opacity-50"
+        >
+          {isPending ? "Adding..." : "+ Add Product"}
+        </button>
+      </div>
+    </form>
+  );
+}

@@ -1,0 +1,185 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Category {
+  id           String        @id @default(uuid())
+  name         String        @unique
+  rawMaterials RawMaterial[]
+
+  @@map("categories")
+}
+
+model Supplier {
+  id             String          @id @default(uuid())
+  name           String
+  contact        String?
+  website        String?
+  notes          String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  rawMaterials   RawMaterial[]
+  purchaseOrders PurchaseOrder[]
+
+  @@map("suppliers")
+}
+
+model RawMaterial {
+  id                 String              @id @default(uuid())
+  name               String
+  categoryId         String
+  category           Category            @relation(fields: [categoryId], references: [id])
+  supplierId         String?
+  supplier           Supplier?           @relation(fields: [supplierId], references: [id])
+  totalQuantity      Float?
+  unit               String?
+  costPerUnit        Float?
+  reorderThreshold   Float?
+  committedQuantity  Float?              @default(0)
+  onOrderQuantity    Float?              @default(0)
+  imagePath          String?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  recipeItems        RecipeItem[]
+  adjustments        Adjustment[]
+  purchaseOrderItems PurchaseOrderItem[]
+
+  @@map("raw_materials")
+}
+
+model FinishedGood {
+  id                   String   @id @default(uuid())
+  name                 String
+  sku                  String?  @unique
+  batchCode            String
+  quantityOnHand       Int      @default(0)
+  retailPrice          Float
+  calculatedCogs       Float    @default(0.0)
+  vesselSizeOz         Float?
+  fragranceLoadPercent Float?
+  laborCostPerUnit     Float?   @default(0)
+  overheadFlat         Float?   @default(0)
+  overheadPercent      Float?   @default(0)
+  isSubAssembly        Boolean  @default(false) // NEW: flag to hide from main product list
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  // Relations
+  recipeItems       RecipeItem[] @relation("RecipeParent") // Ingredients that go INTO this product (parent side)
+  usedAsSubAssembly RecipeItem[] @relation("SubAssemblyRecipe") // Recipes that USE this product as a sub‑assembly
+  saleItems         SaleItem[]
+
+  @@map("finished_goods")
+}
+
+model RecipeItem {
+  id               String  @id @default(uuid())
+  finishedGoodId   String
+  rawMaterialId    String?
+  subAssemblyId    String? // NEW: optional reference to a sub‑assembly FinishedGood
+  requiredQuantity Float
+  unit             String
+
+  // Relations – both sides named explicitly
+  finishedGood FinishedGood  @relation("RecipeParent", fields: [finishedGoodId], references: [id], onDelete: Cascade)
+  rawMaterial  RawMaterial?  @relation(fields: [rawMaterialId], references: [id])
+  subAssembly  FinishedGood? @relation("SubAssemblyRecipe", fields: [subAssemblyId], references: [id])
+
+  // Ensure either rawMaterial OR subAssembly is provided (enforced in application logic)
+  @@unique([finishedGoodId, rawMaterialId]) // still unique for raw materials, but sub‑assemblies can be repeated? We'll keep it flexible.
+  @@map("recipe_items")
+}
+
+model Adjustment {
+  id         String      @id @default(uuid())
+  materialId String
+  material   RawMaterial @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  quantity   Float
+  reason     String
+  notes      String?
+  createdAt  DateTime    @default(now())
+
+  @@map("adjustments")
+}
+
+model PurchaseOrder {
+  id           String              @id @default(uuid())
+  supplierId   String
+  supplier     Supplier            @relation(fields: [supplierId], references: [id])
+  orderDate    DateTime            @default(now())
+  expectedDate DateTime?
+  receivedDate DateTime?
+  status       String              @default("Pending")
+  notes        String?
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  items        PurchaseOrderItem[]
+
+  @@map("purchase_orders")
+}
+
+model PurchaseOrderItem {
+  id              String        @id @default(uuid())
+  purchaseOrderId String
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  materialId      String
+  material        RawMaterial   @relation(fields: [materialId], references: [id])
+  quantity        Float
+  unitCost        Float
+  receivedQty     Float         @default(0)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@map("purchase_order_items")
+}
+
+model Customer {
+  id        String   @id @default(uuid())
+  name      String
+  email     String?
+  phone     String?
+  address   String?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  sales     Sale[]
+
+  @@map("customers")
+}
+
+model Sale {
+  id          String     @id @default(uuid())
+  customerId  String?
+  customer    Customer?  @relation(fields: [customerId], references: [id])
+  saleDate    DateTime   @default(now())
+  totalAmount Float
+  discount    Float      @default(0)
+  tax         Float      @default(0)
+  status      String     @default("Paid")
+  notes       String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  items       SaleItem[]
+
+  @@map("sales")
+}
+
+model SaleItem {
+  id             String       @id @default(uuid())
+  saleId         String
+  sale           Sale         @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  finishedGoodId String
+  finishedGood   FinishedGood @relation(fields: [finishedGoodId], references: [id])
+  quantity       Int
+  unitPrice      Float
+  totalPrice     Float
+  createdAt      DateTime     @default(now())
+
+  @@map("sale_items")
+}
