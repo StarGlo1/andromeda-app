@@ -179,3 +179,19 @@ model SaleItem {
 
   @@map("sale_items")
 }
+
+model Alert {
+  id            String   @id @default(uuid())
+  type          String   // e.g., LOW_STOCK, PENDING_PO, REFUNDED_SALE, RETURN
+  title         String
+  description   String?
+  severity      String   @default("warning") // info, warning, critical
+  status        String   @default("active")  // active, resolved
+  referenceId   String?  // id of the related entity (material, po, sale)
+  referenceType String?  // "material", "purchaseOrder", "sale", etc.
+  location      String?  // optional: e.g., "Main Studio", "Pop-up", "Wholesale"
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("alerts")
+}

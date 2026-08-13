@@ -145,6 +145,17 @@ html.dark body {
   color: var(--color-text-dark);
 }
 
+/* ----- Prevent dark mode flash ----- */
+html {
+  background-color: #f9fafb; /* light mode default */
+}
+html.dark {
+  background-color: #030712; /* dark mode default */
+}
+body {
+  background-color: inherit;
+}
+
 /* ----- Utility classes for every role ----- */
 .bg-bg { background-color: var(--color-bg); }
 html.dark .bg-bg { background-color: #000000; }

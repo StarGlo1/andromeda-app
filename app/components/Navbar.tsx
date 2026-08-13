@@ -17,8 +17,6 @@ import {
   Settings,
   Sun,
   Moon,
-  ChevronRight,
-  ChevronDown,
   Ruler,
   BarChart3,
   DollarSign,
@@ -26,9 +24,9 @@ import {
   Tags,
   ArrowUpDown,
   Upload,
+  Bell,
 } from "lucide-react";
 
-// Navigation groups as per the new structure
 const NAV_GROUPS = [
   {
     label: "Inventory",
@@ -64,6 +62,7 @@ const NAV_GROUPS = [
     items: [
       { name: "Reports", href: "/reports", icon: BarChart3 },
       { name: "COGS", href: "/cogs", icon: DollarSign },
+      { name: "Alerts", href: "/alerts", icon: Bell },
     ],
   },
   {
@@ -76,23 +75,12 @@ const NAV_GROUPS = [
   },
 ];
 
-// Flatten items for mobile drawer, with group headers and a top Command Deck link
-const MOBILE_ITEMS = [
-  { type: "header", label: "Main" },
-  { type: "link", name: "Command Deck", href: "/", icon: LayoutDashboard },
-  ...NAV_GROUPS.flatMap((group) => [
-    { type: "header", label: group.label },
-    ...group.items.map((item) => ({ ...item, type: "link" })),
-  ]),
-];
-
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
-  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
   const [isDark, setIsDark] = useState(false);
   const [hidden, setHidden] = useState(false);
   const lastScrollY = useRef(0);
-  const dropdownRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const pathname = usePathname();
 
   useEffect(() => {
@@ -101,14 +89,14 @@ export default function Navbar() {
 
   useEffect(() => {
     setIsOpen(false);
-    setOpenDropdown(null);
+    setExpandedGroup(null);
   }, [pathname]);
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         setIsOpen(false);
-        setOpenDropdown(null);
+        setExpandedGroup(null);
       }
     };
     window.addEventListener("keydown", handleKey);
@@ -128,7 +116,7 @@ export default function Navbar() {
 
   useEffect(() => {
     const handleScroll = () => {
-      if (isOpen || openDropdown) return;
+      if (isOpen || expandedGroup) return;
       const currentScrollY = window.scrollY;
       if (currentScrollY > lastScrollY.current && currentScrollY > 100) {
         setHidden(true);
@@ -139,22 +127,7 @@ export default function Navbar() {
     };
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [isOpen, openDropdown]);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Node;
-      let closeAll = true;
-      Object.values(dropdownRefs.current).forEach((ref) => {
-        if (ref && ref.contains(target)) {
-          closeAll = false;
-        }
-      });
-      if (closeAll) setOpenDropdown(null);
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  }, [isOpen, expandedGroup]);
 
   const toggleTheme = () => {
     const newDark = !isDark;
@@ -178,7 +151,7 @@ export default function Navbar() {
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between py-3">
-            {/* Left side: Hamburger (mobile) + Brand */}
+            {/* Left side: Hamburger + Brand */}
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setIsOpen(true)}
@@ -202,9 +175,8 @@ export default function Navbar() {
               </Link>
             </div>
 
-            {/* Desktop Navigation (center) - visible from lg up */}
+            {/* Desktop nav groups (accordion) */}
             <div className="hidden lg:flex items-center space-x-1">
-              {/* Command Deck link */}
               <Link
                 href="/"
                 className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 whitespace-nowrap ${
@@ -219,68 +191,53 @@ export default function Navbar() {
 
               {NAV_GROUPS.map((group) => {
                 const Icon = group.icon;
-                const isOpenDropdown = openDropdown === group.label;
+                const isExpanded = expandedGroup === group.label;
                 return (
-                  <div
+                  <button
                     key={group.label}
-                    className="relative"
-                    ref={(el) => {
-                      dropdownRefs.current[group.label] = el;
-                    }}
+                    onClick={() => setExpandedGroup(isExpanded ? null : group.label)}
+                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 whitespace-nowrap ${
+                      isExpanded
+                        ? "bg-teal-600 text-white"
+                        : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100"
+                    }`}
                   >
-                    <button
-                      onClick={() =>
-                        setOpenDropdown(isOpenDropdown ? null : group.label)
-                      }
-                      className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 whitespace-nowrap ${
-                        isOpenDropdown
-                          ? "bg-teal-600 text-white"
-                          : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100"
-                      }`}
-                    >
-                      <Icon className="w-4 h-4" />
-                      {group.label}
-                      <ChevronDown
-                        className={`w-4 h-4 transition-transform ${
-                          isOpenDropdown ? "rotate-180" : ""
-                        }`}
-                      />
-                    </button>
-
-                    {isOpenDropdown && (
-                      <div className="absolute left-0 mt-2 w-64 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg p-2 z-50 animate-slide-down">
-                        {group.items.map((item) => {
-                          const SubIcon = item.icon;
-                          const isSubActive = pathname === item.href;
-                          return (
-                            <Link
-                              key={item.name}
-                              href={item.href}
-                              onClick={() => setOpenDropdown(null)}
-                              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-3 ${
-                                isSubActive
-                                  ? "bg-teal-600 text-white"
-                                  : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100"
-                              }`}
-                            >
-                              <SubIcon className="w-4 h-4 shrink-0" />
-                              {item.name}
-                            </Link>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
+                    <Icon className="w-4 h-4" />
+                    {group.label}
+                  </button>
                 );
               })}
             </div>
-
-            {/* Right side: nothing (theme toggle removed, kept only in drawer) */}
           </div>
+
+          {/* Desktop expanded submenu */}
+          {expandedGroup && (
+            <div className="hidden lg:block border-t border-gray-200 dark:border-gray-800 py-4 animate-slide-down">
+              {NAV_GROUPS.find((g) => g.label === expandedGroup)?.items.map((item) => {
+                const SubIcon = item.icon;
+                const isActive = pathname === item.href;
+                return (
+                  <Link
+                    key={item.name}
+                    href={item.href}
+                    onClick={() => setExpandedGroup(null)}
+                    className={`inline-flex items-center gap-3 px-4 py-2 mx-1 rounded-lg text-sm font-medium transition-colors ${
+                      isActive
+                        ? "bg-teal-600 text-white"
+                        : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100"
+                    }`}
+                  >
+                    <SubIcon className="w-4 h-4 shrink-0" />
+                    {item.name}
+                  </Link>
+                );
+              })}
+            </div>
+          )}
         </div>
       </nav>
 
-      {/* Mobile Drawer (portal) */}
+      {/* Mobile Drawer with accordion */}
       {isOpen &&
         createPortal(
           <>
@@ -300,11 +257,7 @@ export default function Navbar() {
                     className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                     aria-label="Toggle Theme"
                   >
-                    {isDark ? (
-                      <Sun className="w-4 h-4 text-amber-400" />
-                    ) : (
-                      <Moon className="w-4 h-4 text-indigo-600" />
-                    )}
+                    {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-600" />}
                   </button>
                 </div>
                 <button
@@ -317,38 +270,62 @@ export default function Navbar() {
               </div>
 
               <div className="flex-1 overflow-y-auto p-4">
-                <nav className="flex flex-col gap-1">
-                  {MOBILE_ITEMS.map((item, idx) => {
-                    if (item.type === "header") {
-                      return (
-                        <div
-                          key={`header-${idx}`}
-                          className="mt-3 mb-1 px-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400"
-                        >
-                          {item.label}
-                        </div>
-                      );
-                    }
-                    const Icon = item.icon;
-                    const isActive = pathname === item.href;
-                    return (
-                      <Link
-                        key={item.name}
-                        href={item.href}
-                        onClick={() => setIsOpen(false)}
-                        className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-3 ${
-                          isActive
+                <Link
+                  href="/"
+                  onClick={() => setIsOpen(false)}
+                  className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium mb-1 ${
+                    pathname === "/"
+                      ? "bg-teal-600 text-white"
+                      : "text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100"
+                  }`}
+                >
+                  <LayoutDashboard className="w-5 h-5 shrink-0" />
+                  Command Deck
+                </Link>
+
+                {NAV_GROUPS.map((group) => {
+                  const Icon = group.icon;
+                  const isExpanded = expandedGroup === group.label;
+                  return (
+                    <div key={group.label} className="mb-1">
+                      <button
+                        onClick={() => setExpandedGroup(isExpanded ? null : group.label)}
+                        className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                          isExpanded
                             ? "bg-teal-600 text-white"
                             : "text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100"
                         }`}
                       >
                         <Icon className="w-5 h-5 shrink-0" />
-                        {item.name}
-                        <ChevronRight className="w-4 h-4 opacity-50 ml-auto" />
-                      </Link>
-                    );
-                  })}
-                </nav>
+                        {group.label}
+                      </button>
+
+                      {isExpanded && (
+                        <div className="ml-4 border-l-2 border-gray-200 dark:border-gray-700 pl-2 mt-1 space-y-1">
+                          {group.items.map((item) => {
+                            const SubIcon = item.icon;
+                            const isSubActive = pathname === item.href;
+                            return (
+                              <Link
+                                key={item.name}
+                                href={item.href}
+                                onClick={() => setIsOpen(false)}
+                                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                  isSubActive
+                                    ? "bg-teal-600 text-white"
+                                    : "text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100"
+                                }`}
+                              >
+                                <SubIcon className="w-4 h-4 shrink-0" />
+                                {item.name}
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </>,
