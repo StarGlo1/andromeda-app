@@ -44,7 +44,7 @@
   --color-info: #0284c7;
   --color-info-muted: #e0f2fe;
 
-  /* Dark mode tokens */
+  /* Dark mode tokens - Solid Jet Black */
   --color-bg-dark: #000000;
   --color-surface-dark: #0a0a0a;
   --color-surface-elevated-dark: #171717;
@@ -90,25 +90,7 @@
 html { color-scheme: light dark; }
 html.dark { color-scheme: dark; }
 html:not(.dark) { color-scheme: light; }
-/* --------------------------------------------------------- */
 
-/* ============================================================
-   THE REAL DARK-MODE FIX
-   ============================================================
-   Every class below (.text-text, .bg-surface-elevated, etc.) reads
-   its color from a variable like var(--color-text). Until now, only
-   the BASE state of each class had a hand-written override telling it
-   to use the "-dark" version of that variable in dark mode. Any
-   hover/focus state Tailwind generates on its own (e.g. hover:text-text)
-   was never told about the dark variant, so it silently kept using the
-   light-mode value — this is why hover states looked wrong/invisible
-   specifically in dark mode.
-
-   Fix: redefine the SAME variable names here, scoped to html.dark, so
-   every consumer of that variable — base classes, hover, focus, group-
-   hover, anything, now or in the future — automatically gets the right
-   color. Nothing else below needs to change; this block alone fixes it
-   app-wide, not just in one component. */
 html.dark {
   --color-bg: var(--color-bg-dark);
   --color-surface: var(--color-surface-dark);
@@ -150,7 +132,6 @@ html.dark {
   --color-info: var(--color-info-dark);
   --color-info-muted: var(--color-info-muted-dark);
 }
-/* ============================================================ */
 
 /* ----- Global application ----- */
 body {
@@ -160,13 +141,13 @@ body {
 }
 
 html.dark body {
-  background-color: var(--color-bg-dark);
+  background-color: #000000;
   color: var(--color-text-dark);
 }
 
 /* ----- Utility classes for every role ----- */
 .bg-bg { background-color: var(--color-bg); }
-html.dark .bg-bg { background-color: var(--color-bg-dark); }
+html.dark .bg-bg { background-color: #000000; }
 
 .text-text { color: var(--color-text); }
 html.dark .text-text { color: var(--color-text-dark); }
@@ -265,4 +246,16 @@ body, .bg-bg, .bg-surface, .bg-surface-nav, .bg-surface-widget, input, textarea,
 }
 .animate-slide-down {
   animation: slideDown 0.2s ease-out;
+}
+/* ─── Slide-in from left ─── */
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+.animate-slide-in-left {
+  animation: slideInLeft 0.3s ease-out;
 }

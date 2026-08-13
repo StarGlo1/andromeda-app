@@ -132,6 +132,7 @@ The content is organized as follows:
       SKILL.md
 app/
   actions/
+    exportFinancials.ts
     seedDemo.ts
   adjustments/
     AdjustmentForm.tsx
@@ -219,6 +220,8 @@ app/
     new/
       page.tsx
     page.tsx
+  schedule-c/
+    page.tsx
   settings/
     page.tsx
   suppliers/
@@ -280,7 +283,6 @@ prisma/
     migration_lock.toml
   prisma/
     dev.db
-  dev.db
   schema.prisma
 public/
   uploads/
@@ -299,6 +301,7 @@ package.json
 postcss.config.mjs
 README.md
 seed-categories.ts
+seeds.ts
 skills-lock.json
 tailwind.config.ts
 tsconfig.json
@@ -306,6 +309,252 @@ tsconfig.json
 
 <files>
 This section contains the contents of the repository's files.
+
+<file path="app/actions/exportFinancials.ts">
+"use server";
+
+import { prisma } from "@/lib/prisma";
+
+// 1. Export Sales & Revenue
+export async function exportSalesCSV() {
+  const sales = await prisma.saleTransaction.orderBy({ date: "desc" });
+  const headers = ["transaction_id", "date", "channel", "gross_amount", "discounts", "shipping_charged", "refunds_amount", "net_revenue"];
+  
+  const rows = sales.map((s) => [
+    s.transactionId,
+    s.date.toISOString().split("T")[0],
+    `"${s.channel}"`,
+    s.grossAmount,
+    s.discounts,
+    s.shippingCharged,
+    s.refundsAmount,
+    s.netRevenue,
+  ]);
+
+  return [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+}
+
+// 2. Export Raw Material Purchases
+export async function exportPurchasesCSV() {
+  const purchases = await prisma.purchaseLog.orderBy({ purchaseDate: "desc" });
+  const headers = ["purchase_date", "item_name", "category", "supplier", "quantity_purchased", "unit", "cost_per_unit", "total_cost"];
+  
+  const rows = purchases.map((p) => [
+    p.purchaseDate.toISOString().split("T")[0],
+    `"${p.itemName}"`,
+    `"${p.category}"`,
+    `"${p.supplierName}"`,
+    p.quantityPurchased,
+    p.unit,
+    p.costPerUnit,
+    p.totalCost,
+  ]);
+
+  return [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+}
+
+// 3. Export Operating Expenses
+export async function exportExpensesCSV() {
+  const expenses = await prisma.operatingExpense.orderBy({ expenseDate: "desc" });
+  const headers = ["expense_date", "vendor", "category_tag", "amount", "receipt_reference"];
+  
+  const rows = expenses.map((e) => [
+    e.expenseDate.toISOString().split("T")[0],
+    `"${e.vendor}"`,
+    `"${e.categoryTag}"`,
+    e.amount,
+    `"${e.receiptReference || ""}"`,
+  ]);
+
+  return [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+}
+
+// 4. Export Production Batches & COGS
+export async function exportBatchesCSV() {
+  const batches = await prisma.productionBatchLedger.orderBy({ createdAt: "desc" });
+  const headers = ["batch_id", "product_line", "quantity_produced", "total_raw_material_cost", "unit_cogs"];
+  
+  const rows = batches.map((b) => [
+    b.batchId,
+    `"${b.productLine}"`,
+    b.quantityProduced,
+    b.totalRawMaterialCost,
+    b.unitCogs,
+  ]);
+
+  return [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+}
+</file>
+
+<file path="app/schedule-c/page.tsx">
+"use client";
+
+import { useState } from "react";
+import Navbar from "@/app/components/Navbar";
+import { Download, FileText, DollarSign, ShoppingCart, Wrench, Package } from "lucide-react";
+import { 
+  exportSalesCSV, 
+  exportPurchasesCSV, 
+  exportExpensesCSV, 
+  exportBatchesCSV 
+} from "@/app/actions/exportFinancials";
+
+// Helper function to trigger browser file download
+function downloadCSV(csvContent: string, filename: string) {
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.setAttribute("href", url);
+  link.setAttribute("download", filename);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+export default function FinancialExportPage() {
+  const [loadingType, setLoadingType] = useState<string | null>(null);
+
+  const handleDownload = async (type: string) => {
+    setLoadingType(type);
+    try {
+      let csvData = "";
+      let filename = "";
+
+      if (type === "sales") {
+        csvData = await exportSalesCSV();
+        filename = `sales_revenue_${new Date().toISOString().split("T")[0]}.csv`;
+      } else if (type === "purchases") {
+        csvData = await exportPurchasesCSV();
+        filename = `raw_material_purchases_${new Date().toISOString().split("T")[0]}.csv`;
+      } else if (type === "expenses") {
+        csvData = await exportExpensesCSV();
+        filename = `operating_expenses_${new Date().toISOString().split("T")[0]}.csv`;
+      } else if (type === "batches") {
+        csvData = await exportBatchesCSV();
+        filename = `production_batches_cogs_${new Date().toISOString().split("T")[0]}.csv`;
+      }
+
+      downloadCSV(csvData, filename);
+    } catch (error) {
+      console.error("Export failed:", error);
+      alert("Failed to generate export file.");
+    } finally {
+      setLoadingType(null);
+    }
+  };
+
+  return (
+    <main className="min-h-screen bg-bg text-text p-4 sm:p-8">
+      <div className="max-w-6xl mx-auto space-y-8">
+        <Navbar />
+
+        {/* Page Header */}
+        <div className="bg-surface-widget border border-default rounded-2xl p-6 shadow-sm">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 rounded-xl bg-brand/10 border border-brand/20 flex items-center justify-center text-brand">
+              <FileText className="w-5 h-5" />
+            </div>
+            <h1 className="text-2xl font-bold tracking-tight text-text">Financial & Tax Data Hub</h1>
+          </div>
+          <p className="text-sm text-text-muted">
+            Export clean, standardized CSV files of your maker business data. Ready to drop directly into QuickBooks, Wave, or hand to your CPA for clean tax filing.
+          </p>
+        </div>
+
+        {/* Export Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          
+          {/* 1. Sales & Revenue */}
+          <div className="bg-surface-widget border border-default rounded-2xl p-6 shadow-sm flex flex-col justify-between">
+            <div>
+              <div className="flex items-center gap-2.5 text-brand mb-3">
+                <DollarSign className="w-5 h-5" />
+                <h3 className="text-lg font-bold text-text">Sales & Revenue Export</h3>
+              </div>
+              <p className="text-sm text-text-muted mb-6">
+                Tracks incoming revenue across all channels with gross amounts, discounts, shipping fees, refunds, and final net totals.
+              </p>
+            </div>
+            <button
+              onClick={() => handleDownload("sales")}
+              disabled={loadingType === "sales"}
+              className="w-full inline-flex items-center justify-center gap-2 bg-brand hover:bg-brand-hover text-white font-medium py-2.5 px-4 rounded-xl transition-colors text-sm shadow-sm"
+            >
+              <Download className="w-4 h-4" />
+              {loadingType === "sales" ? "Generating..." : "Download Sales CSV"}
+            </button>
+          </div>
+
+          {/* 2. Raw Material Purchases */}
+          <div className="bg-surface-widget border border-default rounded-2xl p-6 shadow-sm flex flex-col justify-between">
+            <div>
+              <div className="flex items-center gap-2.5 text-brand mb-3">
+                <Package className="w-5 h-5" />
+                <h3 className="text-lg font-bold text-text">Raw Material Purchases</h3>
+              </div>
+              <p className="text-sm text-text-muted mb-6">
+                Logs every component purchase (wax, fragrance oils, wicks, vessels) with exact quantities, unit costs, and vendor info.
+              </p>
+            </div>
+            <button
+              onClick={() => handleDownload("purchases")}
+              disabled={loadingType === "purchases"}
+              className="w-full inline-flex items-center justify-center gap-2 bg-brand hover:bg-brand-hover text-white font-medium py-2.5 px-4 rounded-xl transition-colors text-sm shadow-sm"
+            >
+              <Download className="w-4 h-4" />
+              {loadingType === "purchases" ? "Generating..." : "Download Purchases CSV"}
+            </button>
+          </div>
+
+          {/* 3. Operating Expenses */}
+          <div className="bg-surface-widget border border-default rounded-2xl p-6 shadow-sm flex flex-col justify-between">
+            <div>
+              <div className="flex items-center gap-2.5 text-brand mb-3">
+                <ShoppingCart className="w-5 h-5" />
+                <h3 className="text-lg font-bold text-text">Operating Expenses & Overhead</h3>
+              </div>
+              <p className="text-sm text-text-muted mb-6">
+                Captures overhead costs not tied to raw stock—software subscriptions, shipping boxes, advertising, tools, and platform fees.
+              </p>
+            </div>
+            <button
+              onClick={() => handleDownload("expenses")}
+              disabled={loadingType === "expenses"}
+              className="w-full inline-flex items-center justify-center gap-2 bg-brand hover:bg-brand-hover text-white font-medium py-2.5 px-4 rounded-xl transition-colors text-sm shadow-sm"
+            >
+              <Download className="w-4 h-4" />
+              {loadingType === "expenses" ? "Generating..." : "Download Expenses CSV"}
+            </button>
+          </div>
+
+          {/* 4. Production Batches & COGS */}
+          <div className="bg-surface-widget border border-default rounded-2xl p-6 shadow-sm flex flex-col justify-between">
+            <div>
+              <div className="flex items-center gap-2.5 text-brand mb-3">
+                <Wrench className="w-5 h-5" />
+                <h3 className="text-lg font-bold text-text">Production Batches & COGS</h3>
+              </div>
+              <p className="text-sm text-text-muted mb-6">
+                Records how raw materials translate into finished product costs, giving you precise unit COGS across your product lines.
+              </p>
+            </div>
+            <button
+              onClick={() => handleDownload("batches")}
+              disabled={loadingType === "batches"}
+              className="w-full inline-flex items-center justify-center gap-2 bg-brand hover:bg-brand-hover text-white font-medium py-2.5 px-4 rounded-xl transition-colors text-sm shadow-sm"
+            >
+              <Download className="w-4 h-4" />
+              {loadingType === "batches" ? "Generating..." : "Download Batches & COGS CSV"}
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+    </main>
+  );
+}
+</file>
 
 <file path=".agents/skills/prisma-cli/references/agent-safety.md">
 # AI safety checkpoint for destructive commands
@@ -13869,639 +14118,6 @@ export default function HeaderActions() {
         </div>
       )}
     </div>
-  );
-}
-</file>
-
-<file path="app/components/Navbar.tsx">
-"use client";
-
-import { useState, useEffect } from "react";
-import { useToast } from "@/app/context/ToastContext";
-import Navbar from "@/app/components/Navbar";
-import { seedDemoData } from "@/app/actions/seedDemo";
-
-const currencies = ["$", "€", "£", "¥", "₹", "A$", "C$", "R$", "₿"];
-const dateFormats = [
-  { value: "MM/DD/YYYY", label: "MM/DD/YYYY (US)" },
-  { value: "DD/MM/YYYY", label: "DD/MM/YYYY (World)" },
-];
-const saleStatuses = ["Draft", "Paid", "Shipped", "Refunded"];
-const taxRates = [0, 5, 8, 10, 12, 15, 20, 25];
-const discountDefaults = [0, 5, 10, 15, 20, 25, 50];
-const unitSystems = ["imperial", "metric"];
-const valuationMethods = ["weighted-average", "fifo"];
-const lowStockTriggers = ["on-hand", "available"];
-
-export default function SettingsPage() {
-  const { showToast } = useToast();
-  const [seeding, setSeeding] = useState(false);
-
-  // ── Existing preferences ──
-  const [unitSystem, setUnitSystem] = useState<"imperial" | "metric">("imperial");
-  const [currency, setCurrency] = useState("$");
-  const [dateFormat, setDateFormat] = useState("MM/DD/YYYY");
-  const [showConverter, setShowConverter] = useState(true);
-  const [defaultReorder, setDefaultReorder] = useState("");
-
-  // ── Company profile ──
-  const [companyName, setCompanyName] = useState("");
-  const [companyAddress, setCompanyAddress] = useState("");
-  const [companyPhone, setCompanyPhone] = useState("");
-  const [companyEmail, setCompanyEmail] = useState("");
-  const [companyTaxId, setCompanyTaxId] = useState("");
-  const [companyWebsite, setCompanyWebsite] = useState("");
-
-  // ── Sales defaults ──
-  const [defaultTaxRate, setDefaultTaxRate] = useState(0);
-  const [defaultDiscount, setDefaultDiscount] = useState(0);
-  const [defaultSaleStatus, setDefaultSaleStatus] = useState("Paid");
-
-  // ── NEW: Production & Labor defaults ──
-  const [hourlyLaborRate, setHourlyLaborRate] = useState(25);
-  const [defaultRecipeUnit, setDefaultRecipeUnit] = useState("oz");
-  const [batchWasteBuffer, setBatchWasteBuffer] = useState(3);
-  const [lotNumberFormat, setLotNumberFormat] = useState("LOT-{YYYY}{MM}{DD}-{SEQ}");
-
-  // ── NEW: Costing & Inventory preferences ──
-  const [valuationMethod, setValuationMethod] = useState<"weighted-average" | "fifo">("weighted-average");
-  const [includeLaborInCogs, setIncludeLaborInCogs] = useState(true);
-  const [lowStockTrigger, setLowStockTrigger] = useState<"on-hand" | "available">("on-hand");
-
-  // ── NEW: Batch execution defaults ──
-  const [autoDeductRawMaterials, setAutoDeductRawMaterials] = useState(true);
-
-  const [saved, setSaved] = useState(false);
-
-  // ── Load all settings ──
-  useEffect(() => {
-    try {
-      // Preferences
-      const savedUnit = localStorage.getItem("unitSystem");
-      if (savedUnit === "metric" || savedUnit === "imperial") setUnitSystem(savedUnit);
-      const savedCurrency = localStorage.getItem("currency");
-      if (savedCurrency) setCurrency(savedCurrency);
-      const savedDateFormat = localStorage.getItem("dateFormat");
-      if (savedDateFormat) setDateFormat(savedDateFormat);
-      const savedConverter = localStorage.getItem("showConverter");
-      if (savedConverter !== null) setShowConverter(savedConverter === "true");
-      const savedReorder = localStorage.getItem("defaultReorder");
-      if (savedReorder) setDefaultReorder(savedReorder);
-
-      // Company
-      const savedCompany = localStorage.getItem("companyProfile");
-      if (savedCompany) {
-        const parsed = JSON.parse(savedCompany);
-        setCompanyName(parsed.name || "");
-        setCompanyAddress(parsed.address || "");
-        setCompanyPhone(parsed.phone || "");
-        setCompanyEmail(parsed.email || "");
-        setCompanyTaxId(parsed.taxId || "");
-        setCompanyWebsite(parsed.website || "");
-      }
-
-      // Sales
-      const savedSales = localStorage.getItem("salesDefaults");
-      if (savedSales) {
-        const parsed = JSON.parse(savedSales);
-        setDefaultTaxRate(parsed.taxRate ?? 0);
-        setDefaultDiscount(parsed.discount ?? 0);
-        setDefaultSaleStatus(parsed.status || "Paid");
-      }
-
-      // ── New settings ──
-      const savedProduction = localStorage.getItem("productionDefaults");
-      if (savedProduction) {
-        const parsed = JSON.parse(savedProduction);
-        setHourlyLaborRate(parsed.hourlyLaborRate ?? 25);
-        setDefaultRecipeUnit(parsed.defaultRecipeUnit ?? "oz");
-        setBatchWasteBuffer(parsed.batchWasteBuffer ?? 3);
-        setLotNumberFormat(parsed.lotNumberFormat ?? "LOT-{YYYY}{MM}{DD}-{SEQ}");
-      }
-
-      const savedCosting = localStorage.getItem("costingPreferences");
-      if (savedCosting) {
-        const parsed = JSON.parse(savedCosting);
-        setValuationMethod(parsed.valuationMethod ?? "weighted-average");
-        setIncludeLaborInCogs(parsed.includeLaborInCogs ?? true);
-        setLowStockTrigger(parsed.lowStockTrigger ?? "on-hand");
-      }
-
-      const savedBatch = localStorage.getItem("batchDefaults");
-      if (savedBatch) {
-        const parsed = JSON.parse(savedBatch);
-        setAutoDeductRawMaterials(parsed.autoDeductRawMaterials ?? true);
-      }
-    } catch {}
-  }, []);
-
-  const handleSave = () => {
-    try {
-      // Preferences
-      localStorage.setItem("unitSystem", unitSystem);
-      localStorage.setItem("currency", currency);
-      localStorage.setItem("dateFormat", dateFormat);
-      localStorage.setItem("showConverter", String(showConverter));
-      if (defaultReorder) {
-        localStorage.setItem("defaultReorder", defaultReorder);
-      } else {
-        localStorage.removeItem("defaultReorder");
-      }
-
-      // Company
-      localStorage.setItem(
-        "companyProfile",
-        JSON.stringify({
-          name: companyName,
-          address: companyAddress,
-          phone: companyPhone,
-          email: companyEmail,
-          taxId: companyTaxId,
-          website: companyWebsite,
-        })
-      );
-
-      // Sales
-      localStorage.setItem(
-        "salesDefaults",
-        JSON.stringify({
-          taxRate: defaultTaxRate,
-          discount: defaultDiscount,
-          status: defaultSaleStatus,
-        })
-      );
-
-      // ── New settings ──
-      localStorage.setItem(
-        "productionDefaults",
-        JSON.stringify({
-          hourlyLaborRate,
-          defaultRecipeUnit,
-          batchWasteBuffer,
-          lotNumberFormat,
-        })
-      );
-
-      localStorage.setItem(
-        "costingPreferences",
-        JSON.stringify({
-          valuationMethod,
-          includeLaborInCogs,
-          lowStockTrigger,
-        })
-      );
-
-      localStorage.setItem(
-        "batchDefaults",
-        JSON.stringify({
-          autoDeductRawMaterials,
-        })
-      );
-
-      setSaved(true);
-      showToast("All settings saved successfully!", "success");
-      setTimeout(() => setSaved(false), 2500);
-    } catch {
-      showToast("Failed to save settings.", "error");
-    }
-  };
-
-  const handleSeedDemo = async () => {
-    setSeeding(true);
-    const result = await seedDemoData();
-    if (result.success) {
-      showToast(result.message, "success");
-    } else {
-      showToast(result.message, "error");
-    }
-    setSeeding(false);
-  };
-
-  return (
-    <main className="min-h-screen bg-bg text-text p-4 sm:p-8">
-      <div className="max-w-6xl mx-auto space-y-8">
-        <Navbar />
-
-        <div className="space-y-10">
-          {/* ─── Company Profile ─── */}
-          <section className="bg-surface-widget border border-default rounded-xl p-6">
-            <h2 className="text-lg font-semibold text-text mb-4">Company Profile</h2>
-            <p className="text-text-muted text-sm mb-6">
-              This information appears on invoices, receipts, and reports.
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-text-muted text-xs font-medium uppercase mb-1">Business Name</label>
-                <input
-                  type="text"
-                  value={companyName}
-                  onChange={(e) => setCompanyName(e.target.value)}
-                  placeholder="Your candle studio name"
-                  className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-text-muted text-xs font-medium uppercase mb-1">Tax ID / EIN</label>
-                <input
-                  type="text"
-                  value={companyTaxId}
-                  onChange={(e) => setCompanyTaxId(e.target.value)}
-                  placeholder="e.g. 12-3456789"
-                  className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm"
-                />
-              </div>
-              <div className="sm:col-span-2">
-                <label className="block text-text-muted text-xs font-medium uppercase mb-1">Address</label>
-                <textarea
-                  value={companyAddress}
-                  onChange={(e) => setCompanyAddress(e.target.value)}
-                  placeholder="Street address, city, state, zip"
-                  rows={2}
-                  className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm resize-y"
-                />
-              </div>
-              <div>
-                <label className="block text-text-muted text-xs font-medium uppercase mb-1">Phone</label>
-                <input
-                  type="tel"
-                  value={companyPhone}
-                  onChange={(e) => setCompanyPhone(e.target.value)}
-                  placeholder="(555) 123-4567"
-                  className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-text-muted text-xs font-medium uppercase mb-1">Email</label>
-                <input
-                  type="email"
-                  value={companyEmail}
-                  onChange={(e) => setCompanyEmail(e.target.value)}
-                  placeholder="studio@candles.com"
-                  className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm"
-                />
-              </div>
-              <div className="sm:col-span-2">
-                <label className="block text-text-muted text-xs font-medium uppercase mb-1">Website</label>
-                <input
-                  type="url"
-                  value={companyWebsite}
-                  onChange={(e) => setCompanyWebsite(e.target.value)}
-                  placeholder="https://yourcandleshop.com"
-                  className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm"
-                />
-              </div>
-            </div>
-          </section>
-
-          {/* ─── Sales Defaults ─── */}
-          <section className="bg-surface-widget border border-default rounded-xl p-6">
-            <h2 className="text-lg font-semibold text-text mb-4">Sales Defaults</h2>
-            <p className="text-text-muted text-sm mb-6">
-              Default values applied when creating new sales.
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-text-muted text-xs font-medium uppercase mb-1">Default Tax Rate (%)</label>
-                <select
-                  value={defaultTaxRate}
-                  onChange={(e) => setDefaultTaxRate(Number(e.target.value))}
-                  className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text text-sm focus:outline-none focus:ring-2 focus:ring-brand"
-                >
-                  {taxRates.map((rate) => (
-                    <option key={rate} value={rate}>{rate}%</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-text-muted text-xs font-medium uppercase mb-1">Default Discount (%)</label>
-                <select
-                  value={defaultDiscount}
-                  onChange={(e) => setDefaultDiscount(Number(e.target.value))}
-                  className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text text-sm focus:outline-none focus:ring-2 focus:ring-brand"
-                >
-                  {discountDefaults.map((d) => (
-                    <option key={d} value={d}>{d}%</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-text-muted text-xs font-medium uppercase mb-1">Default Sale Status</label>
-                <select
-                  value={defaultSaleStatus}
-                  onChange={(e) => setDefaultSaleStatus(e.target.value)}
-                  className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text text-sm focus:outline-none focus:ring-2 focus:ring-brand"
-                >
-                  {saleStatuses.map((s) => (
-                    <option key={s} value={s}>{s}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </section>
-
-          {/* ─── Production & Labor Defaults (NEW) ─── */}
-          <section className="bg-surface-widget border border-default rounded-xl p-6">
-            <h2 className="text-lg font-semibold text-text mb-4">🧪 Production & Labor Defaults</h2>
-            <p className="text-text-muted text-sm mb-6">
-              These defaults pre‑fill the batch calculator and production forms.
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-text-muted text-xs font-medium uppercase mb-1">
-                  Hourly Labor Rate ($/hr)
-                </label>
-                <input
-                  type="number"
-                  step="any"
-                  min="0"
-                  value={hourlyLaborRate}
-                  onChange={(e) => setHourlyLaborRate(parseFloat(e.target.value) || 0)}
-                  className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-text-muted text-xs font-medium uppercase mb-1">
-                  Default Recipe Unit
-                </label>
-                <select
-                  value={defaultRecipeUnit}
-                  onChange={(e) => setDefaultRecipeUnit(e.target.value)}
-                  className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text text-sm"
-                >
-                  <option value="oz">Ounces (oz)</option>
-                  <option value="g">Grams (g)</option>
-                  <option value="lb">Pounds (lb)</option>
-                  <option value="kg">Kilograms (kg)</option>
-                  <option value="ml">Milliliters (ml)</option>
-                  <option value="fl oz">Fluid Ounces (fl oz)</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-text-muted text-xs font-medium uppercase mb-1">
-                  Batch Waste Buffer (%)
-                </label>
-                <input
-                  type="number"
-                  step="any"
-                  min="0"
-                  max="20"
-                  value={batchWasteBuffer}
-                  onChange={(e) => setBatchWasteBuffer(parseFloat(e.target.value) || 0)}
-                  className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text text-sm"
-                />
-                <p className="text-text-muted text-xs mt-1">
-                  Extra materials to account for spillage / residue.
-                </p>
-              </div>
-              <div>
-                <label className="block text-text-muted text-xs font-medium uppercase mb-1">
-                  Lot Number Pattern
-                </label>
-                <input
-                  type="text"
-                  value={lotNumberFormat}
-                  onChange={(e) => setLotNumberFormat(e.target.value)}
-                  placeholder="LOT-{YYYY}{MM}{DD}-{SEQ}"
-                  className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text text-sm"
-                />
-                <p className="text-text-muted text-xs mt-1">
-                  Use <code className="bg-surface px-1 py-0.5 rounded border border-default">YYYY</code>, <code>MM</code>, <code>DD</code>, <code>SEQ</code>
-                </p>
-              </div>
-            </div>
-          </section>
-
-          {/* ─── Costing & Inventory Preferences (EXPANDED) ─── */}
-          <section className="bg-surface-widget border border-default rounded-xl p-6">
-            <h2 className="text-lg font-semibold text-text mb-4">📊 Costing & Inventory Preferences</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-text-muted text-xs font-medium uppercase mb-1">Unit System</label>
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => setUnitSystem("imperial")}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      unitSystem === "imperial"
-                        ? "bg-brand text-white"
-                        : "bg-bg border border-default text-text-secondary hover:bg-brand-muted"
-                    }`}
-                  >
-                    Imperial (oz, lb)
-                  </button>
-                  <button
-                    onClick={() => setUnitSystem("metric")}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      unitSystem === "metric"
-                        ? "bg-brand text-white"
-                        : "bg-bg border border-default text-text-secondary hover:bg-brand-muted"
-                    }`}
-                  >
-                    Metric (g, kg)
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-text-muted text-xs font-medium uppercase mb-1">Currency Symbol</label>
-                <select
-                  value={currency}
-                  onChange={(e) => setCurrency(e.target.value)}
-                  className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text text-sm focus:outline-none focus:ring-2 focus:ring-brand"
-                >
-                  {currencies.map((sym) => (
-                    <option key={sym} value={sym}>{sym}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-text-muted text-xs font-medium uppercase mb-1">Date Format</label>
-                <select
-                  value={dateFormat}
-                  onChange={(e) => setDateFormat(e.target.value)}
-                  className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text text-sm focus:outline-none focus:ring-2 focus:ring-brand"
-                >
-                  {dateFormats.map((fmt) => (
-                    <option key={fmt.value} value={fmt.value}>{fmt.label}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-text-muted text-xs font-medium uppercase mb-1">Cost Valuation Method</label>
-                <select
-                  value={valuationMethod}
-                  onChange={(e) => setValuationMethod(e.target.value as "weighted-average" | "fifo")}
-                  className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text text-sm focus:outline-none focus:ring-2 focus:ring-brand"
-                >
-                  <option value="weighted-average">Weighted Average</option>
-                  <option value="fifo">FIFO (First‑In, First‑Out)</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-text-muted text-xs font-medium uppercase mb-1">
-                  Include Labor in Schedule C COGS
-                </label>
-                <div className="flex items-center gap-4 mt-2">
-                  <label className="flex items-center gap-2 text-sm">
-                    <input
-                      type="radio"
-                      checked={includeLaborInCogs}
-                      onChange={() => setIncludeLaborInCogs(true)}
-                      className="accent-brand"
-                    />
-                    Yes
-                  </label>
-                  <label className="flex items-center gap-2 text-sm">
-                    <input
-                      type="radio"
-                      checked={!includeLaborInCogs}
-                      onChange={() => setIncludeLaborInCogs(false)}
-                      className="accent-brand"
-                    />
-                    No
-                  </label>
-                </div>
-                <p className="text-text-muted text-xs mt-1">
-                  Exclude self‑labor for taxes, include for internal margin.
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-text-muted text-xs font-medium uppercase mb-1">Low Stock Trigger</label>
-                <select
-                  value={lowStockTrigger}
-                  onChange={(e) => setLowStockTrigger(e.target.value as "on-hand" | "available")}
-                  className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text text-sm focus:outline-none focus:ring-2 focus:ring-brand"
-                >
-                  <option value="on-hand">On‑Hand Quantity</option>
-                  <option value="available">Available (On‑Hand − Committed)</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-text-muted text-xs font-medium uppercase mb-1">Default Reorder Threshold</label>
-                <input
-                  type="number"
-                  value={defaultReorder}
-                  onChange={(e) => setDefaultReorder(e.target.value)}
-                  placeholder="e.g. 50"
-                  className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm"
-                />
-              </div>
-            </div>
-          </section>
-
-          {/* ─── Batch Execution Defaults ─── */}
-          <section className="bg-surface-widget border border-default rounded-xl p-6">
-            <h2 className="text-lg font-semibold text-text mb-4">⚙️ Batch Execution Defaults</h2>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-text">Auto‑Deduct Raw Materials on Batch Completion</p>
-                <p className="text-xs text-text-muted">When a batch is marked complete, automatically deduct ingredients from stock.</p>
-              </div>
-              <button
-                onClick={() => setAutoDeductRawMaterials(!autoDeductRawMaterials)}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  autoDeductRawMaterials ? "bg-brand" : "bg-border-strong"
-                }`}
-              >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    autoDeductRawMaterials ? "translate-x-6" : "translate-x-1"
-                  }`}
-                />
-              </button>
-            </div>
-          </section>
-
-          {/* ─── Display Preferences ─── */}
-          <section className="bg-surface-widget border border-default rounded-xl p-6">
-            <h2 className="text-lg font-semibold text-text mb-4">🖥️ Display Preferences</h2>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-text">Show Unit Converter</p>
-                <p className="text-xs text-text-muted">Display the unit converter widget on the Materials page.</p>
-              </div>
-              <button
-                onClick={() => setShowConverter(!showConverter)}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  showConverter ? "bg-brand" : "bg-border-strong"
-                }`}
-              >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    showConverter ? "translate-x-6" : "translate-x-1"
-                  }`}
-                />
-              </button>
-            </div>
-          </section>
-
-          {/* ─── Data Management ─── */}
-          <section className="bg-surface-widget border border-default rounded-xl p-6">
-            <h2 className="text-lg font-semibold text-text mb-4">💾 Data Management</h2>
-            <div className="flex flex-wrap gap-4">
-              <a
-                href="/import"
-                className="bg-brand hover:bg-brand-hover text-white font-medium px-4 py-2 rounded-lg transition-colors text-sm"
-              >
-                📥 Import Data
-              </a>
-              <a
-                href="/api/export"
-                className="bg-surface border border-default text-text-secondary hover:bg-surface-elevated font-medium px-4 py-2 rounded-lg transition-colors text-sm"
-              >
-                ⬇️ Export All Data
-              </a>
-              <button
-                onClick={handleSeedDemo}
-                disabled={seeding}
-                className="bg-info hover:bg-info-dark text-white font-medium px-4 py-2 rounded-lg transition-colors text-sm disabled:opacity-50"
-              >
-                {seeding ? "Seeding..." : "🌱 Load Demo Data"}
-              </button>
-            </div>
-            <p className="text-text-muted text-xs mt-3">
-              Demo data includes sample materials, a sub‑assembly, and a finished product recipe. It won't overwrite existing data with the same names.
-            </p>
-          </section>
-
-          {/* ─── Danger Zone ─── */}
-          <section className="bg-surface-widget border border-error rounded-xl p-6 mt-4">
-            <h2 className="text-lg font-semibold text-error mb-4">⚠️ Danger Zone</h2>
-            <p className="text-sm text-text-secondary mb-4">
-              Permanently delete all data from the application. This includes materials, products, recipes, adjustments, and settings.
-            </p>
-            <button
-              onClick={() => {
-                if (confirm("Are you sure? This will delete ALL data and cannot be undone.")) {
-                  localStorage.clear();
-                  window.location.href = "/onboarding";
-                }
-              }}
-              className="bg-error hover:bg-red-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
-            >
-              Reset Everything
-            </button>
-          </section>
-
-          {/* ─── Save Button ─── */}
-          <div className="flex justify-center">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={handleSave}
-                className="bg-brand hover:bg-brand-hover text-white text-sm font-medium px-6 py-2 rounded-lg transition-colors"
-              >
-                Save All Settings
-              </button>
-              {saved && <span className="text-success text-sm font-medium">✓ Saved</span>}
-            </div>
-          </div>
-        </div>
-      </div>
-    </main>
   );
 }
 </file>
@@ -46268,21 +45884,20 @@ Object.assign(exports, Prisma)
 
 <file path="lib/prisma.ts">
 import { PrismaClient } from "@prisma/client";
-import path from "path";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
-// Explicitly resolve full absolute path to prisma/dev.db
-const dbPath = path.join(process.cwd(), "prisma", "dev.db");
+console.log("🔍 DATABASE_URL from env:", process.env.DATABASE_URL);
+console.log("🔍 Current working directory:", process.cwd());
 
 export const prisma =
   globalForPrisma.prisma ??
   new PrismaClient({
     datasources: {
       db: {
-        url: `file:${dbPath}`,
+        url: process.env.DATABASE_URL,
       },
     },
   });
@@ -46545,10 +46160,6 @@ PRAGMA defer_foreign_keys=OFF;
 provider = "sqlite"
 </file>
 
-<file path="prisma/dev.db">
-
-</file>
-
 <file path="prisma/schema.prisma">
 datasource db {
   provider = "sqlite"
@@ -46733,15 +46344,105 @@ model SaleItem {
 }
 </file>
 
+<file path="public/file.svg">
+<svg fill="none" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M14.5 13.5V5.41a1 1 0 0 0-.3-.7L9.8.29A1 1 0 0 0 9.08 0H1.5v13.5A2.5 2.5 0 0 0 4 16h8a2.5 2.5 0 0 0 2.5-2.5m-1.5 0v-7H8v-5H3v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1M9.5 5V2.12L12.38 5zM5.13 5h-.62v1.25h2.12V5zm-.62 3h7.12v1.25H4.5zm.62 3h-.62v1.25h7.12V11z" clip-rule="evenodd" fill="#666" fill-rule="evenodd"/></svg>
+</file>
+
+<file path="public/globe.svg">
+<svg fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><g clip-path="url(#a)"><path fill-rule="evenodd" clip-rule="evenodd" d="M10.27 14.1a6.5 6.5 0 0 0 3.67-3.45q-1.24.21-2.7.34-.31 1.83-.97 3.1M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m.48-1.52a7 7 0 0 1-.96 0H7.5a4 4 0 0 1-.84-1.32q-.38-.89-.63-2.08a40 40 0 0 0 3.92 0q-.25 1.2-.63 2.08a4 4 0 0 1-.84 1.31zm2.94-4.76q1.66-.15 2.95-.43a7 7 0 0 0 0-2.58q-1.3-.27-2.95-.43a18 18 0 0 1 0 3.44m-1.27-3.54a17 17 0 0 1 0 3.64 39 39 0 0 1-4.3 0 17 17 0 0 1 0-3.64 39 39 0 0 1 4.3 0m1.1-1.17q1.45.13 2.69.34a6.5 6.5 0 0 0-3.67-3.44q.65 1.26.98 3.1M8.48 1.5l.01.02q.41.37.84 1.31.38.89.63 2.08a40 40 0 0 0-3.92 0q.25-1.2.63-2.08a4 4 0 0 1 .85-1.32 7 7 0 0 1 .96 0m-2.75.4a6.5 6.5 0 0 0-3.67 3.44 29 29 0 0 1 2.7-.34q.31-1.83.97-3.1M4.58 6.28q-1.66.16-2.95.43a7 7 0 0 0 0 2.58q1.3.27 2.95.43a18 18 0 0 1 0-3.44m.17 4.71q-1.45-.12-2.69-.34a6.5 6.5 0 0 0 3.67 3.44q-.65-1.27-.98-3.1" fill="#666"/></g><defs><clipPath id="a"><path fill="#fff" d="M0 0h16v16H0z"/></clipPath></defs></svg>
+</file>
+
+<file path="public/next.svg">
+<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 394 80"><path fill="#000" d="M262 0h68.5v12.7h-27.2v66.6h-13.6V12.7H262V0ZM149 0v12.7H94v20.4h44.3v12.6H94v21h55v12.6H80.5V0h68.7zm34.3 0h-17.8l63.8 79.4h17.9l-32-39.7 32-39.6h-17.9l-23 28.6-23-28.6zm18.3 56.7-9-11-27.1 33.7h17.8l18.3-22.7z"/><path fill="#000" d="M81 79.3 17 0H0v79.3h13.6V17l50.2 62.3H81Zm252.6-.4c-1 0-1.8-.4-2.5-1s-1.1-1.6-1.1-2.6.3-1.8 1-2.5 1.6-1 2.6-1 1.8.3 2.5 1a3.4 3.4 0 0 1 .6 4.3 3.7 3.7 0 0 1-3 1.8zm23.2-33.5h6v23.3c0 2.1-.4 4-1.3 5.5a9.1 9.1 0 0 1-3.8 3.5c-1.6.8-3.5 1.3-5.7 1.3-2 0-3.7-.4-5.3-1s-2.8-1.8-3.7-3.2c-.9-1.3-1.4-3-1.4-5h6c.1.8.3 1.6.7 2.2s1 1.2 1.6 1.5c.7.4 1.5.5 2.4.5 1 0 1.8-.2 2.4-.6a4 4 0 0 0 1.6-1.8c.3-.8.5-1.8.5-3V45.5zm30.9 9.1a4.4 4.4 0 0 0-2-3.3 7.5 7.5 0 0 0-4.3-1.1c-1.3 0-2.4.2-3.3.5-.9.4-1.6 1-2 1.6a3.5 3.5 0 0 0-.3 4c.3.5.7.9 1.3 1.2l1.8 1 2 .5 3.2.8c1.3.3 2.5.7 3.7 1.2a13 13 0 0 1 3.2 1.8 8.1 8.1 0 0 1 3 6.5c0 2-.5 3.7-1.5 5.1a10 10 0 0 1-4.4 3.5c-1.8.8-4.1 1.2-6.8 1.2-2.6 0-4.9-.4-6.8-1.2-2-.8-3.4-2-4.5-3.5a10 10 0 0 1-1.7-5.6h6a5 5 0 0 0 3.5 4.6c1 .4 2.2.6 3.4.6 1.3 0 2.5-.2 3.5-.6 1-.4 1.8-1 2.4-1.7a4 4 0 0 0 .8-2.4c0-.9-.2-1.6-.7-2.2a11 11 0 0 0-2.1-1.4l-3.2-1-3.8-1c-2.8-.7-5-1.7-6.6-3.2a7.2 7.2 0 0 1-2.4-5.7 8 8 0 0 1 1.7-5 10 10 0 0 1 4.3-3.5c2-.8 4-1.2 6.4-1.2 2.3 0 4.4.4 6.2 1.2 1.8.8 3.2 2 4.3 3.4 1 1.4 1.5 3 1.5 5h-5.8z"/></svg>
+</file>
+
+<file path="public/vercel.svg">
+<svg fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1155 1000"><path d="m577.3 0 577.4 1000H0z" fill="#fff"/></svg>
+</file>
+
+<file path="public/window.svg">
+<svg fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path fill-rule="evenodd" clip-rule="evenodd" d="M1.5 2.5h13v10a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1zM0 1h16v11.5a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 0 12.5zm3.75 4.5a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5M7 4.75a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0m1.75.75a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5" fill="#666"/></svg>
+</file>
+
+<file path="AGENTS.md">
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->
+</file>
+
+<file path="CLAUDE.md">
+@AGENTS.md
+</file>
+
+<file path="eslint.config.mjs">
+import { defineConfig, globalIgnores } from "eslint/config";
+import nextVitals from "eslint-config-next/core-web-vitals";
+import nextTs from "eslint-config-next/typescript";
+
+const eslintConfig = defineConfig([
+  ...nextVitals,
+  ...nextTs,
+  // Override default ignores of eslint-config-next.
+  globalIgnores([
+    // Default ignores of eslint-config-next:
+    ".next/**",
+    "out/**",
+    "build/**",
+    "next-env.d.ts",
+  ]),
+]);
+
+export default eslintConfig;
+</file>
+
+<file path="README.md">
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+
+## Getting Started
+
+First, run the development server:
+
+```bash
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+
+## Learn More
+
+To learn more about Next.js, take a look at the following resources:
+
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+
+## Deploy on Vercel
+
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+</file>
+
 <file path="seed-categories.ts">
-import { PrismaClient } from '@prisma/client'
-import { PrismaLibSql } from '@prisma/adapter-libsql'
-
-const adapter = new PrismaLibSql({
-  url: process.env.DATABASE_URL ?? 'file:./dev.db',
-})
-
-const prisma = new PrismaClient({ adapter })
+// seed.ts
+import { prisma } from './lib/prisma';
 
 async function main() {
   const categories = [
@@ -46754,22 +46455,39 @@ async function main() {
     'Dust Cover',
     'Packaging',
     'Additive',
-  ]
+  ];
 
   for (const name of categories) {
-    await prisma.category.create({ data: { name } })
-    console.log(`✓ Added category: ${name}`)
+    await prisma.category.upsert({
+      where: { name },
+      update: {},
+      create: { name },
+    });
+    console.log(`✓ Added category: ${name}`);
   }
 
-  console.log('All categories created!')
+  console.log('All categories created!');
 }
 
 main()
   .catch((e) => {
-    console.error(e)
-    process.exit(1)
+    console.error(e);
+    process.exit(1);
   })
-  .finally(() => prisma.$disconnect())
+  .finally(() => prisma.$disconnect());
+</file>
+
+<file path="seeds.ts">
+import { prisma } from './lib/prisma';
+
+async function main() {
+  const categories = ['Wax', 'Wick', 'Vessel', 'Fragrance Oil', 'Lid', 'Label & Sticker', 'Dust Cover', 'Packaging', 'Additive'];
+  for (const name of categories) {
+    await prisma.category.upsert({ where: { name }, update: {}, create: { name } });
+  }
+  console.log('Categories seeded');
+}
+main().catch(console.error);
 </file>
 
 <file path="skills-lock.json">
@@ -46851,6 +46569,148 @@ const config: Config = {
 };
 
 export default config;
+</file>
+
+<file path="app/components/Navbar.tsx">
+"use client";
+
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { 
+  Boxes, 
+  Package, 
+  ShoppingCart, 
+  Users, 
+  Calculator, 
+  Menu, 
+  X, 
+  LayoutDashboard,
+  Truck,
+  FileText,
+  Settings,
+  Sun,
+  Moon
+} from "lucide-react";
+
+export default function Navbar() {
+  const [isOpen, setIsOpen] = useState(false);
+  const [isDark, setIsDark] = useState(true);
+  const pathname = usePathname();
+
+  useEffect(() => {
+    const isDarkMode = document.documentElement.classList.contains("dark");
+    setIsDark(isDarkMode);
+  }, []);
+
+  const toggleTheme = () => {
+    if (isDark) {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+      setIsDark(false);
+    } else {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+      setIsDark(true);
+    }
+  };
+
+  const navLinks = [
+    { name: "Dashboard", href: "/", icon: LayoutDashboard },
+    { name: "Materials", href: "/materials", icon: Boxes },
+    { name: "Finished Goods", href: "/finished-goods", icon: Package },
+    { name: "Recipes", href: "/recipes", icon: FileText },
+    { name: "Suppliers", href: "/suppliers", icon: Truck },
+    { name: "Sales", href: "/sales", icon: ShoppingCart },
+    { name: "Customers", href: "/customers", icon: Users },
+    { name: "Calculator", href: "/calculator", icon: Calculator },
+    { name: "Settings", href: "/settings", icon: Settings },
+  ];
+
+  return (
+    <nav className="bg-surface-widget border border-default rounded-2xl mb-6 sm:mb-8 px-3 sm:px-6 py-3 shadow-sm">
+      <div className="flex items-center justify-between">
+        {/* Logo & Brand */}
+        <div className="flex items-center gap-3">
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <div className="w-9 h-9 rounded-xl bg-brand flex items-center justify-center shadow-md shadow-brand/20 group-hover:scale-105 transition-transform shrink-0">
+              <Boxes className="w-5 h-5 text-white" />
+            </div>
+            <span className="text-lg sm:text-xl font-extrabold tracking-tight text-text truncate">
+              ANDROMEDA
+            </span>
+          </Link>
+        </div>
+
+        {/* Desktop Navigation Links */}
+        <div className="hidden xl:flex items-center space-x-1">
+          {navLinks.map((link) => {
+            const Icon = link.icon;
+            const isActive = pathname === link.href;
+            return (
+              <Link
+                key={link.name}
+                href={link.href}
+                className={`px-3 py-2 rounded-xl text-sm font-medium transition-colors flex items-center gap-2 ${
+                  isActive
+                    ? "bg-brand text-white shadow-sm"
+                    : "text-text-secondary hover:text-text hover:bg-surface-elevated"
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                {link.name}
+              </Link>
+            );
+          })}
+        </div>
+
+        {/* Right Side Actions: Theme Toggle & Hamburger */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={toggleTheme}
+            className="p-2.5 rounded-xl bg-surface border border-default text-text-secondary hover:text-text hover:bg-surface-elevated transition-colors"
+            aria-label="Toggle Theme"
+          >
+            {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-600" />}
+          </button>
+
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className="xl:hidden p-2.5 rounded-xl bg-surface border border-default text-text-secondary hover:text-text hover:bg-surface-elevated transition-colors"
+            aria-label="Toggle Menu"
+          >
+            {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile / Tablet Navigation Dropdown */}
+      {isOpen && (
+        <div className="xl:hidden mt-3 pt-3 border-t border-default grid grid-cols-2 sm:grid-cols-3 gap-2 animate-fadeIn">
+          {navLinks.map((link) => {
+            const Icon = link.icon;
+            const isActive = pathname === link.href;
+            return (
+              <Link
+                key={link.name}
+                href={link.href}
+                onClick={() => setIsOpen(false)}
+                className={`px-3 py-3 rounded-xl text-sm font-medium transition-colors flex items-center gap-2.5 ${
+                  isActive
+                    ? "bg-brand text-white"
+                    : "text-text-secondary hover:text-text bg-surface hover:bg-surface-elevated"
+                }`}
+              >
+                <Icon className="w-4 h-4 shrink-0" />
+                <span className="truncate">{link.name}</span>
+              </Link>
+            );
+          })}
+        </div>
+      )}
+    </nav>
+  );
+}
 </file>
 
 <file path="app/globals.css">
@@ -47124,170 +46984,6 @@ body, .bg-bg, .bg-surface, .bg-surface-nav, .bg-surface-widget, input, textarea,
 }
 </file>
 
-<file path="app/layout.tsx">
-import type { Metadata, Viewport } from "next";
-import "./globals.css";
-import { ToastProvider } from "@/app/context/ToastContext";
-
-export const metadata: Metadata = {
-  title: "ANDROMEDA",
-  description: "One system. Infinite crafts. Exact margins.",
-};
-
-export const viewport: Viewport = {
-  colorScheme: "light dark",
-};
-
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return (
-    <html lang="en" suppressHydrationWarning>
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `(function() {
-              try {
-                var stored = localStorage.getItem('theme');
-                if (stored === 'light') {
-                  document.documentElement.classList.remove('dark');
-                } else {
-                  document.documentElement.classList.add('dark');
-                }
-              } catch(e) {}
-            })();`,
-          }}
-        />
-      </head>
-      <body className="bg-bg text-text antialiased">
-        <ToastProvider>
-          <main className="w-full max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            {children}
-          </main>
-        </ToastProvider>
-      </body>
-    </html>
-  );
-}
-</file>
-
-<file path="app/page.tsx">
-import { prisma } from "@/lib/prisma";
-import Navbar from "./components/Navbar";
-import DashboardWidgets from "./components/DashboardWidgets";
-
-export default async function DashboardPage() {
-  const [rawMaterialsCount, finishedGoodsCount, activeRecipesCount, salesData] = await Promise.all([
-    prisma.rawMaterial.count(),
-    prisma.finishedGood.count(),
-    prisma.finishedGood.count({ where: { recipeItems: { some: { id: { not: "" } } } } }),
-    prisma.sale.aggregate({
-      _sum: { totalAmount: true },
-      _count: true,
-    }),
-  ]);
-
-  const allMaterials = await prisma.rawMaterial.findMany({
-    orderBy: { updatedAt: "desc" },
-    include: { category: true },
-  });
-
-  const lowStockMaterials = allMaterials.filter(
-    (m) => m.reorderThreshold !== null && (m.totalQuantity ?? 0) <= m.reorderThreshold!
-  );
-
-  const totalInventoryValue = allMaterials.reduce(
-    (sum, m) => sum + (m.totalQuantity ?? 0) * (m.costPerUnit ?? 0),
-    0
-  );
-
-  const allGoods = await prisma.finishedGood.findMany();
-  const totalProducts = allGoods.length;
-  const avgCogs = allGoods.length > 0
-    ? allGoods.reduce((sum, g) => sum + (g.calculatedCogs ?? 0), 0) / allGoods.length
-    : 0;
-
-  const potentialProfit = allGoods.reduce(
-    (sum, g) => sum + (g.retailPrice - (g.calculatedCogs ?? 0)) * g.quantityOnHand,
-    0
-  );
-
-  const recentMaterials = await prisma.rawMaterial.findMany({
-    take: 3,
-    orderBy: { updatedAt: "desc" },
-    select: { id: true, name: true, updatedAt: true },
-  });
-  const recentGoods = await prisma.finishedGood.findMany({
-    take: 2,
-    orderBy: { updatedAt: "desc" },
-    select: { id: true, name: true, updatedAt: true },
-  });
-
-  const recentActivity = [
-    ...recentMaterials.map((m) => ({
-      type: "material" as const,
-      name: m.name,
-      when: m.updatedAt,
-      link: "/materials",
-    })),
-    ...recentGoods.map((g) => ({
-      type: "product" as const,
-      name: g.name,
-      when: g.updatedAt,
-      link: "/finished-goods",
-    })),
-  ].sort((a, b) => (b.when > a.when ? 1 : -1))
-   .slice(0, 5);
-
-  const dashboardData = {
-    rawMaterialsCount,
-    lowStockCount: lowStockMaterials.length,
-    totalProducts,
-    totalInventoryValue,
-    activeRecipesCount,
-    avgCogs,
-    potentialProfit,
-    lowStockMaterials,
-    recentActivity,
-    totalSales: salesData._count,
-    totalRevenue: salesData._sum?.totalAmount ?? 0,
-  };
-
-  return (
-    <main className="min-h-screen bg-bg text-text p-4 sm:p-8">
-      <div className="max-w-6xl mx-auto space-y-8">
-        <Navbar />
-        <div className="overflow-x-auto">
-          <DashboardWidgets data={dashboardData} />
-        </div>
-      </div>
-    </main>
-  );
-}
-</file>
-
-<file path="public/file.svg">
-<svg fill="none" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M14.5 13.5V5.41a1 1 0 0 0-.3-.7L9.8.29A1 1 0 0 0 9.08 0H1.5v13.5A2.5 2.5 0 0 0 4 16h8a2.5 2.5 0 0 0 2.5-2.5m-1.5 0v-7H8v-5H3v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1M9.5 5V2.12L12.38 5zM5.13 5h-.62v1.25h2.12V5zm-.62 3h7.12v1.25H4.5zm.62 3h-.62v1.25h7.12V11z" clip-rule="evenodd" fill="#666" fill-rule="evenodd"/></svg>
-</file>
-
-<file path="public/globe.svg">
-<svg fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><g clip-path="url(#a)"><path fill-rule="evenodd" clip-rule="evenodd" d="M10.27 14.1a6.5 6.5 0 0 0 3.67-3.45q-1.24.21-2.7.34-.31 1.83-.97 3.1M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m.48-1.52a7 7 0 0 1-.96 0H7.5a4 4 0 0 1-.84-1.32q-.38-.89-.63-2.08a40 40 0 0 0 3.92 0q-.25 1.2-.63 2.08a4 4 0 0 1-.84 1.31zm2.94-4.76q1.66-.15 2.95-.43a7 7 0 0 0 0-2.58q-1.3-.27-2.95-.43a18 18 0 0 1 0 3.44m-1.27-3.54a17 17 0 0 1 0 3.64 39 39 0 0 1-4.3 0 17 17 0 0 1 0-3.64 39 39 0 0 1 4.3 0m1.1-1.17q1.45.13 2.69.34a6.5 6.5 0 0 0-3.67-3.44q.65 1.26.98 3.1M8.48 1.5l.01.02q.41.37.84 1.31.38.89.63 2.08a40 40 0 0 0-3.92 0q.25-1.2.63-2.08a4 4 0 0 1 .85-1.32 7 7 0 0 1 .96 0m-2.75.4a6.5 6.5 0 0 0-3.67 3.44 29 29 0 0 1 2.7-.34q.31-1.83.97-3.1M4.58 6.28q-1.66.16-2.95.43a7 7 0 0 0 0 2.58q1.3.27 2.95.43a18 18 0 0 1 0-3.44m.17 4.71q-1.45-.12-2.69-.34a6.5 6.5 0 0 0 3.67 3.44q-.65-1.27-.98-3.1" fill="#666"/></g><defs><clipPath id="a"><path fill="#fff" d="M0 0h16v16H0z"/></clipPath></defs></svg>
-</file>
-
-<file path="public/next.svg">
-<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 394 80"><path fill="#000" d="M262 0h68.5v12.7h-27.2v66.6h-13.6V12.7H262V0ZM149 0v12.7H94v20.4h44.3v12.6H94v21h55v12.6H80.5V0h68.7zm34.3 0h-17.8l63.8 79.4h17.9l-32-39.7 32-39.6h-17.9l-23 28.6-23-28.6zm18.3 56.7-9-11-27.1 33.7h17.8l18.3-22.7z"/><path fill="#000" d="M81 79.3 17 0H0v79.3h13.6V17l50.2 62.3H81Zm252.6-.4c-1 0-1.8-.4-2.5-1s-1.1-1.6-1.1-2.6.3-1.8 1-2.5 1.6-1 2.6-1 1.8.3 2.5 1a3.4 3.4 0 0 1 .6 4.3 3.7 3.7 0 0 1-3 1.8zm23.2-33.5h6v23.3c0 2.1-.4 4-1.3 5.5a9.1 9.1 0 0 1-3.8 3.5c-1.6.8-3.5 1.3-5.7 1.3-2 0-3.7-.4-5.3-1s-2.8-1.8-3.7-3.2c-.9-1.3-1.4-3-1.4-5h6c.1.8.3 1.6.7 2.2s1 1.2 1.6 1.5c.7.4 1.5.5 2.4.5 1 0 1.8-.2 2.4-.6a4 4 0 0 0 1.6-1.8c.3-.8.5-1.8.5-3V45.5zm30.9 9.1a4.4 4.4 0 0 0-2-3.3 7.5 7.5 0 0 0-4.3-1.1c-1.3 0-2.4.2-3.3.5-.9.4-1.6 1-2 1.6a3.5 3.5 0 0 0-.3 4c.3.5.7.9 1.3 1.2l1.8 1 2 .5 3.2.8c1.3.3 2.5.7 3.7 1.2a13 13 0 0 1 3.2 1.8 8.1 8.1 0 0 1 3 6.5c0 2-.5 3.7-1.5 5.1a10 10 0 0 1-4.4 3.5c-1.8.8-4.1 1.2-6.8 1.2-2.6 0-4.9-.4-6.8-1.2-2-.8-3.4-2-4.5-3.5a10 10 0 0 1-1.7-5.6h6a5 5 0 0 0 3.5 4.6c1 .4 2.2.6 3.4.6 1.3 0 2.5-.2 3.5-.6 1-.4 1.8-1 2.4-1.7a4 4 0 0 0 .8-2.4c0-.9-.2-1.6-.7-2.2a11 11 0 0 0-2.1-1.4l-3.2-1-3.8-1c-2.8-.7-5-1.7-6.6-3.2a7.2 7.2 0 0 1-2.4-5.7 8 8 0 0 1 1.7-5 10 10 0 0 1 4.3-3.5c2-.8 4-1.2 6.4-1.2 2.3 0 4.4.4 6.2 1.2 1.8.8 3.2 2 4.3 3.4 1 1.4 1.5 3 1.5 5h-5.8z"/></svg>
-</file>
-
-<file path="public/vercel.svg">
-<svg fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1155 1000"><path d="m577.3 0 577.4 1000H0z" fill="#fff"/></svg>
-</file>
-
-<file path="public/window.svg">
-<svg fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path fill-rule="evenodd" clip-rule="evenodd" d="M1.5 2.5h13v10a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1zM0 1h16v11.5a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 0 12.5zm3.75 4.5a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5M7 4.75a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0m1.75.75a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5" fill="#666"/></svg>
-</file>
-
 <file path=".gitignore">
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
@@ -47334,51 +47030,316 @@ next-env.d.ts
 /app/generated/prisma
 </file>
 
-<file path="AGENTS.md">
-<!-- BEGIN:nextjs-agent-rules -->
-
-# This is NOT the Next.js you know
-
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
-
-This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
-
-<!-- END:nextjs-agent-rules -->
-</file>
-
-<file path="CLAUDE.md">
-@AGENTS.md
-</file>
-
-<file path="eslint.config.mjs">
-import { defineConfig, globalIgnores } from "eslint/config";
-import nextVitals from "eslint-config-next/core-web-vitals";
-import nextTs from "eslint-config-next/typescript";
-
-const eslintConfig = defineConfig([
-  ...nextVitals,
-  ...nextTs,
-  // Override default ignores of eslint-config-next.
-  globalIgnores([
-    // Default ignores of eslint-config-next:
-    ".next/**",
-    "out/**",
-    "build/**",
-    "next-env.d.ts",
-  ]),
-]);
-
-export default eslintConfig;
-</file>
-
 <file path="next.config.ts">
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
-  /* config options here */
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  webpack: (config) => {
+    // Disables persistent disk cache to prevent macOS ENOENT rename crashes
+    config.cache = false;
+    return config;
+  },
 };
 
 export default nextConfig;
+</file>
+
+<file path="postcss.config.mjs">
+const config = {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+};
+
+export default config;
+</file>
+
+<file path="tsconfig.json">
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "incremental": true,
+    "baseUrl": ".",
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+  "@/*": ["./*"]
+}
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "exclude": ["node_modules"]
+}
+</file>
+
+<file path="app/layout.tsx">
+import type { Metadata, Viewport } from "next";
+import "./globals.css";
+import { ToastProvider } from "@/app/context/ToastContext";
+
+export const metadata: Metadata = {
+  title: "ANDROMEDA",
+  description: "One system. Infinite crafts. Exact margins.",
+};
+
+export const viewport: Viewport = {
+  colorScheme: "light dark",
+};
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function() {
+              try {
+                var stored = localStorage.getItem('theme');
+                if (stored === 'light') {
+                  document.documentElement.classList.remove('dark');
+                } else {
+                  document.documentElement.classList.add('dark');
+                }
+              } catch(e) {}
+            })();`,
+          }}
+        />
+      </head>
+      <body className="bg-bg text-text antialiased min-h-screen">
+        <ToastProvider>
+          <main className="w-full max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            {children}
+          </main>
+        </ToastProvider>
+      </body>
+    </html>
+  );
+}
+</file>
+
+<file path="app/page.tsx">
+"use client";
+
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import Navbar from "@/app/components/Navbar";
+import { Boxes, Package, ShoppingCart, FileText, ArrowUpRight, Plus, AlertTriangle, TrendingUp } from "lucide-react";
+
+export default function DashboardPage() {
+  const [currency, setCurrency] = useState("$");
+
+  useEffect(() => {
+    const savedCurrency = localStorage.getItem("currency");
+    if (savedCurrency) setCurrency(savedCurrency);
+  }, []);
+
+  return (
+    <main className="min-h-screen bg-bg text-text p-4 sm:p-6 lg:p-8">
+      <div className="max-w-6xl mx-auto space-y-6 sm:space-y-8">
+        <Navbar />
+
+        {/* Header section with responsive stacking */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-text">Dashboard</h1>
+            <p className="text-sm text-text-muted mt-1">
+              Overview of your inventory, production metrics, and sales performance.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+            <Link
+              href="/calculator"
+              className="flex-1 sm:flex-none justify-center bg-surface border border-default text-text hover:bg-surface-elevated font-medium px-4 py-2.5 rounded-xl transition-colors text-sm flex items-center gap-2 shadow-sm"
+            >
+              <TrendingUp className="w-4 h-4 text-brand shrink-0" />
+              <span>Batch Calculator</span>
+            </Link>
+            <Link
+              href="/materials"
+              className="flex-1 sm:flex-none justify-center bg-brand hover:bg-brand-hover text-white font-medium px-4 py-2.5 rounded-xl transition-colors text-sm flex items-center gap-2 shadow-sm shadow-brand/20"
+            >
+              <Plus className="w-4 h-4 shrink-0" />
+              <span>Add Material</span>
+            </Link>
+          </div>
+        </div>
+
+        {/* Metrics Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          <div className="bg-surface-widget border border-default rounded-xl p-5 shadow-sm">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium uppercase text-text-muted tracking-wider">Raw Materials</span>
+              <div className="w-8 h-8 rounded-lg bg-brand-muted flex items-center justify-center text-brand">
+                <Boxes className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="mt-3 flex items-baseline gap-2">
+              <span className="text-2xl font-bold text-text">24</span>
+              <span className="text-xs text-success font-medium">Active items</span>
+            </div>
+          </div>
+
+          <div className="bg-surface-widget border border-default rounded-xl p-5 shadow-sm">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium uppercase text-text-muted tracking-wider">Finished Goods</span>
+              <div className="w-8 h-8 rounded-lg bg-brand-muted flex items-center justify-center text-brand">
+                <Package className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="mt-3 flex items-baseline gap-2">
+              <span className="text-2xl font-bold text-text">12</span>
+              <span className="text-xs text-text-muted font-medium">SKUs cataloged</span>
+            </div>
+          </div>
+
+          <div className="bg-surface-widget border border-default rounded-xl p-5 shadow-sm">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium uppercase text-text-muted tracking-wider">Active Recipes</span>
+              <div className="w-8 h-8 rounded-lg bg-brand-muted flex items-center justify-center text-brand">
+                <FileText className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="mt-3 flex items-baseline gap-2">
+              <span className="text-2xl font-bold text-text">8</span>
+              <span className="text-xs text-text-muted font-medium">Ready for batching</span>
+            </div>
+          </div>
+
+          <div className="bg-surface-widget border border-default rounded-xl p-5 shadow-sm">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium uppercase text-text-muted tracking-wider">Monthly Revenue</span>
+              <div className="w-8 h-8 rounded-lg bg-success/10 flex items-center justify-center text-success">
+                <ShoppingCart className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="mt-3 flex items-baseline gap-2">
+              <span className="text-2xl font-bold text-text">{currency}1,480.00</span>
+              <span className="text-xs text-success font-medium">+12% this mo</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Two-column layout for Quick Navigation & Alerts */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Quick Navigation Cards */}
+          <div className="lg:col-span-2 bg-surface-widget border border-default rounded-xl p-5 sm:p-6 shadow-sm space-y-4">
+            <h2 className="text-lg font-semibold text-text">Quick Navigation</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Link
+                href="/materials"
+                className="p-4 rounded-xl bg-surface border border-default hover:border-brand transition-all flex items-center justify-between group"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-lg bg-brand-muted flex items-center justify-center text-brand shrink-0">
+                    <Boxes className="w-5 h-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-text group-hover:text-brand transition-colors truncate">Manage Materials</p>
+                    <p className="text-xs text-text-muted truncate">Waxes, oils, wicks, vessels</p>
+                  </div>
+                </div>
+                <ArrowUpRight className="w-4 h-4 text-text-muted group-hover:text-brand transition-colors shrink-0 ml-2" />
+              </Link>
+
+              <Link
+                href="/finished-goods"
+                className="p-4 rounded-xl bg-surface border border-default hover:border-brand transition-all flex items-center justify-between group"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-lg bg-brand-muted flex items-center justify-center text-brand shrink-0">
+                    <Package className="w-5 h-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-text group-hover:text-brand transition-colors truncate">Finished Goods</p>
+                    <p className="text-xs text-text-muted truncate">Stock levels & pricing</p>
+                  </div>
+                </div>
+                <ArrowUpRight className="w-4 h-4 text-text-muted group-hover:text-brand transition-colors shrink-0 ml-2" />
+              </Link>
+
+              <Link
+                href="/recipes"
+                className="p-4 rounded-xl bg-surface border border-default hover:border-brand transition-all flex items-center justify-between group"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-lg bg-brand-muted flex items-center justify-center text-brand shrink-0">
+                    <FileText className="w-5 h-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-text group-hover:text-brand transition-colors truncate">Formulations & Recipes</p>
+                    <p className="text-xs text-text-muted truncate">BOMs & batch ratios</p>
+                  </div>
+                </div>
+                <ArrowUpRight className="w-4 h-4 text-text-muted group-hover:text-brand transition-colors shrink-0 ml-2" />
+              </Link>
+
+              <Link
+                href="/sales"
+                className="p-4 rounded-xl bg-surface border border-default hover:border-brand transition-all flex items-center justify-between group"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-lg bg-brand-muted flex items-center justify-center text-brand shrink-0">
+                    <ShoppingCart className="w-5 h-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-text group-hover:text-brand transition-colors truncate">Sales & Orders</p>
+                    <p className="text-xs text-text-muted truncate">Invoices & customer status</p>
+                  </div>
+                </div>
+                <ArrowUpRight className="w-4 h-4 text-text-muted group-hover:text-brand transition-colors shrink-0 ml-2" />
+              </Link>
+            </div>
+          </div>
+
+          {/* Low Stock / Inventory Alerts Widget */}
+          <div className="bg-surface-widget border border-default rounded-xl p-5 sm:p-6 shadow-sm flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-text">Inventory Alerts</h2>
+                <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0" />
+              </div>
+              <div className="space-y-3">
+                <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs">
+                  <p className="font-semibold text-amber-600 dark:text-amber-400">Low Stock Warning</p>
+                  <p className="text-text-muted mt-0.5">Primary wax inventory is approaching the reorder threshold.</p>
+                </div>
+                <div className="p-3 rounded-lg bg-surface border border-default text-xs">
+                  <p className="font-semibold text-text">Fragrance Oils Stock</p>
+                  <p className="text-text-muted mt-0.5">All active preblended stock levels normal.</p>
+                </div>
+              </div>
+            </div>
+            <div className="mt-6 pt-4 border-t border-default">
+              <Link
+                href="/materials"
+                className="text-xs font-semibold text-brand hover:underline flex items-center gap-1"
+              >
+                View all inventory items &rarr;
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  );
+}
 </file>
 
 <file path="package.json">
@@ -47398,6 +47359,7 @@ export default nextConfig;
     "@prisma/adapter-libsql": "^7.9.1",
     "@prisma/client": "^6.19.3",
     "better-sqlite3": "^13.0.3",
+    "lucide-react": "^1.31.0",
     "next": "^15.1.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
@@ -47415,101 +47377,6 @@ export default nextConfig;
     "tailwindcss": "^3.4.17",
     "typescript": "^5.0.0"
   }
-}
-</file>
-
-<file path="postcss.config.mjs">
-const config = {
-  plugins: {
-    tailwindcss: {},
-    autoprefixer: {},
-  },
-};
-
-export default config;
-</file>
-
-<file path="README.md">
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
-
-## Getting Started
-
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-</file>
-
-<file path="tsconfig.json">
-{
-  "compilerOptions": {
-    "target": "ES2017",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
-    "allowJs": true,
-    "skipLibCheck": true,
-    "strict": true,
-    "noEmit": true,
-    "esModuleInterop": true,
-    "module": "esnext",
-    "moduleResolution": "bundler",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "jsx": "preserve",
-    "incremental": true,
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ],
-    "paths": {
-      "@/*": [
-        "./*"
-      ]
-    }
-  },
-  "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts",
-    "**/*.mts"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
 }
 </file>
 

@@ -1,14 +1,15 @@
-import type { Metadata, Viewport } from "next";
-import "./globals.css";
-import { ToastProvider } from "@/app/context/ToastContext";
+import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
+import Script from 'next/script';
+import Navbar from '@/app/components/Navbar';
+import { ToastProvider } from '@/app/context/ToastContext';
+import '@/app/globals.css';
+
+const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: "ANDROMEDA",
-  description: "One system. Infinite crafts. Exact margins.",
-};
-
-export const viewport: Viewport = {
-  colorScheme: "light dark",
+  title: 'Andromeda',
+  description: 'Inventory and COGS calculator for small-batch makers',
 };
 
 export default function RootLayout({
@@ -18,25 +19,29 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `(function() {
+      <body
+        className={`${inter.className} bg-gray-50 dark:bg-gray-950 min-h-screen text-gray-900 dark:text-gray-100 antialiased`}
+      >
+        {/* This script loads the saved theme before the page renders */}
+        <Script id="theme-init" strategy="beforeInteractive">
+          {`
+            (function() {
               try {
-                var stored = localStorage.getItem('theme');
-                if (stored === 'light') {
-                  document.documentElement.classList.remove('dark');
-                } else {
+                const theme = localStorage.getItem('theme');
+                if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
                   document.documentElement.classList.add('dark');
+                } else {
+                  document.documentElement.classList.remove('dark');
                 }
-              } catch(e) {}
-            })();`,
-          }}
-        />
-      </head>
-      <body className="bg-bg text-text antialiased min-h-screen">
+              } catch (e) {}
+            })();
+          `}
+        </Script>
+
         <ToastProvider>
-          <main className="w-full max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <Navbar />
+          {/* Add top padding so content doesn't hide behind fixed navbar */}
+          <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-8">
             {children}
           </main>
         </ToastProvider>

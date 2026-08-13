@@ -1,427 +1,297 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { useToast } from "@/app/context/ToastContext";
-import Navbar from "@/app/components/Navbar";
-import { seedDemoData } from "@/app/actions/seedDemo";
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import {
+  Package,
+  Calculator,
+  Search,
+  Sparkles,
+  Plus,
+  ArrowRight,
+  Pencil,
+  Check,
+} from 'lucide-react';
+import DashboardWidgets from '@/app/components/DashboardWidgets'; // adjust path if needed
 
-const currencies = ["$", "€", "£", "¥", "₹", "A$", "C$", "R$", "₿"];
-const dateFormats = [
-  { value: "MM/DD/YYYY", label: "MM/DD/YYYY (US)" },
-  { value: "DD/MM/YYYY", label: "DD/MM/YYYY (World)" },
+// Sample data for widgets – replace with real data from your backend later
+const dashboardData = {
+  totalSales: 45,
+  totalRevenue: 1480.0,
+  rawMaterialsCount: 24,
+  lowStockCount: 5,
+  totalProducts: 12,
+  totalInventoryValue: 4250.75,
+  activeRecipesCount: 8,
+  avgCogs: 6.25,
+  potentialProfit: 2100.5,
+  recentActivity: [
+    { id: 1, name: 'Lavender Candle', type: 'product' },
+    { id: 2, name: 'Vanilla Candle', type: 'product' },
+  ],
+  lowStockMaterials: [
+    { id: 1, name: 'Soy Wax', category: { name: 'Wax' }, totalQuantity: 10, unit: 'lb', reorderThreshold: 20 },
+    { id: 2, name: 'Cotton Wicks', category: { name: 'Wicks' }, totalQuantity: 15, unit: 'pcs', reorderThreshold: 25 },
+  ],
+};
+
+// Quick Navigation default links
+const DEFAULT_QUICK_LINKS = [
+  { name: 'Materials', href: '/materials', icon: Package, color: 'bg-teal-100 dark:bg-teal-900/40 text-teal-600 dark:text-teal-400' },
+  { name: 'Finished Goods', href: '/finished-goods', icon: Calculator, color: 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400' },
+  { name: 'Recipes', href: '/recipes', icon: Sparkles, color: 'bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400' },
 ];
-const saleStatuses = ["Draft", "Paid", "Shipped", "Refunded"];
-const taxRates = [0, 5, 8, 10, 12, 15, 20, 25];
-const discountDefaults = [0, 5, 10, 15, 20, 25, 50];
 
-export default function SettingsPage() {
-  const { showToast } = useToast();
-  const [seeding, setSeeding] = useState(false);
+// All available quick links for customization
+const ALL_QUICK_LINKS = [
+  { name: 'Materials', href: '/materials', icon: Package },
+  { name: 'Finished Goods', href: '/finished-goods', icon: Calculator },
+  { name: 'Recipes', href: '/recipes', icon: Sparkles },
+  { name: 'Suppliers', href: '/suppliers', icon: Package }, // replace with proper icon
+  { name: 'Sales', href: '/sales', icon: Calculator },
+  { name: 'Customers', href: '/customers', icon: Package },
+  { name: 'Settings', href: '/settings', icon: Package },
+];
 
-  // ----- Preferences -----
-  const [unitSystem, setUnitSystem] = useState<"metric" | "imperial">("imperial");
-  const [currency, setCurrency] = useState("$");
-  const [dateFormat, setDateFormat] = useState("MM/DD/YYYY");
-  const [showConverter, setShowConverter] = useState(true);
-  const [defaultReorder, setDefaultReorder] = useState("");
+export default function DashboardPage() {
+  const [searchQuery, setSearchQuery] = useState('');
 
-  // ----- Company Profile -----
-  const [companyName, setCompanyName] = useState("");
-  const [companyAddress, setCompanyAddress] = useState("");
-  const [companyPhone, setCompanyPhone] = useState("");
-  const [companyEmail, setCompanyEmail] = useState("");
-  const [companyTaxId, setCompanyTaxId] = useState("");
-  const [companyWebsite, setCompanyWebsite] = useState("");
+  // Quick Batch Estimator state
+  const [batchSizeOz, setBatchSizeOz] = useState(16);
+  const [numCandles, setNumCandles] = useState(8);
+  const [waxCostPerLb, setWaxCostPerLb] = useState(2.5);
+  const [fragranceOzPerLb, setFragranceOzPerLb] = useState(1.0);
+  const [fragranceCostPerOz, setFragranceCostPerOz] = useState(3.0);
+  const [wickCostPerCandle, setWickCostPerCandle] = useState(0.15);
+  const [containerCostPerCandle, setContainerCostPerCandle] = useState(1.2);
 
-  // ----- Sales Defaults -----
-  const [defaultTaxRate, setDefaultTaxRate] = useState(0);
-  const [defaultDiscount, setDefaultDiscount] = useState(0);
-  const [defaultSaleStatus, setDefaultSaleStatus] = useState("Paid");
+  // Quick Navigation custom state
+  const [quickLinks, setQuickLinks] = useState(DEFAULT_QUICK_LINKS);
+  const [editingQuickLinks, setEditingQuickLinks] = useState(false);
 
-  const [saved, setSaved] = useState(false);
-
-  // Load all settings on mount
+  // Load saved quick links from localStorage
   useEffect(() => {
     try {
-      // Preferences
-      const savedUnit = localStorage.getItem("unitSystem");
-      if (savedUnit === "metric" || savedUnit === "imperial") setUnitSystem(savedUnit);
-      const savedCurrency = localStorage.getItem("currency");
-      if (savedCurrency) setCurrency(savedCurrency);
-      const savedDateFormat = localStorage.getItem("dateFormat");
-      if (savedDateFormat) setDateFormat(savedDateFormat);
-      const savedConverter = localStorage.getItem("showConverter");
-      if (savedConverter !== null) setShowConverter(savedConverter === "true");
-      const savedReorder = localStorage.getItem("defaultReorder");
-      if (savedReorder) setDefaultReorder(savedReorder);
-
-      // Company Profile
-      const savedCompany = localStorage.getItem("companyProfile");
-      if (savedCompany) {
-        const parsed = JSON.parse(savedCompany);
-        setCompanyName(parsed.name || "");
-        setCompanyAddress(parsed.address || "");
-        setCompanyPhone(parsed.phone || "");
-        setCompanyEmail(parsed.email || "");
-        setCompanyTaxId(parsed.taxId || "");
-        setCompanyWebsite(parsed.website || "");
-      }
-
-      // Sales Defaults
-      const savedSales = localStorage.getItem("salesDefaults");
-      if (savedSales) {
-        const parsed = JSON.parse(savedSales);
-        setDefaultTaxRate(parsed.taxRate ?? 0);
-        setDefaultDiscount(parsed.discount ?? 0);
-        setDefaultSaleStatus(parsed.status || "Paid");
+      const saved = localStorage.getItem('dashboardQuickLinks');
+      if (saved) {
+        setQuickLinks(JSON.parse(saved));
       }
     } catch {}
   }, []);
 
-  const handleSave = () => {
+  const saveQuickLinks = (links: typeof DEFAULT_QUICK_LINKS) => {
+    setQuickLinks(links);
     try {
-      // Preferences
-      localStorage.setItem("unitSystem", unitSystem);
-      localStorage.setItem("currency", currency);
-      localStorage.setItem("dateFormat", dateFormat);
-      localStorage.setItem("showConverter", String(showConverter));
-      if (defaultReorder) {
-        localStorage.setItem("defaultReorder", defaultReorder);
-      } else {
-        localStorage.removeItem("defaultReorder");
-      }
-
-      // Company Profile
-      localStorage.setItem(
-        "companyProfile",
-        JSON.stringify({
-          name: companyName,
-          address: companyAddress,
-          phone: companyPhone,
-          email: companyEmail,
-          taxId: companyTaxId,
-          website: companyWebsite,
-        })
-      );
-
-      // Sales Defaults
-      localStorage.setItem(
-        "salesDefaults",
-        JSON.stringify({
-          taxRate: defaultTaxRate,
-          discount: defaultDiscount,
-          status: defaultSaleStatus,
-        })
-      );
-
-      setSaved(true);
-      showToast("Settings saved successfully!", "success");
-      setTimeout(() => setSaved(false), 2500);
-    } catch {
-      showToast("Failed to save settings.", "error");
-    }
+      localStorage.setItem('dashboardQuickLinks', JSON.stringify(links));
+    } catch {}
   };
 
-  const handleSeedDemo = async () => {
-    setSeeding(true);
-    const result = await seedDemoData();
-    if (result.success) {
-      showToast(result.message, "success");
-    } else {
-      showToast(result.message, "error");
-    }
-    setSeeding(false);
-  };
+  // Calculate batch cost
+  const totalWaxOz = batchSizeOz;
+  const totalFragranceOz = (batchSizeOz / 16) * fragranceOzPerLb;
+  const totalWaxCost = (batchSizeOz / 16) * waxCostPerLb;
+  const totalFragranceCost = totalFragranceOz * fragranceCostPerOz;
+  const totalWickCost = numCandles * wickCostPerCandle;
+  const totalContainerCost = numCandles * containerCostPerCandle;
+  const totalBatchCost = totalWaxCost + totalFragranceCost + totalWickCost + totalContainerCost;
+  const costPerCandle = numCandles > 0 ? totalBatchCost / numCandles : 0;
 
   return (
-    <main className="min-h-screen bg-bg text-text p-4 sm:p-8">
-      <div className="max-w-6xl mx-auto space-y-8">
-        <Navbar />
+    <div className="space-y-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      {/* Heading */}
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">Dashboard</h1>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          Overview of your inventory, production metrics, and sales performance.
+        </p>
+      </div>
 
-<div className="space-y-10" suppressHydrationWarning>
-            {/* Company Profile */}
-          <section className="bg-surface-widget border border-default rounded-xl p-6">
-            <h2 className="text-lg font-semibold text-text mb-4">Company Profile</h2>
-            <p className="text-text-muted text-sm mb-6">
-              This information appears on invoices, receipts, and reports.
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-text-muted text-xs font-medium uppercase mb-1">Business Name</label>
-                <input
-                  type="text"
-                  value={companyName}
-                  onChange={(e) => setCompanyName(e.target.value)}
-                  placeholder="Your candle studio name"
-                  className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-text-muted text-xs font-medium uppercase mb-1">Tax ID / EIN</label>
-                <input
-                  type="text"
-                  value={companyTaxId}
-                  onChange={(e) => setCompanyTaxId(e.target.value)}
-                  placeholder="e.g. 12-3456789"
-                  className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm"
-                />
-              </div>
-              <div className="sm:col-span-2">
-                <label className="block text-text-muted text-xs font-medium uppercase mb-1">Address</label>
-                <textarea
-                  value={companyAddress}
-                  onChange={(e) => setCompanyAddress(e.target.value)}
-                  placeholder="Street address, city, state, zip"
-                  rows={2}
-                  className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm resize-y"
-                />
-              </div>
-              <div>
-                <label className="block text-text-muted text-xs font-medium uppercase mb-1">Phone</label>
-                <input
-                  type="tel"
-                  value={companyPhone}
-                  onChange={(e) => setCompanyPhone(e.target.value)}
-                  placeholder="(555) 123-4567"
-                  className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-text-muted text-xs font-medium uppercase mb-1">Email</label>
-                <input
-                  type="email"
-                  value={companyEmail}
-                  onChange={(e) => setCompanyEmail(e.target.value)}
-                  placeholder="studio@candles.com"
-                  className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm"
-                />
-              </div>
-              <div className="sm:col-span-2">
-                <label className="block text-text-muted text-xs font-medium uppercase mb-1">Website</label>
-                <input
-                  type="url"
-                  value={companyWebsite}
-                  onChange={(e) => setCompanyWebsite(e.target.value)}
-                  placeholder="https://yourcandleshop.com"
-                  className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm"
-                />
-              </div>
-            </div>
-          </section>
+      {/* Search Bar */}
+      <div className="relative">
+        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+          <Search className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+        </div>
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Quick search materials, suppliers, or product formulas..."
+          className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 shadow-sm"
+        />
+        {searchQuery && (
+          <div className="absolute right-3 top-2.5 text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded border border-gray-200 dark:border-gray-700">
+            Press Enter to search
+          </div>
+        )}
+      </div>
 
-          {/* Sales Defaults */}
-          <section className="bg-surface-widget border border-default rounded-xl p-6">
-            <h2 className="text-lg font-semibold text-text mb-4">Sales Defaults</h2>
-            <p className="text-text-muted text-sm mb-6">
-              Default values applied when creating new sales.
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-text-muted text-xs font-medium uppercase mb-1">Default Tax Rate (%)</label>
-                <select
-                  value={defaultTaxRate}
-                  onChange={(e) => setDefaultTaxRate(Number(e.target.value))}
-                  className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text text-sm focus:outline-none focus:ring-2 focus:ring-brand"
-                >
-                  {taxRates.map((rate) => (
-                    <option key={rate} value={rate}>{rate}%</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-text-muted text-xs font-medium uppercase mb-1">Default Discount (%)</label>
-                <select
-                  value={defaultDiscount}
-                  onChange={(e) => setDefaultDiscount(Number(e.target.value))}
-                  className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text text-sm focus:outline-none focus:ring-2 focus:ring-brand"
-                >
-                  {discountDefaults.map((d) => (
-                    <option key={d} value={d}>{d}%</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-text-muted text-xs font-medium uppercase mb-1">Default Sale Status</label>
-                <select
-                  value={defaultSaleStatus}
-                  onChange={(e) => setDefaultSaleStatus(e.target.value)}
-                  className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text text-sm focus:outline-none focus:ring-2 focus:ring-brand"
-                >
-                  {saleStatuses.map((s) => (
-                    <option key={s} value={s}>{s}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </section>
+      {/* Draggable Widgets */}
+      <DashboardWidgets data={dashboardData} />
 
-          {/* Preferences */}
-          <section className="bg-surface-widget border border-default rounded-xl p-6">
-            <h2 className="text-lg font-semibold text-text mb-4">Preferences</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-text-muted text-xs font-medium uppercase mb-1">Unit System</label>
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => setUnitSystem("imperial")}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      unitSystem === "imperial"
-                        ? "bg-brand text-white"
-                        : "bg-bg border border-default text-text-secondary hover:bg-brand-muted"
-                    }`}
-                  >
-                    Imperial (oz, lb)
-                  </button>
-                  <button
-                    onClick={() => setUnitSystem("metric")}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      unitSystem === "metric"
-                        ? "bg-brand text-white"
-                        : "bg-bg border border-default text-text-secondary hover:bg-brand-muted"
-                    }`}
-                  >
-                    Metric (g, kg)
-                  </button>
-                </div>
-              </div>
+      {/* Quick Batch Estimator Widget */}
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-6 shadow-sm space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+            Quick Batch Estimator
+          </h2>
+          <span className="text-xs text-gray-500 dark:text-gray-400 bg-teal-50 dark:bg-teal-900/30 px-2 py-0.5 rounded text-teal-600 dark:text-teal-400 font-medium">
+            Live
+          </span>
+        </div>
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          Estimate your candle batch cost with just a few inputs.
+        </p>
 
-              <div>
-                <label className="block text-text-muted text-xs font-medium uppercase mb-1">Currency Symbol</label>
-                <select
-                  value={currency}
-                  onChange={(e) => setCurrency(e.target.value)}
-                  className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text text-sm focus:outline-none focus:ring-2 focus:ring-brand"
-                >
-                  {currencies.map((sym) => (
-                    <option key={sym} value={sym}>{sym}</option>
-                  ))}
-                </select>
-              </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
+          <div>
+            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1">Batch Size (oz)</label>
+            <input
+              type="number"
+              value={batchSizeOz}
+              onChange={(e) => setBatchSizeOz(Math.max(0, Number(e.target.value)))}
+              className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1">Number of Candles</label>
+            <input
+              type="number"
+              value={numCandles}
+              onChange={(e) => setNumCandles(Math.max(0, Number(e.target.value)))}
+              className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1">Wax Cost / lb ($)</label>
+            <input
+              type="number"
+              step="0.01"
+              value={waxCostPerLb}
+              onChange={(e) => setWaxCostPerLb(Math.max(0, Number(e.target.value)))}
+              className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1">Fragrance (oz/lb)</label>
+            <input
+              type="number"
+              step="0.1"
+              value={fragranceOzPerLb}
+              onChange={(e) => setFragranceOzPerLb(Math.max(0, Number(e.target.value)))}
+              className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1">Fragrance Cost / oz ($)</label>
+            <input
+              type="number"
+              step="0.01"
+              value={fragranceCostPerOz}
+              onChange={(e) => setFragranceCostPerOz(Math.max(0, Number(e.target.value)))}
+              className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1">Wick Cost / candle ($)</label>
+            <input
+              type="number"
+              step="0.01"
+              value={wickCostPerCandle}
+              onChange={(e) => setWickCostPerCandle(Math.max(0, Number(e.target.value)))}
+              className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1">Container Cost / candle ($)</label>
+            <input
+              type="number"
+              step="0.01"
+              value={containerCostPerCandle}
+              onChange={(e) => setContainerCostPerCandle(Math.max(0, Number(e.target.value)))}
+              className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+            />
+          </div>
+        </div>
 
-              <div>
-                <label className="block text-text-muted text-xs font-medium uppercase mb-1">Date Format</label>
-                <select
-                  value={dateFormat}
-                  onChange={(e) => setDateFormat(e.target.value)}
-                  className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text text-sm focus:outline-none focus:ring-2 focus:ring-brand"
-                >
-                  {dateFormats.map((fmt) => (
-                    <option key={fmt.value} value={fmt.value}>{fmt.label}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-text-muted text-xs font-medium uppercase mb-1">Default Reorder Threshold</label>
-                <input
-                  type="number"
-                  value={defaultReorder}
-                  onChange={(e) => setDefaultReorder(e.target.value)}
-                  placeholder="e.g. 50"
-                  className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm"
-                />
-                <p className="text-text-muted text-xs mt-1">
-                  Auto-filled when adding new materials.
-                </p>
-              </div>
-
-              <div className="sm:col-span-2 flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-text">Show Unit Converter</p>
-                  <p className="text-xs text-text-muted">Display on Materials page</p>
-                </div>
-                <button
-                  onClick={() => setShowConverter(!showConverter)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    showConverter ? "bg-brand" : "bg-border-strong"
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      showConverter ? "translate-x-6" : "translate-x-1"
-                    }`}
-                  />
-                </button>
-              </div>
-            </div>
-          </section>
-
-          {/* Data Management */}
-          <section className="bg-surface-widget border border-default rounded-xl p-6">
-            <h2 className="text-lg font-semibold text-text mb-4">Data Management</h2>
-            <div className="flex flex-wrap gap-4">
-              <a
-                href="/import"
-                className="bg-brand hover:bg-brand-hover text-white font-medium px-4 py-2 rounded-lg transition-colors text-sm"
-              >
-                📥 Import Data
-              </a>
-              <a
-                href="/api/export"
-                className="bg-surface border border-default text-text-secondary hover:bg-surface-elevated font-medium px-4 py-2 rounded-lg transition-colors text-sm"
-              >
-                ⬇️ Export All Data
-              </a>
-              <button
-                onClick={() => {
-                  if (confirm("Download a full backup of your data (JSON)?")) {
-                    alert("Full database backup will be implemented with the Reports phase. For now, use Export.");
-                  }
-                }}
-                className="bg-surface border border-default text-text-secondary hover:bg-surface-elevated font-medium px-4 py-2 rounded-lg transition-colors text-sm"
-              >
-                💾 Backup (Coming Soon)
-              </button>
-              <button
-                onClick={handleSeedDemo}
-                disabled={seeding}
-                className="bg-info hover:bg-info-dark text-white font-medium px-4 py-2 rounded-lg transition-colors text-sm disabled:opacity-50"
-              >
-                {seeding ? "Seeding..." : "🌱 Load Demo Data"}
-              </button>
-            </div>
-            <p className="text-text-muted text-xs mt-3">
-              Demo data includes sample materials, a sub‑assembly, and a finished product recipe. It won't overwrite existing data with the same names.
-            </p>
-          </section>
-
-          {/* Danger Zone */}
-          <section className="bg-surface-widget border border-error rounded-xl p-6 mt-4">
-            <h2 className="text-lg font-semibold text-error mb-4">Danger Zone</h2>
-            <p className="text-sm text-text-secondary mb-4">
-              Permanently delete all data from the application. This includes materials, products, recipes, adjustments, and settings.
-            </p>
-            <button
-              onClick={() => {
-                if (confirm("Are you sure? This will delete ALL data and cannot be undone.")) {
-                  localStorage.clear();
-                  window.location.href = "/onboarding";
-                }
-              }}
-              className="bg-error hover:bg-red-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
-            >
-              Reset Everything
-            </button>
-          </section>
-
-          {/* Save Button */}
-          <div className="flex justify-center">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={handleSave}
-                className="bg-brand hover:bg-brand-hover text-white text-sm font-medium px-6 py-2 rounded-lg transition-colors"
-              >
-                Save All Settings
-              </button>
-              {saved && (
-                <span className="text-success text-sm font-medium">
-                  ✓ Saved
-                </span>
-              )}
-            </div>
+        <div className="pt-3 border-t border-gray-200 dark:border-gray-700 flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Batch Cost:</span>
+            <span className="text-xl font-bold text-gray-900 dark:text-gray-100 ml-2">
+              ${totalBatchCost.toFixed(2)}
+            </span>
+          </div>
+          <div>
+            <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Cost per Candle:</span>
+            <span className="text-xl font-bold text-gray-900 dark:text-gray-100 ml-2">
+              ${costPerCandle.toFixed(2)}
+            </span>
           </div>
         </div>
       </div>
-    </main>
+
+      {/* Quick Navigation – Customizable 3 Tiles */}
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-6 shadow-sm space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Quick Navigation</h2>
+          <button
+            onClick={() => setEditingQuickLinks(!editingQuickLinks)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+          >
+            {editingQuickLinks ? <Check className="w-4 h-4" /> : <Pencil className="w-4 h-4" />}
+            {editingQuickLinks ? 'Done' : 'Edit'}
+          </button>
+        </div>
+
+        {editingQuickLinks ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            {ALL_QUICK_LINKS.map((link) => {
+              const isSelected = quickLinks.some((ql) => ql.name === link.name);
+              return (
+                <button
+                  key={link.name}
+                  onClick={() => {
+                    if (isSelected) {
+                      saveQuickLinks(quickLinks.filter((ql) => ql.name !== link.name));
+                    } else if (quickLinks.length < 3) {
+                      saveQuickLinks([...quickLinks, { ...link, color: 'bg-teal-100 dark:bg-teal-900/40 text-teal-600 dark:text-teal-400' }]);
+                    }
+                  }}
+                  className={`p-3 rounded-xl border text-sm font-medium transition-colors ${
+                    isSelected
+                      ? 'bg-teal-600 text-white border-teal-600'
+                      : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  {link.name}
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {quickLinks.map((link) => (
+              <Link
+                key={link.name}
+                href={link.href}
+                className="flex items-center justify-between p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-teal-600 dark:hover:border-teal-400 transition-colors group bg-gray-50 dark:bg-gray-800"
+              >
+                <div className="flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${link.color}`}>
+                    <link.icon className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">
+                      {link.name}
+                    </h3>
+                  </div>
+                </div>
+                <ArrowRight className="w-4 h-4 text-gray-400 dark:text-gray-500 group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors" />
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }

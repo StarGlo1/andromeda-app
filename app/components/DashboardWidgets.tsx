@@ -30,63 +30,65 @@ const WIDGETS: Record<
   {
     label: string;
     icon: string;
-    color: string;
+    color: string | ((data: any) => string);
     renderValue: (data: any) => React.ReactNode;
   }
 > = {
   totalSales: {
     label: "Total Sales",
     icon: "📊",
-    color: "text-text-brand",
+    color: "text-teal-600 dark:text-teal-400",
     renderValue: (d) => d.totalSales ?? 0,
   },
   totalRevenue: {
     label: "Revenue",
     icon: "💰",
-    color: "text-text-brand",
+    color: "text-teal-600 dark:text-teal-400",
     renderValue: (d) => `$${(d.totalRevenue ?? 0).toFixed(2)}`,
   },
   rawMaterialsCount: {
     label: "Raw Materials",
     icon: "🧱",
-    color: "text-text-brand",
+    color: "text-teal-600 dark:text-teal-400",
     renderValue: (d) => d.rawMaterialsCount,
   },
   lowStock: {
     label: "Low Stock",
     icon: "⚠️",
     color: (d: any) =>
-      d.lowStockCount > 0 ? "text-warning" : "text-text",
+      d.lowStockCount > 0
+        ? "text-yellow-600 dark:text-yellow-400"
+        : "text-gray-900 dark:text-gray-100",
     renderValue: (d) => d.lowStockCount,
   },
   totalProducts: {
     label: "Products",
     icon: "📦",
-    color: "text-text-brand",
+    color: "text-teal-600 dark:text-teal-400",
     renderValue: (d) => d.totalProducts,
   },
   totalInventoryValue: {
     label: "Inventory Value",
     icon: "💰",
-    color: "text-text",
+    color: "text-gray-900 dark:text-gray-100",
     renderValue: (d) => `$${d.totalInventoryValue.toFixed(2)}`,
   },
   activeRecipesCount: {
     label: "Active Recipes",
     icon: "📝",
-    color: "text-text-brand",
+    color: "text-teal-600 dark:text-teal-400",
     renderValue: (d) => d.activeRecipesCount,
   },
   avgCogs: {
     label: "Avg COGS",
     icon: "📊",
-    color: "text-text",
+    color: "text-gray-900 dark:text-gray-100",
     renderValue: (d) => `$${d.avgCogs.toFixed(2)}`,
   },
   potentialProfit: {
     label: "Potential Profit",
     icon: "💸",
-    color: "text-text-brand",
+    color: "text-teal-600 dark:text-teal-400",
     renderValue: (d) => `$${d.potentialProfit.toFixed(2)}`,
   },
 };
@@ -153,29 +155,29 @@ export default function DashboardWidgets({ data }: { data: any }) {
         onDragStart={() => handleDragStart(index)}
         onDragOver={(e) => handleDragOver(e, index)}
         onDragEnd={handleDragEnd}
-        className={`bg-surface-widget border border-default rounded-xl p-5 transition-colors ${
+        className={`bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-5 transition-colors ${
           editMode
-            ? "cursor-grab active:cursor-grabbing ring-2 ring-outline-focus"
-            : "hover:border-brand"
+            ? "cursor-grab active:cursor-grabbing ring-2 ring-teal-500"
+            : "hover:border-teal-600 dark:hover:border-teal-400"
         } ${dragIndex === index ? "opacity-50" : ""}`}
       >
         <div className="flex items-center gap-2 mb-1">
           <span className="text-xl">{widget.icon}</span>
-          <p className="text-text-muted text-xs font-semibold uppercase tracking-wider">
+          <p className="text-gray-500 dark:text-gray-400 text-xs font-semibold uppercase tracking-wider">
             {widget.label}
           </p>
           {editMode && (
             <div className="ml-auto flex gap-1">
               <button
                 onClick={() => moveWidget(index, "up")}
-                className="text-text-muted hover:text-text text-xs px-1"
+                className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 text-xs px-1"
                 title="Move up"
               >
                 ▲
               </button>
               <button
                 onClick={() => moveWidget(index, "down")}
-                className="text-text-muted hover:text-text text-xs px-1"
+                className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 text-xs px-1"
                 title="Move down"
               >
                 ▼
@@ -188,9 +190,9 @@ export default function DashboardWidgets({ data }: { data: any }) {
         </p>
         {key === "potentialProfit" && (
           <>
-            <div className="mt-2 w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1.5">
+            <div className="mt-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
               <div
-                className="bg-brand h-1.5 rounded-full"
+                className="bg-teal-600 dark:bg-teal-400 h-1.5 rounded-full"
                 style={{
                   width: `${Math.min(
                     data.potentialProfit > 0 && data.totalInventoryValue > 0
@@ -201,7 +203,7 @@ export default function DashboardWidgets({ data }: { data: any }) {
                 }}
               />
             </div>
-            <p className="text-xs text-text-muted mt-1">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               Profit vs. Inventory Value
             </p>
           </>
@@ -210,7 +212,6 @@ export default function DashboardWidgets({ data }: { data: any }) {
     );
   };
 
-  // Prepare chart data from recent activity
   const chartData = (data.recentActivity || [])
     .filter((item: any) => item.type === "product")
     .map((item: any) => ({
@@ -237,8 +238,8 @@ export default function DashboardWidgets({ data }: { data: any }) {
           onClick={() => setEditMode(!editMode)}
           className={`text-sm font-medium px-4 py-2 rounded-lg transition-colors ${
             editMode
-              ? "bg-brand text-text-inverse"
-              : "bg-surface-widget border border-default text-text-muted hover:text-text"
+              ? "bg-teal-600 text-white"
+              : "bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
           }`}
         >
           {editMode ? "Done" : "Customize"}
@@ -246,16 +247,16 @@ export default function DashboardWidgets({ data }: { data: any }) {
       </div>
 
       {/* Profit per Product Chart */}
-      <div className="bg-surface-widget border border-default rounded-xl p-5">
-        <h2 className="text-lg font-semibold text-text mb-4">
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-5">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
           Profit per Product
         </h2>
         {chartData.length > 0 ? (
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-              <XAxis dataKey="name" tick={{ fill: "var(--color-text-muted)" }} />
-              <YAxis tick={{ fill: "var(--color-text-muted)" }} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis dataKey="name" tick={{ fill: "#6b7280" }} />
+              <YAxis tick={{ fill: "#6b7280" }} />
               <Tooltip
                 contentStyle={{
                   backgroundColor: "var(--color-surface)",
@@ -263,11 +264,11 @@ export default function DashboardWidgets({ data }: { data: any }) {
                   borderRadius: "8px",
                 }}
               />
-              <Bar dataKey="profit" fill="var(--color-brand)" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="profit" fill="#0d9488" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         ) : (
-          <div className="text-center py-12 text-text-muted text-sm">
+          <div className="text-center py-12 text-gray-500 dark:text-gray-400 text-sm">
             Add finished goods and recipes to see profit data.
           </div>
         )}
@@ -275,34 +276,34 @@ export default function DashboardWidgets({ data }: { data: any }) {
 
       {/* Low‑stock alert table */}
       {data.lowStockMaterials?.length > 0 && (
-        <div className="bg-surface-widget border border-warning rounded-xl overflow-hidden">
-          <div className="p-5 border-b border-warning flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-warning">
+        <div className="bg-white dark:bg-gray-900 border border-yellow-500 dark:border-yellow-400 rounded-xl overflow-hidden">
+          <div className="p-5 border-b border-yellow-500 dark:border-yellow-400 flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-yellow-600 dark:text-yellow-400">
               ⚠️ Low Stock Alerts
             </h2>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-warning bg-warning-muted dark:bg-warning-muted-dark text-warning text-xs uppercase tracking-wider">
+                <tr className="border-b border-yellow-500 dark:border-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400 text-xs uppercase tracking-wider">
                   <th className="p-4">Material</th>
                   <th className="p-4">Category</th>
                   <th className="p-4">Stock</th>
                   <th className="p-4">Reorder At</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-warning text-sm">
+              <tbody className="divide-y divide-yellow-200 dark:divide-yellow-800 text-sm">
                 {data.lowStockMaterials.slice(0, 5).map((m: any) => (
                   <tr
                     key={m.id}
-                    className="hover:bg-warning-muted dark:hover:bg-warning-muted-dark transition-colors"
+                    className="hover:bg-yellow-50 dark:hover:bg-yellow-900/20 transition-colors"
                   >
-                    <td className="p-4 font-medium text-text">{m.name}</td>
-                    <td className="p-4 text-text-secondary">{m.category.name}</td>
-                    <td className="p-4 text-warning font-medium">
+                    <td className="p-4 font-medium text-gray-900 dark:text-gray-100">{m.name}</td>
+                    <td className="p-4 text-gray-600 dark:text-gray-300">{m.category.name}</td>
+                    <td className="p-4 text-yellow-600 dark:text-yellow-400 font-medium">
                       {m.totalQuantity ?? 0} {m.unit ?? ""}
                     </td>
-                    <td className="p-4 text-text-muted">
+                    <td className="p-4 text-gray-500 dark:text-gray-400">
                       {m.reorderThreshold} {m.unit ?? ""}
                     </td>
                   </tr>
@@ -314,7 +315,7 @@ export default function DashboardWidgets({ data }: { data: any }) {
             <div className="p-3 text-center">
               <a
                 href="/materials"
-                className="text-text-brand text-xs font-medium hover:underline"
+                className="text-teal-600 dark:text-teal-400 text-xs font-medium hover:underline"
               >
                 View all →
               </a>
@@ -325,45 +326,45 @@ export default function DashboardWidgets({ data }: { data: any }) {
 
       {/* Quick Actions & Recent Activity */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-surface-widget border border-default rounded-xl p-5">
-          <h2 className="text-lg font-semibold text-text mb-3">
+        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-5">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">
             Quick Actions
           </h2>
           <div className="grid grid-cols-2 gap-2">
             <a
               href="/materials"
-              className="flex items-center justify-center gap-2 bg-brand-muted dark:bg-brand-muted-dark text-text-brand dark:text-text-brand-dark hover:bg-brand hover:text-text-inverse px-4 py-2 rounded-full text-sm font-medium transition-colors"
+              className="flex items-center justify-center gap-2 bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 hover:bg-teal-600 hover:text-white dark:hover:bg-teal-600 dark:hover:text-white px-4 py-2 rounded-full text-sm font-medium transition-colors"
             >
               <span className="text-base">+</span> Material
             </a>
             <a
               href="/finished-goods"
-              className="flex items-center justify-center gap-2 bg-brand-muted dark:bg-brand-muted-dark text-text-brand dark:text-text-brand-dark hover:bg-brand hover:text-text-inverse px-4 py-2 rounded-full text-sm font-medium transition-colors"
+              className="flex items-center justify-center gap-2 bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 hover:bg-teal-600 hover:text-white dark:hover:bg-teal-600 dark:hover:text-white px-4 py-2 rounded-full text-sm font-medium transition-colors"
             >
               <span className="text-base">+</span> Product
             </a>
             <a
               href="/import"
-              className="flex items-center justify-center gap-2 bg-surface border border-default text-text-secondary hover:bg-brand hover:text-text-inverse px-4 py-2 rounded-full text-sm font-medium transition-colors"
+              className="flex items-center justify-center gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-teal-600 hover:text-white dark:hover:bg-teal-600 dark:hover:text-white px-4 py-2 rounded-full text-sm font-medium transition-colors"
             >
               📥 Import
             </a>
             <a
               href="/categories"
-              className="flex items-center justify-center gap-2 bg-surface border border-default text-text-secondary hover:bg-brand hover:text-text-inverse px-4 py-2 rounded-full text-sm font-medium transition-colors"
+              className="flex items-center justify-center gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-teal-600 hover:text-white dark:hover:bg-teal-600 dark:hover:text-white px-4 py-2 rounded-full text-sm font-medium transition-colors"
             >
               📋 Categories
             </a>
           </div>
         </div>
 
-        <div className="bg-surface-widget border border-default rounded-xl overflow-hidden">
-          <div className="p-5 border-b border-default">
-            <h2 className="text-lg font-semibold text-text">
+        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+          <div className="p-5 border-b border-gray-200 dark:border-gray-700">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
               Recent Activity
             </h2>
           </div>
-          <div className="p-6 text-center text-text-muted text-sm">
+          <div className="p-6 text-center text-gray-500 dark:text-gray-400 text-sm">
             Activity feed coming soon.
           </div>
         </div>

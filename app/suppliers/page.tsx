@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import Navbar from "@/app/components/Navbar";
 import { SupplierTable } from "./SupplierTable";
 
 // ─── Server Actions ───
@@ -64,8 +63,7 @@ export default async function SuppliersPage() {
   return (
     <main className="min-h-screen bg-bg text-text p-8">
       <div className="max-w-6xl mx-auto space-y-8">
-        <Navbar />
-
+        
         {/* Add Supplier Form */}
         <div className="bg-surface-widget border border-default rounded-xl p-6">
           <h2 className="text-lg font-semibold text-text mb-4">Add New Supplier</h2>
