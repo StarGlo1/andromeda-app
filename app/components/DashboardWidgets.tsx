@@ -10,6 +10,8 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  LineChart,
+  Line,
 } from "recharts";
 
 const DEFAULT_ORDER = [
@@ -151,8 +153,8 @@ export default function DashboardWidgets({ data }: { data: any }) {
   useEffect(() => {
     setMounted(true);
     try {
-      const saved = localStorage.getItem("widgetOrder");
-      if (saved) setOrder(JSON.parse(saved));
+      const savedOrder = localStorage.getItem("widgetOrder");
+      if (savedOrder) setOrder(JSON.parse(savedOrder));
       const savedSizes = localStorage.getItem("widgetSizes");
       if (savedSizes) setWidgetSizes(JSON.parse(savedSizes));
     } catch {}
@@ -236,18 +238,14 @@ export default function DashboardWidgets({ data }: { data: any }) {
 
     const widgetBody = (
       <>
-        {/* Title and icon - always full, no truncation in edit mode */}
         <div className="flex items-start gap-2 mb-1">
           <span className="text-xl shrink-0">{widget.icon}</span>
           <p className="text-gray-500 dark:text-gray-400 text-xs font-semibold uppercase tracking-wider break-words">
             {widget.label}
           </p>
-          {!editMode && (
-            <span className="ml-auto" />
-          )}
+          {!editMode && <span className="ml-auto" />}
         </div>
 
-        {/* Edit mode controls on a separate row */}
         {editMode && (
           <div className="flex items-center justify-between mb-2">
             <div className="flex gap-1">
@@ -408,6 +406,38 @@ export default function DashboardWidgets({ data }: { data: any }) {
           <div className="text-center py-12 text-gray-500 dark:text-gray-400 text-sm">Add finished goods and recipes to see profit data.</div>
         )}
       </div>
+
+      {/* Top Selling Products Chart */}
+      {data.topSelling?.length > 0 && (
+        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-5">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Top Selling Products</h2>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={data.topSelling}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis dataKey="name" tick={{ fill: "#6b7280" }} />
+              <YAxis tick={{ fill: "#6b7280" }} />
+              <Tooltip contentStyle={{ backgroundColor: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "8px" }} />
+              <Bar dataKey="quantity" fill="#0d9488" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
+      {/* Profit Margin Trend Chart */}
+      {data.profitTrend?.length > 0 && (
+        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-5">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Profit Margin Trend</h2>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={data.profitTrend}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis dataKey="month" tick={{ fill: "#6b7280" }} />
+              <YAxis tick={{ fill: "#6b7280" }} />
+              <Tooltip contentStyle={{ backgroundColor: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "8px" }} />
+              <Line type="monotone" dataKey="margin" stroke="#0d9488" strokeWidth={2} dot={{ r: 4 }} />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      )}
 
       {/* Low‑stock alert table */}
       {data.lowStockMaterials?.length > 0 && (

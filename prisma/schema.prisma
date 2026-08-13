@@ -37,6 +37,8 @@ model RawMaterial {
   supplierId         String?
   supplier           Supplier?           @relation(fields: [supplierId], references: [id])
   totalQuantity      Float?
+  quantity           Float?              // number of containers/units bought
+  sizePerUnit        Float?              // size/weight per container/unit
   unit               String?
   costPerUnit        Float?
   reorderThreshold   Float?
@@ -48,6 +50,7 @@ model RawMaterial {
   recipeItems        RecipeItem[]
   adjustments        Adjustment[]
   purchaseOrderItems PurchaseOrderItem[]
+  lots               Lot[]
 
   @@map("raw_materials")
 }
@@ -72,6 +75,7 @@ model FinishedGood {
   recipeItems       RecipeItem[] @relation("RecipeParent")
   usedAsSubAssembly RecipeItem[] @relation("SubAssemblyRecipe")
   saleItems         SaleItem[]
+  lots              Lot[]
 
   @@map("finished_goods")
 }
@@ -194,4 +198,37 @@ model Alert {
   updatedAt     DateTime @updatedAt
 
   @@map("alerts")
+}
+
+model Lot {
+  id             String   @id @default(uuid())
+  lotNumber      String   @unique
+  kind           String   // "RAW_MATERIAL" or "FINISHED_GOOD"
+  quantity       Float?
+  rawMaterialId  String?
+  finishedGoodId String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  rawMaterial   RawMaterial?  @relation(fields: [rawMaterialId], references: [id], onDelete: SetNull)
+  finishedGood  FinishedGood? @relation(fields: [finishedGoodId], references: [id], onDelete: SetNull)
+
+  rawMaterialLinks  LotRawMaterial[] @relation("finishedLot")
+  finishedGoodLinks LotRawMaterial[] @relation("rawLot")
+
+  @@map("lots")
+}
+
+model LotRawMaterial {
+  id                String   @id @default(uuid())
+  finishedGoodLotId String
+  rawMaterialLotId  String
+  quantityUsed      Float
+  createdAt         DateTime @default(now())
+
+  finishedGoodLot Lot @relation("finishedLot", fields: [finishedGoodLotId], references: [id], onDelete: Cascade)
+  rawMaterialLot  Lot @relation("rawLot", fields: [rawMaterialLotId], references: [id], onDelete: Cascade)
+
+  @@unique([finishedGoodLotId, rawMaterialLotId])
+  @@map("lot_raw_materials")
 }

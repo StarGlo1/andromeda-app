@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { SortableFinishedGoodsTable } from "@/app/components/SortableFinishedGoodsTable";
 import Navbar from "@/app/components/Navbar";
+import { HelpTip } from "@/app/components/HelpTip";
 
 async function addFinishedGood(formData: FormData) {
   "use server";
@@ -255,10 +256,16 @@ export default async function FinishedGoodsPage() {
             </div>
             <div className="flex items-center gap-2">
               <input type="checkbox" name="isSubAssembly" id="isSubAssembly" className="rounded border-default accent-brand" />
-              <label htmlFor="isSubAssembly" className="text-text-muted text-xs font-medium uppercase">Is Sub‑Assembly</label>
+              <label htmlFor="isSubAssembly" className="flex items-center text-text-muted text-xs font-medium uppercase">
+                Is Sub‑Assembly
+                <HelpTip text="Check this if you make this product to use inside another product, not to sell by itself." />
+              </label>
             </div>
             <div>
-              <button type="submit" className="w-full bg-brand hover:bg-brand-hover text-white font-medium px-4 py-2 rounded-lg transition-colors text-sm h-[40px]">
+              <button
+                type="submit"
+                className="w-fit px-6 mx-auto bg-teal-600 hover:bg-teal-700 text-white font-medium py-2 rounded-full shadow-md transition-colors text-sm h-[40px]"
+              >
                 + Add Product
               </button>
             </div>

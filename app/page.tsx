@@ -68,6 +68,7 @@ export default function CommandDeckPage() {
     pendingSalesCount: 0,
     profitMargin: 0,
     expiringStock: [],
+    profitTrend: [],
   });
 
   useEffect(() => {
@@ -109,6 +110,7 @@ export default function CommandDeckPage() {
             pendingSalesCount: data.pendingSalesCount ?? 0,
             profitMargin: data.profitMargin ?? 0,
             expiringStock: data.expiringStock || [],
+            profitTrend: data.profitTrend || [],
           });
         }
       } catch (error) {
@@ -134,6 +136,7 @@ export default function CommandDeckPage() {
         </p>
       </div>
 
+      {/* Search Bar */}
       <div className="relative">
         <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
           <Search className="w-4 h-4 text-gray-400 dark:text-gray-500" />
@@ -152,8 +155,10 @@ export default function CommandDeckPage() {
         )}
       </div>
 
+      {/* Draggable Widgets */}
       <DashboardWidgets data={dashboardData} />
 
+      {/* Quick Navigation */}
       <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-6 shadow-sm space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Quick Navigation</h2>

@@ -49,18 +49,15 @@ export async function GET() {
     }),
   ]);
 
-  // Inventory value calculation (simplified)
   const inventoryValue =
     totalInventoryValue._sum.totalQuantity && totalInventoryValue._sum.costPerUnit
       ? totalInventoryValue._sum.totalQuantity * totalInventoryValue._sum.costPerUnit
       : 0;
 
-  // Profit margin %
   const revenue = totalRevenue._sum.totalAmount ?? 0;
   const cogs = totalCogs._sum.totalPrice ?? 0;
   const profitMargin = revenue > 0 ? ((revenue - cogs) / revenue) * 100 : 0;
 
-  // Reorder suggestions (low stock with suggested order qty)
   const reorderSuggestions = lowStockMaterials.map((m) => ({
     id: m.id,
     name: m.name,
@@ -70,8 +67,6 @@ export async function GET() {
     unit: m.unit ?? "",
   }));
 
-  // Expiring / oldest stock
-  // If expirationDate doesn't exist, use updatedAt as proxy (oldest updated = oldest)
   const expiringStock = await prisma.rawMaterial.findMany({
     orderBy: { updatedAt: "asc" },
     take: 5,
@@ -84,7 +79,7 @@ export async function GET() {
     },
   });
 
-  // Top selling products (with product names)
+  // Top selling products with names
   const topSelling = [];
   for (const group of topSellingProducts) {
     const product = await prisma.finishedGood.findUnique({
@@ -99,6 +94,55 @@ export async function GET() {
       });
     }
   }
+
+  // Profit margin over time (monthly)
+  const salesByMonth = await prisma.sale.findMany({
+    select: {
+      saleDate: true,
+      totalAmount: true,
+    },
+    orderBy: { saleDate: "asc" },
+  });
+
+  const monthlyProfitMap: Record<string, { revenue: number; cogs: number }> = {};
+
+  for (const sale of salesByMonth) {
+    const month = sale.saleDate.toISOString().slice(0, 7); // YYYY-MM
+    if (!monthlyProfitMap[month]) {
+      monthlyProfitMap[month] = { revenue: 0, cogs: 0 };
+    }
+    monthlyProfitMap[month].revenue += sale.totalAmount;
+  }
+
+  // Estimate COGS per month: we'll use avg COGS from sale items
+  const saleItemsWithCogs = await prisma.saleItem.findMany({
+    include: { finishedGood: true },
+  });
+
+  // Map saleId -> total COGS
+  const saleCogsMap: Record<string, number> = {};
+  for (const item of saleItemsWithCogs) {
+    const cogsForItem = item.finishedGood.calculatedCogs * item.quantity;
+    if (!saleCogsMap[item.saleId]) saleCogsMap[item.saleId] = 0;
+    saleCogsMap[item.saleId] += cogsForItem;
+  }
+
+  // Recalculate monthly COGS using map
+  for (const sale of salesByMonth) {
+    const month = sale.saleDate.toISOString().slice(0, 7);
+    const saleCogs = saleCogsMap[sale.id] || 0;
+    monthlyProfitMap[month].cogs += saleCogs;
+  }
+
+  const profitTrend = Object.entries(monthlyProfitMap).map(([month, data]) => {
+    const margin = data.revenue > 0 ? ((data.revenue - data.cogs) / data.revenue) * 100 : 0;
+    return {
+      month,
+      revenue: data.revenue,
+      cogs: data.cogs,
+      margin: parseFloat(margin.toFixed(1)),
+    };
+  });
 
   const alerts = await prisma.alert.findMany({
     where: { status: "active" },
@@ -133,6 +177,7 @@ export async function GET() {
         unit: m.unit,
         updatedAt: m.updatedAt,
       })),
+      profitTrend,
       recentActivity: recentActivity.map((s) => ({
         id: s.id,
         type: "sale",

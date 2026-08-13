@@ -3,13 +3,43 @@
 import { useState, useRef, useTransition } from "react";
 import { useToast } from "@/app/context/ToastContext";
 
-function FieldTooltip({ text }: { text: string }) {
-  // ... same as before ...
+/**
+ * HelpTip component
+ * Shows a small bubble with helpful text when hovering over the comet icon.
+ */
+function HelpTip({ text }: { text: string }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <span
+      className="relative inline-flex items-center ml-1"
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+    >
+      <button
+        type="button"
+        className="focus:outline-none"
+        aria-label="Help"
+      >
+        <span className="text-sm">☄️</span>
+      </button>
+
+      {open && (
+        <span
+          role="tooltip"
+          className="absolute z-20 bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 px-3 py-2 rounded-lg shadow-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs text-gray-700 dark:text-gray-200 text-center"
+        >
+          {text}
+          <span className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-white dark:border-t-gray-800" />
+        </span>
+      )}
+    </span>
+  );
 }
 
 export function AddMaterialForm({
-  categories,
-  suppliers,
+  categories: initialCategories,
+  suppliers: initialSuppliers,
   addRawMaterialAction,
   addCategoryAction,
   addSupplierAction,
@@ -17,13 +47,16 @@ export function AddMaterialForm({
   categories: { id: string; name: string }[];
   suppliers: { id: string; name: string }[];
   addRawMaterialAction: (formData: FormData) => Promise<void>;
-  addCategoryAction: (formData: FormData) => Promise<void>;
-  addSupplierAction: (formData: FormData) => Promise<void>;
+  addCategoryAction: (formData: FormData) => Promise<{ id: string; name: string }>;
+  addSupplierAction: (formData: FormData) => Promise<{ id: string; name: string }>;
 }) {
   const { showToast } = useToast();
   const formRef = useRef<HTMLFormElement>(null);
-  const [refreshKey, setRefreshKey] = useState(0);
   const [isPending, startTransition] = useTransition();
+
+  // Local state for categories and suppliers so new ones show immediately
+  const [categories, setCategories] = useState(initialCategories);
+  const [suppliers, setSuppliers] = useState(initialSuppliers);
 
   const [categoryId, setCategoryId] = useState("");
   const [showNewCategory, setShowNewCategory] = useState(false);
@@ -38,7 +71,7 @@ export function AddMaterialForm({
     const value = e.target.value;
     if (value === "__new__") {
       setShowNewCategory(true);
-      setCategoryId("");
+      setCategoryId("__new__");
       setCategoryError(false);
     } else {
       setCategoryId(value);
@@ -51,7 +84,7 @@ export function AddMaterialForm({
     const value = e.target.value;
     if (value === "__new__") {
       setShowNewSupplier(true);
-      setSupplierId("");
+      setSupplierId("__new__");
     } else {
       setSupplierId(value);
       setShowNewSupplier(false);
@@ -59,30 +92,47 @@ export function AddMaterialForm({
   };
 
   const handleSaveNewCategory = async () => {
-    if (!newCategoryName.trim()) return;
+    console.log("handleSaveNewCategory called");
+    if (!newCategoryName.trim()) {
+      console.log("Category name is empty");
+      return;
+    }
     const fd = new FormData();
     fd.append("name", newCategoryName.trim());
     try {
-      await addCategoryAction(fd);
-      showToast("Category created successfully!", "success");
-      setShowNewCategory(false);
+      const newCategory = await addCategoryAction(fd);
+      console.log("New category created:", newCategory);
+      setCategories((prev) => [...prev, newCategory]);
+      setCategoryId(newCategory.id);
       setNewCategoryName("");
-    } catch (error) {
-      showToast("Failed to create category.", "error");
+      setShowNewCategory(false);
+      setCategoryError(false);
+      showToast("Category created successfully!", "success");
+    } catch (error: any) {
+      console.error("Failed to create category:", error);
+      showToast(error.message || "Failed to create category.", "error");
     }
   };
 
   const handleSaveNewSupplier = async () => {
-    if (!newSupplierName.trim()) return;
+    console.log("handleSaveNewSupplier called");
+    if (!newSupplierName.trim()) {
+      console.log("Supplier name is empty");
+      return;
+    }
     const fd = new FormData();
     fd.append("name", newSupplierName.trim());
     try {
-      await addSupplierAction(fd);
-      showToast("Supplier created successfully!", "success");
-      setShowNewSupplier(false);
+      const newSupplier = await addSupplierAction(fd);
+      console.log("New supplier created:", newSupplier);
+      setSuppliers((prev) => [...prev, newSupplier]);
+      setSupplierId(newSupplier.id);
       setNewSupplierName("");
-    } catch (error) {
-      showToast("Failed to create supplier.", "error");
+      setShowNewSupplier(false);
+      showToast("Supplier created successfully!", "success");
+    } catch (error: any) {
+      console.error("Failed to create supplier:", error);
+      showToast(error.message || "Failed to create supplier.", "error");
     }
   };
 
@@ -90,7 +140,7 @@ export function AddMaterialForm({
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
 
-    if (categoryId) {
+    if (categoryId && categoryId !== "__new__") {
       formData.set("categoryId", categoryId);
     } else {
       setCategoryError(true);
@@ -98,7 +148,7 @@ export function AddMaterialForm({
     }
     setCategoryError(false);
 
-    if (supplierId) {
+    if (supplierId && supplierId !== "__new__") {
       formData.set("supplierId", supplierId);
     } else {
       formData.delete("supplierId");
@@ -109,7 +159,6 @@ export function AddMaterialForm({
         await addRawMaterialAction(formData);
         showToast("Material added successfully!", "success");
         formRef.current?.reset();
-        setRefreshKey((k) => k + 1);
         setCategoryId("");
         setSupplierId("");
       } catch (error: any) {
@@ -119,113 +168,257 @@ export function AddMaterialForm({
   };
 
   return (
-    <div className="bg-surface-widget border border-default rounded-xl p-6" key={refreshKey}>
+    <div className="bg-surface-widget border border-default rounded-xl p-6">
       <h2 className="text-lg font-semibold text-text mb-4">Add New Raw Material</h2>
 
       <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
-        {/* Row 1 */}
-        <div className="grid grid-cols-1 sm:grid-cols-6 gap-4 items-end">
+        {/* Row 1: Material Name, Category, Supplier */}
+        <div className="grid grid-cols-1 sm:grid-cols-6 gap-4 items-start">
           <div className="sm:col-span-2">
-            <label className="block text-text-muted text-xs font-medium uppercase mb-1">Material Name</label>
-            <input type="text" name="name" required placeholder="e.g. Ceda Serica Wax" className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm" />
+            <label className="block text-text-muted text-xs font-medium uppercase mb-1">
+              Material Name
+            </label>
+            <input
+              type="text"
+              name="name"
+              required
+              placeholder="e.g. Ceda Serica Wax"
+              className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm"
+            />
           </div>
+
           <div className="sm:col-span-2">
-            <label className="block text-text-muted text-xs font-medium uppercase mb-1">Category</label>
+            <label className="block text-text-muted text-xs font-medium uppercase mb-1">
+              Category
+            </label>
+
             {!showNewCategory ? (
-              <select value={categoryId} onChange={handleCategoryChange} className={`w-full px-3 py-2 bg-bg border rounded-lg text-text focus:outline-none focus:ring-2 focus:ring-brand text-sm ${categoryError ? "border-error ring-1 ring-error" : "border-default"}`}>
+              <select
+                value={categoryId}
+                onChange={handleCategoryChange}
+                className={`w-full px-3 py-2 bg-bg border rounded-lg text-text focus:outline-none focus:ring-2 focus:ring-brand text-sm ${
+                  categoryError ? "border-error ring-1 ring-error" : "border-default"
+                }`}
+              >
                 <option value="">Select...</option>
-                {categories.map((cat) => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
-                <option value="__new__" className="text-text-brand">+ Add new category…</option>
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </option>
+                ))}
+                <option value="__new__" className="text-text-brand">
+                  + Add new category…
+                </option>
               </select>
             ) : (
-              <div className="flex items-center gap-1">
-                <input type="text" value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} placeholder="Category name" className="flex-1 px-2 py-1 bg-bg border border-default rounded text-text text-sm" />
-                <button type="button" onClick={handleSaveNewCategory} className="text-text-brand hover:underline text-xs font-medium">Save</button>
-                <button type="button" onClick={() => setShowNewCategory(false)} className="text-text-muted hover:text-text text-xs font-medium">Cancel</button>
+              <div className="w-full">
+                <input
+                  type="text"
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value)}
+                  placeholder="Category name"
+                  className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm"
+                />
+                <div className="mt-2 flex items-center justify-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleSaveNewCategory}
+                    className="px-4 py-1.5 rounded-full bg-teal-600 hover:bg-teal-700 text-white text-xs font-medium transition-colors"
+                  >
+                    Save
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowNewCategory(false);
+                      setCategoryId("");
+                      setNewCategoryName("");
+                    }}
+                    className="px-4 py-1.5 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 text-xs font-medium transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
               </div>
             )}
+
             {categoryError && <p className="text-error text-xs mt-1">Please select a category.</p>}
           </div>
+
           <div className="sm:col-span-2">
-            <label className="block text-text-muted text-xs font-medium uppercase mb-1">Supplier</label>
+            <label className="block text-text-muted text-xs font-medium uppercase mb-1">
+              Supplier
+            </label>
+
             {!showNewSupplier ? (
-              <select value={supplierId} onChange={handleSupplierChange} className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text focus:outline-none focus:ring-2 focus:ring-brand text-sm">
+              <select
+                value={supplierId}
+                onChange={handleSupplierChange}
+                className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text focus:outline-none focus:ring-2 focus:ring-brand text-sm"
+              >
                 <option value="">None</option>
-                {suppliers.map((sup) => <option key={sup.id} value={sup.id}>{sup.name}</option>)}
-                <option value="__new__" className="text-text-brand">+ Add new supplier…</option>
+                {suppliers.map((sup) => (
+                  <option key={sup.id} value={sup.id}>
+                    {sup.name}
+                  </option>
+                ))}
+                <option value="__new__" className="text-text-brand">
+                  + Add new supplier…
+                </option>
               </select>
             ) : (
-              <div className="flex items-center gap-1">
-                <input type="text" value={newSupplierName} onChange={(e) => setNewSupplierName(e.target.value)} placeholder="Supplier name" className="flex-1 px-2 py-1 bg-bg border border-default rounded text-text text-sm" />
-                <button type="button" onClick={handleSaveNewSupplier} className="text-text-brand hover:underline text-xs font-medium">Save</button>
-                <button type="button" onClick={() => setShowNewSupplier(false)} className="text-text-muted hover:text-text text-xs font-medium">Cancel</button>
+              <div className="w-full">
+                <input
+                  type="text"
+                  value={newSupplierName}
+                  onChange={(e) => setNewSupplierName(e.target.value)}
+                  placeholder="Supplier name"
+                  className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm"
+                />
+                <div className="mt-2 flex items-center justify-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleSaveNewSupplier}
+                    className="px-4 py-1.5 rounded-full bg-teal-600 hover:bg-teal-700 text-white text-xs font-medium transition-colors"
+                  >
+                    Save
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowNewSupplier(false);
+                      setSupplierId("");
+                      setNewSupplierName("");
+                    }}
+                    className="px-4 py-1.5 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 text-xs font-medium transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
               </div>
             )}
           </div>
         </div>
 
-        {/* Row 2 */}
-        <div className="grid grid-cols-2 sm:grid-cols-7 gap-4 items-end">
+        {/* Row 2: Qty, Size, Unit, Cost (4 fields) */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div>
             <label className="flex items-center text-text-muted text-xs font-medium uppercase mb-1">
               Qty
-              <FieldTooltip text="How many bottles, bags, or containers you bought." />
+              <HelpTip text="How many items or containers you purchased. Example: 1 bottle, 5 bricks." />
             </label>
-            <input type="number" step="any" name="quantity" placeholder="1" className="w-full px-2 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm" />
+            <input
+              type="number"
+              step="any"
+              name="quantity"
+              placeholder="1"
+              className="w-full px-2 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm"
+            />
           </div>
           <div>
             <label className="flex items-center text-text-muted text-xs font-medium uppercase mb-1">
               Size
-              <FieldTooltip text="The size or weight of each bottle, bag, or container." />
+              <HelpTip text="How much is in one item. Example: 16 oz, 2 lbs, 100 grams." />
             </label>
-            <input type="number" step="any" name="sizePerUnit" placeholder="0" className="w-full px-2 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm" />
+            <input
+              type="number"
+              step="any"
+              name="sizePerUnit"
+              placeholder="0"
+              className="w-full px-2 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm"
+            />
           </div>
           <div>
             <label className="flex items-center text-text-muted text-xs font-medium uppercase mb-1">
               Unit
-              <FieldTooltip text="Unit of measurement (e.g. oz, lb, each)." />
+              <HelpTip text="The unit shown on the label. For example: oz, lb, g." />
             </label>
-            <input type="text" name="unit" required placeholder="e.g. oz" className="w-full px-2 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm" />
+            <input
+              type="text"
+              name="unit"
+              required
+              placeholder="e.g. oz"
+              className="w-full px-2 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm"
+            />
           </div>
           <div>
             <label className="flex items-center text-text-muted text-xs font-medium uppercase mb-1">
               Cost ($)
-              <FieldTooltip text="The total price you paid." />
+              <HelpTip text="Total price you paid for this purchase." />
             </label>
-            <input type="number" step="any" name="purchaseTotal" placeholder="0.00" className="w-full px-2 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm" />
+            <input
+              type="number"
+              step="any"
+              name="purchaseTotal"
+              placeholder="0.00"
+              className="w-full px-2 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm"
+            />
           </div>
+        </div>
+
+        {/* Row 3: Min, On Ord (2 fields) */}
+        <div className="grid grid-cols-2 sm:grid-cols-2 gap-4">
           <div>
             <label className="flex items-center text-text-muted text-xs font-medium uppercase mb-1">
               Min
-              <FieldTooltip text="Alert when stock drops below this number." />
+              <HelpTip text="Low stock alert level. You'll be notified when stock drops below this." />
             </label>
-            <input type="number" step="any" name="reorderThreshold" placeholder="0" className="w-full px-2 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm" />
-          </div>
-          <div>
-            <label className="flex items-center text-text-muted text-xs font-medium uppercase mb-1">
-              Comm.
-              <FieldTooltip text="Reserved for production." />
-            </label>
-            <input type="number" step="any" name="committedQuantity" placeholder="0" className="w-full px-2 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm" />
+            <input
+              type="number"
+              step="any"
+              name="reorderThreshold"
+              placeholder="0"
+              className="w-full px-2 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm"
+            />
           </div>
           <div>
             <label className="flex items-center text-text-muted text-xs font-medium uppercase mb-1">
               On Ord.
-              <FieldTooltip text="Ordered but not yet received." />
+              <HelpTip text="Quantity already ordered from a supplier but not yet received." />
             </label>
-            <input type="number" step="any" name="onOrderQuantity" placeholder="0" className="w-full px-2 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm" />
+            <input
+              type="number"
+              step="any"
+              name="onOrderQuantity"
+              placeholder="0"
+              className="w-full px-2 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm"
+            />
           </div>
         </div>
 
-        <button
-          type="submit"
-          disabled={isPending}
-          className="w-full bg-brand hover:bg-brand-hover text-white font-medium px-4 py-2 rounded-lg transition-colors text-sm h-[40px] disabled:opacity-50"
-        >
-          {isPending ? "Adding..." : "+ Add Material"}
-        </button>
+        {/* Optional section: Committed Quantity */}
+        <div className="pt-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-text-muted mb-2">
+            Optional
+          </p>
+          <div className="w-full sm:w-1/2 lg:w-1/3">
+            <label className="flex items-center text-text-muted text-xs font-medium uppercase mb-1">
+              Committed Quantity
+              <HelpTip text="Quantity reserved for upcoming production." />
+            </label>
+            <input
+              type="number"
+              step="any"
+              name="committedQuantity"
+              placeholder="0"
+              className="w-full px-2 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm"
+            />
+          </div>
+        </div>
+
+        <div className="flex justify-center">
+          <button
+            type="submit"
+            disabled={isPending}
+            className="bg-teal-600 hover:bg-teal-700 text-white font-medium px-6 py-2 rounded-full shadow-md transition-colors text-sm disabled:opacity-50"
+          >
+            {isPending ? "Adding..." : "+ Add Material"}
+          </button>
+        </div>
       </form>
-      <p className="text-text-muted text-xs mt-2">Cost per unit = total purchase cost ÷ (quantity × size per unit).</p>
+      <p className="text-text-muted text-xs mt-2">
+        Cost per unit = total purchase cost ÷ (quantity × size per unit).
+      </p>
     </div>
   );
 }

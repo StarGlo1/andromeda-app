@@ -1,57 +1,165 @@
-import React from 'react';
-import { AddMaterialForm } from '@/app/components/AddMaterialForm';
-import { SortableRawMaterialsTable } from '@/app/components/SortableRawMaterialsTable';
+import React from "react";
+import { prisma } from "@/lib/prisma";
+import { revalidatePath } from "next/cache";
+import { AddMaterialForm } from "@/app/components/AddMaterialForm";
+import { SortableRawMaterialsTable } from "@/app/components/SortableRawMaterialsTable";
 
-// Replace these server actions with your actual database actions / imports
+// ─── Real Server Actions ───
 async function addRawMaterialAction(formData: FormData) {
-  'use server';
-  // TODO: Implement server action to add raw material
+  "use server";
+
+  const name = String(formData.get("name") || "").trim();
+  const categoryId = String(formData.get("categoryId") || "");
+  const supplierId = String(formData.get("supplierId") || "") || null;
+  const unit = String(formData.get("unit") || "").trim();
+  const quantity = parseFloat(String(formData.get("quantity") || "0")) || 0;
+  const sizePerUnit = parseFloat(String(formData.get("sizePerUnit") || "0")) || 0;
+  const purchaseTotal = parseFloat(String(formData.get("purchaseTotal") || "0")) || 0;
+  const reorderThreshold = parseFloat(String(formData.get("reorderThreshold") || "")) || null;
+  const committedQuantity = parseFloat(String(formData.get("committedQuantity") || "0")) || 0;
+  const onOrderQuantity = parseFloat(String(formData.get("onOrderQuantity") || "0")) || 0;
+
+  if (!name || !categoryId || !unit) {
+    throw new Error("Name, category, and unit are required.");
+  }
+
+  const totalQuantity = quantity * sizePerUnit;
+  const costPerUnit = totalQuantity > 0 ? purchaseTotal / totalQuantity : 0;
+
+  await prisma.rawMaterial.create({
+    data: {
+      name,
+      categoryId,
+      supplierId,
+      totalQuantity,
+      quantity,
+      sizePerUnit,
+      unit,
+      costPerUnit,
+      reorderThreshold,
+      committedQuantity,
+      onOrderQuantity,
+    },
+  });
+
+  revalidatePath("/materials");
 }
 
 async function addCategoryAction(formData: FormData) {
-  'use server';
-  // TODO: Implement server action to add category
+  "use server";
+
+  const name = String(formData.get("name") || "").trim();
+
+  if (!name) {
+    throw new Error("Category name is required.");
+  }
+
+  const category = await prisma.category.create({
+    data: { name },
+  });
+
+  revalidatePath("/materials");
+  return category;
 }
 
 async function addSupplierAction(formData: FormData) {
-  'use server';
-  // TODO: Implement server action to add supplier
+  "use server";
+
+  const name = String(formData.get("name") || "").trim();
+  const contact = String(formData.get("contact") || "").trim() || null;
+  const website = String(formData.get("website") || "").trim() || null;
+  const notes = String(formData.get("notes") || "").trim() || null;
+
+  if (!name) {
+    throw new Error("Supplier name is required.");
+  }
+
+  const supplier = await prisma.supplier.create({
+    data: {
+      name,
+      contact,
+      website,
+      notes,
+    },
+  });
+
+  revalidatePath("/materials");
+  return supplier;
 }
 
 async function updateAction(formData: FormData) {
-  'use server';
-  // TODO: Implement server action to update material
+  "use server";
+
+  const id = String(formData.get("id") || "");
+  const name = String(formData.get("name") || "").trim();
+  const categoryId = String(formData.get("categoryId") || "");
+  const supplierId = String(formData.get("supplierId") || "") || null;
+  const unit = String(formData.get("unit") || "").trim();
+  const quantity = parseFloat(String(formData.get("quantity") || "0")) || 0;
+  const sizePerUnit = parseFloat(String(formData.get("sizePerUnit") || "0")) || 0;
+  const purchaseTotal = parseFloat(String(formData.get("purchaseTotal") || "0")) || 0;
+  const reorderThreshold = parseFloat(String(formData.get("reorderThreshold") || "")) || null;
+  const committedQuantity = parseFloat(String(formData.get("committedQuantity") || "0")) || 0;
+  const onOrderQuantity = parseFloat(String(formData.get("onOrderQuantity") || "0")) || 0;
+
+  if (!id || !name || !categoryId || !unit) {
+    throw new Error("Name, category, and unit are required.");
+  }
+
+  const totalQuantity = quantity * sizePerUnit;
+  const costPerUnit = totalQuantity > 0 ? purchaseTotal / totalQuantity : 0;
+
+  await prisma.rawMaterial.update({
+    where: { id },
+    data: {
+      name,
+      categoryId,
+      supplierId,
+      totalQuantity,
+      quantity,
+      sizePerUnit,
+      unit,
+      costPerUnit,
+      reorderThreshold,
+      committedQuantity,
+      onOrderQuantity,
+    },
+  });
+
+  revalidatePath("/materials");
 }
 
 async function deleteAction(formData: FormData) {
-  'use server';
-  // TODO: Implement server action to delete material
+  "use server";
+
+  const id = String(formData.get("id") || "");
+
+  if (!id) {
+    throw new Error("Material ID is required.");
+  }
+
+  await prisma.rawMaterial.delete({
+    where: { id },
+  });
+
+  revalidatePath("/materials");
 }
 
 export default async function MaterialsPage() {
-  // Fetch your categories, suppliers, and materials from your database here
-  const categories = [
-    { id: '1', name: 'Waxes' },
-    { id: '2', name: 'Fragrance Oils' },
-    { id: '3', name: 'Wicks' },
-    { id: '4', name: 'Containers' },
-  ];
+  const [categories, suppliers, materials] = await Promise.all([
+    prisma.category.findMany({ orderBy: { name: "asc" } }),
+    prisma.supplier.findMany({ orderBy: { name: "asc" } }),
+    prisma.rawMaterial.findMany({
+      include: { category: true, supplier: true },
+      orderBy: { name: "asc" },
+    }),
+  ]);
 
-  const suppliers = [
-    { id: '1', name: 'CandleScience' },
-    { id: '2', name: 'Lonestar' },
-    { id: '3', name: 'Flamingo Candle Co.' },
-  ];
-
-  // Placeholder material items array (replace with real DB query result)
-  const materials: any[] = [];
-
-  // Calculate dynamic stats
   const totalMaterials = materials.length;
   const lowStockCount = materials.filter(
-    (m: any) => m.reorderThreshold !== null && (m.totalQuantity ?? 0) <= m.reorderThreshold
+    (m) => m.reorderThreshold !== null && (m.totalQuantity ?? 0) <= m.reorderThreshold
   ).length;
-  const uniqueCategories = new Set(materials.map((m: any) => m.categoryId)).size;
+  const uniqueCategories = new Set(materials.map((m) => m.categoryId)).size;
 
   return (
     <div className="space-y-6">
@@ -85,7 +193,7 @@ export default async function MaterialsPage() {
       />
 
       {/* Sortable Table Component */}
-      <div className="bg-surface-widget border border-default rounded-xl shadow-sm overflow-hidden">
+      <div className="bg-surface-widget border border-default rounded-xl shadow-sm overflow-x-auto">
         <SortableRawMaterialsTable
           materials={materials}
           categories={categories}

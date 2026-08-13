@@ -4,7 +4,7 @@
 
 @theme {
   /* Light mode */
-  --color-bg: #f8fafc;
+  --color-bg: #f9fafb;
   --color-surface: #ffffff;
   --color-surface-elevated: #ffffff;
   --color-surface-nav: #ffffff;
@@ -44,37 +44,37 @@
   --color-info: #0284c7;
   --color-info-muted: #e0f2fe;
 
-  /* Dark mode tokens - Solid Jet Black */
+  /* Dark mode tokens */
   --color-bg-dark: #000000;
-  --color-surface-dark: #0a0a0a;
-  --color-surface-elevated-dark: #171717;
-  --color-surface-nav-dark: #0a0a0a;
-  --color-surface-widget-dark: #171717;
+  --color-surface-dark: #000000;
+  --color-surface-elevated-dark: #000000;
+  --color-surface-nav-dark: #000000;
+  --color-surface-widget-dark: #000000;
 
-  --color-text-dark: #f8fafc;
-  --color-text-secondary-dark: #e2e8f0;
-  --color-text-muted-dark: #94a3b8;
-  --color-text-inverse-dark: #0f172a;
+  --color-text-dark: #f9fafb;
+  --color-text-secondary-dark: #e5e7eb;
+  --color-text-muted-dark: #9ca3af;
+  --color-text-inverse-dark: #111827;
   --color-text-brand-dark: #8bc9da;
 
-  --color-border-dark: #262626;
-  --color-border-subtle-dark: #171717;
-  --color-border-strong-dark: #404040;
+  --color-border-dark: #334155;
+  --color-border-subtle-dark: #1f2937;
+  --color-border-strong-dark: #475569;
   --color-outline-focus-dark: #8bc9da;
 
   --color-brand-dark: #7abfcf;
   --color-brand-hover-dark: #8bc9da;
   --color-brand-muted-dark: #1e3a42;
-  --color-brand-foreground-dark: #000000;
+  --color-brand-foreground-dark: #111827;
 
-  --color-nav-bg-dark: #0a0a0a;
-  --color-nav-text-dark: #f8fafc;
-  --color-nav-text-muted-dark: #94a3b8;
-  --color-nav-border-dark: #262626;
+  --color-nav-bg-dark: #000000;
+  --color-nav-text-dark: #f9fafb;
+  --color-nav-text-muted-dark: #9ca3af;
+  --color-nav-border-dark: #334155;
   --color-nav-active-dark: #8bc9da;
 
-  --color-widget-bg-dark: #171717;
-  --color-widget-border-dark: #262626;
+  --color-widget-bg-dark: #000000;
+  --color-widget-border-dark: #334155;
 
   --color-success-dark: #34d399;
   --color-success-muted-dark: #064e3b;
@@ -145,12 +145,12 @@ html.dark body {
   color: var(--color-text-dark);
 }
 
-/* ----- Prevent dark mode flash ----- */
+/* Prevent dark mode flash */
 html {
-  background-color: #f9fafb; /* light mode default */
+  background-color: #f9fafb;
 }
 html.dark {
-  background-color: #030712; /* dark mode default */
+  background-color: #000000;
 }
 body {
   background-color: inherit;
@@ -202,11 +202,29 @@ html.dark .text-warning { color: var(--color-warning-dark); }
 .text-error { color: var(--color-error); }
 html.dark .text-error { color: var(--color-error-dark); }
 
+/* ----- Force workspace container to slate grey in dark mode ----- */
+html.dark .workspace-container {
+  background-color: #1e293b !important; /* slate-800 */
+  border-radius: 1rem !important;
+  padding: 1.5rem !important;
+}
+
+/* ----- Force all major cards inside workspace to pure black in dark mode ----- */
+html.dark .workspace-container section,
+html.dark .workspace-container .bg-white,
+html.dark .workspace-container .bg-surface-widget,
+html.dark .workspace-container .bg-surface,
+html.dark .workspace-container .dark\:bg-gray-900,
+html.dark .workspace-container [class*="bg-gray-900"] {
+  background-color: #000000 !important;
+  border-color: #334155 !important;
+}
+
 /* ----- Inputs in dark mode ----- */
 html.dark input,
 html.dark textarea,
 html.dark select {
-  background-color: #262626 !important;
+  background-color: #1f2937 !important;
   border-color: var(--color-border-dark) !important;
   color: var(--color-text-dark) !important;
 }
@@ -225,48 +243,28 @@ input[type="number"] {
   -moz-appearance: textfield;
 }
 
-/* ----- Transitions ----- */
+/* Transitions */
 body, .bg-bg, .bg-surface, .bg-surface-nav, .bg-surface-widget, input, textarea, select, button, a {
   transition: background-color 0.2s, color 0.2s;
 }
 
-/* ─── Toast animation ─── */
+/* Toast animation */
 @keyframes slideUp {
-  from {
-    transform: translateY(1rem);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
+  from { transform: translateY(1rem); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
-.animate-slide-up {
-  animation: slideUp 0.3s ease-out;
-}
-/* ─── Dropdown slide-down animation ─── */
+.animate-slide-up { animation: slideUp 0.3s ease-out; }
+
+/* Dropdown slide-down animation */
 @keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
-.animate-slide-down {
-  animation: slideDown 0.2s ease-out;
-}
-/* ─── Slide-in from left ─── */
+.animate-slide-down { animation: slideDown 0.2s ease-out; }
+
+/* Slide-in from left */
 @keyframes slideInLeft {
-  from {
-    transform: translateX(-100%);
-  }
-  to {
-    transform: translateX(0);
-  }
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
 }
-.animate-slide-in-left {
-  animation: slideInLeft 0.3s ease-out;
-}
+.animate-slide-in-left { animation: slideInLeft 0.3s ease-out; }

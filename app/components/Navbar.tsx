@@ -25,6 +25,7 @@ import {
   ArrowUpDown,
   Upload,
   Bell,
+  PackageSearch,
 } from "lucide-react";
 
 const NAV_GROUPS = [
@@ -46,6 +47,7 @@ const NAV_GROUPS = [
       { name: "Recipes", href: "/recipes", icon: FileText },
       { name: "Calculator", href: "/calculator", icon: Calculator },
       { name: "Pricing", href: "/pricing", icon: DollarSign },
+      { name: "Lot Traceability", href: "/lots", icon: PackageSearch },
     ],
   },
   {
@@ -143,9 +145,9 @@ export default function Navbar() {
 
   return (
     <>
-      {/* Fixed Top Navbar */}
+      {/* Fixed Top Navbar - pure black in dark mode */}
       <nav
-        className={`fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 rounded-b-2xl shadow-sm transition-transform duration-300 ${
+        className={`fixed top-0 left-0 right-0 z-50 bg-white dark:bg-black border-b border-gray-200 dark:border-slate-700 rounded-b-2xl shadow-sm transition-transform duration-300 ${
           hidden ? "-translate-y-full" : "translate-y-0"
         }`}
       >
@@ -155,7 +157,7 @@ export default function Navbar() {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setIsOpen(true)}
-                className="lg:hidden p-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300"
+                className="lg:hidden p-2.5 rounded-xl bg-gray-100 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-600 transition-all duration-300"
                 aria-label="Open Menu"
               >
                 <span className="flex flex-col items-center justify-center w-5 h-5 gap-1">
@@ -182,7 +184,7 @@ export default function Navbar() {
                 className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 whitespace-nowrap ${
                   pathname === "/"
                     ? "bg-teal-600 text-white"
-                    : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100"
+                    : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-gray-900 dark:hover:text-gray-100"
                 }`}
               >
                 <LayoutDashboard className="w-4 h-4" />
@@ -199,7 +201,7 @@ export default function Navbar() {
                     className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 whitespace-nowrap ${
                       isExpanded
                         ? "bg-teal-600 text-white"
-                        : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100"
+                        : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-gray-900 dark:hover:text-gray-100"
                     }`}
                   >
                     <Icon className="w-4 h-4" />
@@ -212,7 +214,7 @@ export default function Navbar() {
 
           {/* Desktop expanded submenu */}
           {expandedGroup && (
-            <div className="hidden lg:block border-t border-gray-200 dark:border-gray-800 py-4 animate-slide-down">
+            <div className="hidden lg:block border-t border-gray-200 dark:border-slate-700 py-4 animate-slide-down">
               {NAV_GROUPS.find((g) => g.label === expandedGroup)?.items.map((item) => {
                 const SubIcon = item.icon;
                 const isActive = pathname === item.href;
@@ -224,7 +226,7 @@ export default function Navbar() {
                     className={`inline-flex items-center gap-3 px-4 py-2 mx-1 rounded-lg text-sm font-medium transition-colors ${
                       isActive
                         ? "bg-teal-600 text-white"
-                        : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100"
+                        : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-gray-900 dark:hover:text-gray-100"
                     }`}
                   >
                     <SubIcon className="w-4 h-4 shrink-0" />
@@ -246,15 +248,15 @@ export default function Navbar() {
               onClick={() => setIsOpen(false)}
             />
             <div
-              className="fixed left-0 top-0 bottom-0 w-80 max-w-[85vw] bg-gray-50 dark:bg-gray-950 border-r border-gray-200 dark:border-gray-800 shadow-xl animate-slide-in-left flex flex-col z-[70]"
+              className="fixed left-0 top-0 bottom-0 w-80 max-w-[85vw] bg-gray-50 dark:bg-black border-r border-gray-200 dark:border-slate-700 shadow-xl animate-slide-in-left flex flex-col z-[70]"
               style={{ height: "100vh", top: 0, left: 0 }}
             >
-              <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800">
+              <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-slate-700">
                 <div className="flex items-center gap-3">
                   <span className="text-lg font-bold text-gray-900 dark:text-gray-100">Menu</span>
                   <button
                     onClick={toggleTheme}
-                    className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                    className="p-2 rounded-xl bg-gray-100 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
                     aria-label="Toggle Theme"
                   >
                     {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-600" />}
@@ -262,7 +264,7 @@ export default function Navbar() {
                 </div>
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                  className="p-2 rounded-xl bg-gray-100 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
                   aria-label="Close Menu"
                 >
                   <X className="w-5 h-5" />
@@ -276,7 +278,7 @@ export default function Navbar() {
                   className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium mb-1 ${
                     pathname === "/"
                       ? "bg-teal-600 text-white"
-                      : "text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100"
+                      : "text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-700 hover:text-gray-900 dark:hover:text-gray-100"
                   }`}
                 >
                   <LayoutDashboard className="w-5 h-5 shrink-0" />
@@ -293,7 +295,7 @@ export default function Navbar() {
                         className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                           isExpanded
                             ? "bg-teal-600 text-white"
-                            : "text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100"
+                            : "text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-700 hover:text-gray-900 dark:hover:text-gray-100"
                         }`}
                       >
                         <Icon className="w-5 h-5 shrink-0" />
@@ -301,7 +303,7 @@ export default function Navbar() {
                       </button>
 
                       {isExpanded && (
-                        <div className="ml-4 border-l-2 border-gray-200 dark:border-gray-700 pl-2 mt-1 space-y-1">
+                        <div className="ml-4 border-l-2 border-gray-200 dark:border-slate-700 pl-2 mt-1 space-y-1">
                           {group.items.map((item) => {
                             const SubIcon = item.icon;
                             const isSubActive = pathname === item.href;
@@ -313,7 +315,7 @@ export default function Navbar() {
                                 className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                                   isSubActive
                                     ? "bg-teal-600 text-white"
-                                    : "text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100"
+                                    : "text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-700 hover:text-gray-900 dark:hover:text-gray-100"
                                 }`}
                               >
                                 <SubIcon className="w-4 h-4 shrink-0" />

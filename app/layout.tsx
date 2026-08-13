@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import Navbar from '@/app/components/Navbar';
 import { ToastProvider } from '@/app/context/ToastContext';
+import { DemoModeProvider } from '@/app/context/DemoModeContext';
+import DemoModeBanner from '@/app/components/DemoModeBanner';
 import '@/app/globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -36,15 +38,18 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body
-        className={`${inter.className} bg-gray-50 dark:bg-gray-950 min-h-screen text-gray-900 dark:text-gray-100 antialiased`}
-      >
-        <ToastProvider>
-          <Navbar />
-          <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-8">
-            {children}
-          </main>
-        </ToastProvider>
+      <body className={`${inter.className} bg-gray-50 dark:bg-black min-h-screen text-gray-900 dark:text-gray-100 antialiased`}>
+        <DemoModeProvider>
+          <ToastProvider>
+            <DemoModeBanner />
+            <Navbar />
+            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-8">
+              <div className="workspace-container">
+                {children}
+              </div>
+            </main>
+          </ToastProvider>
+        </DemoModeProvider>
       </body>
     </html>
   );

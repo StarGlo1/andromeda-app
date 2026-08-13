@@ -2,6 +2,7 @@
 
 import { useTransition } from "react";
 import { useToast } from "@/app/context/ToastContext";
+import { HelpTip } from "@/app/components/HelpTip";
 
 interface AddProductFormProps {
   addAction: (formData: FormData) => Promise<void>;
@@ -16,7 +17,6 @@ export function AddProductForm({ addAction }: AddProductFormProps) {
       try {
         await addAction(formData);
         showToast("Product added successfully!", "success");
-        // Reset form fields manually if needed
         const form = document.getElementById("add-product-form") as HTMLFormElement;
         form?.reset();
       } catch (error: any) {
@@ -27,7 +27,6 @@ export function AddProductForm({ addAction }: AddProductFormProps) {
 
   return (
     <form id="add-product-form" action={handleSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
-      {/* ... same fields as before ... */}
       <div>
         <label className="block text-text-muted text-xs font-medium uppercase mb-1">Product Name</label>
         <input type="text" name="name" required placeholder="e.g. 8oz Spiced Vanilla Candle" className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm" />
@@ -62,13 +61,16 @@ export function AddProductForm({ addAction }: AddProductFormProps) {
       </div>
       <div className="flex items-center gap-2">
         <input type="checkbox" name="isSubAssembly" id="isSubAssembly" className="rounded border-default accent-brand" />
-        <label htmlFor="isSubAssembly" className="text-text-muted text-xs font-medium uppercase">Is Sub‑Assembly</label>
+        <label htmlFor="isSubAssembly" className="flex items-center text-text-muted text-xs font-medium uppercase">
+          Is Sub‑Assembly
+          <HelpTip text="Check this if you make this product to use inside another product, not to sell by itself." />
+        </label>
       </div>
       <div>
         <button
           type="submit"
           disabled={isPending}
-          className="w-full bg-brand hover:bg-brand-hover text-white font-medium px-4 py-2 rounded-lg transition-colors text-sm h-[40px] disabled:opacity-50"
+          className="w-fit px-6 mx-auto bg-teal-600 hover:bg-teal-700 text-white font-medium py-2 rounded-full shadow-md transition-colors text-sm h-[40px] disabled:opacity-50"
         >
           {isPending ? "Adding..." : "+ Add Product"}
         </button>
