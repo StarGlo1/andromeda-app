@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/prisma";
-import { format } from "date-fns";
 import Navbar from "@/app/components/Navbar";
 import ReportsClient from "./ReportsClient";
 
@@ -22,9 +21,10 @@ interface ReportData {
 }
 
 async function getReportData(startDate?: Date, endDate?: Date): Promise<ReportData> {
-  const salesWhere = {};
-  if (startDate) salesWhere["saleDate"] = { gte: startDate };
-  if (endDate) salesWhere["saleDate"] = { ...salesWhere["saleDate"], lte: endDate };
+  const salesWhere: any = {};
+  if (startDate) salesWhere.saleDate = { gte: startDate };
+  if (endDate) salesWhere.saleDate = { ...salesWhere.saleDate, lte: endDate };
+
   const sales = await prisma.sale.findMany({
     where: salesWhere,
     include: { items: { include: { finishedGood: true } } },
@@ -44,12 +44,12 @@ async function getReportData(startDate?: Date, endDate?: Date): Promise<ReportDa
   const materialValue = materials.reduce((sum, m) => sum + (m.totalQuantity ?? 0) * (m.costPerUnit ?? 0), 0);
 
   const subAssemblies = await prisma.finishedGood.findMany({
-    where: { isSubAssembly: true },
+    where: { isCoreElement: true },
   });
   const subAssemblyValue = subAssemblies.reduce((sum, g) => sum + g.quantityOnHand * (g.calculatedCogs ?? 0), 0);
 
   const finishedGoods = await prisma.finishedGood.findMany({
-    where: { isSubAssembly: false },
+    where: { isCoreElement: false },
   });
   const finishedGoodValue = finishedGoods.reduce((sum, g) => sum + g.quantityOnHand * (g.retailPrice ?? 0), 0);
 

@@ -3,48 +3,48 @@
 @tailwind utilities;
 
 @theme {
-  /* Light mode */
-  --color-bg: #f9fafb;
-  --color-surface: #ffffff;
-  --color-surface-elevated: #ffffff;
-  --color-surface-nav: #ffffff;
-  --color-surface-widget: #ffffff;
+  /* Light mode — deep warm sand/beige, very soft */
+  --color-bg: #ede6dc;
+  --color-surface: #e5dcd0;
+  --color-surface-elevated: #ede6dc;
+  --color-surface-nav: #ede6dc;
+  --color-surface-widget: #e5dcd0;
 
-  --color-text: #0f172a;
-  --color-text-secondary: #334155;
-  --color-text-muted: #64748b;
-  --color-text-inverse: #f8fafc;
-  --color-text-brand: #4b8d9f;
+  --color-text: #332d26;
+  --color-text-secondary: #4a423a;
+  --color-text-muted: #615950;
+  --color-text-inverse: #ede6dc;
+  --color-text-brand: #3f6f7c;
 
-  --color-border: #e2e8f0;
-  --color-border-subtle: #f1f5f9;
-  --color-border-strong: #cbd5e1;
-  --color-outline-focus: #6bafc2;
+  --color-border: #d0c6b8;
+  --color-border-subtle: #dbd2c5;
+  --color-border-strong: #bfb4a4;
+  --color-outline-focus: #4f8792;
 
-  --color-brand: #6bafc2;
-  --color-brand-hover: #5497ab;
-  --color-brand-muted: #e0f2f7;
+  --color-brand: #4f8792;
+  --color-brand-hover: #426f79;
+  --color-brand-muted: #d3dfe1;
   --color-brand-foreground: #ffffff;
 
-  --color-nav-bg: #ffffff;
-  --color-nav-text: #0f172a;
-  --color-nav-text-muted: #64748b;
-  --color-nav-border: #e2e8f0;
-  --color-nav-active: #6bafc2;
+  --color-nav-bg: #ede6dc;
+  --color-nav-text: #332d26;
+  --color-nav-text-muted: #615950;
+  --color-nav-border: #d0c6b8;
+  --color-nav-active: #4f8792;
 
-  --color-widget-bg: #ffffff;
-  --color-widget-border: #e2e8f0;
+  --color-widget-bg: #e5dcd0;
+  --color-widget-border: #d0c6b8;
 
-  --color-success: #059669;
-  --color-success-muted: #d1fae5;
-  --color-warning: #d97706;
-  --color-warning-muted: #fef3c7;
-  --color-error: #dc2626;
-  --color-error-muted: #fee2e2;
-  --color-info: #0284c7;
-  --color-info-muted: #e0f2fe;
+  --color-success: #286f4e;
+  --color-success-muted: #cfe3d7;
+  --color-warning: #8a5515;
+  --color-warning-muted: #eeddbf;
+  --color-error: #a83228;
+  --color-error-muted: #eccfca;
+  --color-info: #275f73;
+  --color-info-muted: #cfdfe4;
 
-  /* Dark mode tokens */
+  /* Dark mode tokens — UNCHANGED */
   --color-bg-dark: #000000;
   --color-surface-dark: #000000;
   --color-surface-elevated-dark: #000000;
@@ -86,12 +86,10 @@
   --color-info-muted-dark: #0c4a6e;
 }
 
-/* Add default sidebar width variable for layout */
 :root {
   --sidebar-width: 16rem;
 }
 
-/* ----- BROWSER-LEVEL FIX for mobile auto-darkening ----- */
 html { color-scheme: light dark; }
 html.dark { color-scheme: dark; }
 html:not(.dark) { color-scheme: light; }
@@ -138,7 +136,6 @@ html.dark {
   --color-info-muted: var(--color-info-muted-dark);
 }
 
-/* ----- Global application ----- */
 html {
   font-size: 16px;
 }
@@ -146,7 +143,7 @@ html {
 body {
   background-color: var(--color-bg);
   color: var(--color-text);
-  font-size: 1.3005rem; /* 1.586 * 0.82 */
+  font-size: 1.3005rem;
   line-height: 1.55;
   transition: background-color 0.2s, color 0.2s;
 }
@@ -156,9 +153,8 @@ html.dark body {
   color: var(--color-text-dark);
 }
 
-/* Prevent dark mode flash */
 html {
-  background-color: #f9fafb;
+  background-color: #ede6dc;
 }
 html.dark {
   background-color: #000000;
@@ -167,7 +163,7 @@ body {
   background-color: inherit;
 }
 
-/* ----- GLOBAL TEXT SIZE (adjusted down 18% from previous) ----- */
+/* ----- GLOBAL TEXT SIZE ----- */
 .text-xs { font-size: 0.9754rem !important; line-height: 1.35 !important; }
 .text-sm { font-size: 1.138rem !important; line-height: 1.45 !important; }
 .text-base { font-size: 1.3005rem !important; line-height: 1.55 !important; }
@@ -177,7 +173,7 @@ body {
 .text-3xl { font-size: 2.4385rem !important; line-height: 1.3 !important; }
 .text-4xl { font-size: 2.9262rem !important; line-height: 1.2 !important; }
 
-/* ----- Utility classes for every role ----- */
+/* ----- Utility classes ----- */
 .bg-bg { background-color: var(--color-bg); }
 html.dark .bg-bg { background-color: #000000; }
 
@@ -223,14 +219,64 @@ html.dark .text-warning { color: var(--color-warning-dark); }
 .text-error { color: var(--color-error); }
 html.dark .text-error { color: var(--color-error-dark); }
 
-/* ----- Force workspace container to slate grey in dark mode ----- */
+/* ===== FORCE LIGHT MODE OVERRIDES ===== */
+/* This ensures ALL white/gray backgrounds use the warm palette in light mode */
+
+html:not(.dark) .bg-white {
+  background-color: #e5dcd0 !important;
+}
+
+html:not(.dark) .bg-gray-50 {
+  background-color: #ede6dc !important;
+}
+
+html:not(.dark) .bg-gray-100 {
+  background-color: #dbd2c5 !important;
+}
+
+html:not(.dark) .bg-gray-200 {
+  background-color: #d0c6b8 !important;
+}
+
+html:not(.dark) .bg-gray-800 {
+  background-color: #d0c6b8 !important;
+}
+
+html:not(.dark) .bg-gray-900 {
+  background-color: #e5dcd0 !important;
+}
+
+/* Force text colors in light mode */
+html:not(.dark) .text-gray-900 {
+  color: #332d26 !important;
+}
+
+html:not(.dark) .text-gray-700,
+html:not(.dark) .text-gray-600 {
+  color: #4a423a !important;
+}
+
+html:not(.dark) .text-gray-500,
+html:not(.dark) .text-gray-400 {
+  color: #615950 !important;
+}
+
+/* Force borders in light mode */
+html:not(.dark) .border-gray-200,
+html:not(.dark) .border-gray-300,
+html:not(.dark) .border-gray-700 {
+  border-color: #d0c6b8 !important;
+}
+
+/* ===== END FORCE LIGHT MODE OVERRIDES ===== */
+
+/* ----- Dark mode workspace ----- */
 html.dark .workspace-container {
-  background-color: #1e293b !important; /* slate-800 */
+  background-color: #1e293b !important;
   border-radius: 1rem !important;
   padding: 1.5rem !important;
 }
 
-/* ----- Force all major cards inside workspace to pure black in dark mode ----- */
 html.dark .workspace-container section,
 html.dark .workspace-container .bg-white,
 html.dark .workspace-container .bg-surface-widget,
@@ -248,21 +294,17 @@ html.dark select {
   background-color: #1f2937 !important;
   border-color: var(--color-border-dark) !important;
   color: var(--color-text-dark) !important;
-  font-size: 1rem !important;
-  padding: 0.6rem 0.75rem !important;
 }
 html.dark input::placeholder,
 html.dark textarea::placeholder {
   color: var(--color-text-muted-dark) !important;
 }
 
-/* ----- Button sizing to match larger text ----- */
 button {
   font-size: inherit;
   padding: 0.5rem 1rem;
 }
 
-/* Remove number input spinners */
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
   -webkit-appearance: none;
@@ -272,26 +314,22 @@ input[type="number"] {
   -moz-appearance: textfield;
 }
 
-/* Transitions */
 body, .bg-bg, .bg-surface, .bg-surface-nav, .bg-surface-widget, input, textarea, select, button, a {
   transition: background-color 0.2s, color 0.2s;
 }
 
-/* Toast animation */
 @keyframes slideUp {
   from { transform: translateY(1rem); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 }
 .animate-slide-up { animation: slideUp 0.3s ease-out; }
 
-/* Dropdown slide-down animation */
 @keyframes slideDown {
   from { opacity: 0; transform: translateY(-8px); }
   to { opacity: 1; transform: translateY(0); }
 }
 .animate-slide-down { animation: slideDown 0.2s ease-out; }
 
-/* Slide-in from left */
 @keyframes slideInLeft {
   from { transform: translateX(-100%); }
   to { transform: translateX(0); }

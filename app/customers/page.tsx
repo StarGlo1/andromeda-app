@@ -1,36 +1,14 @@
-"use client";
-
-import { useState, useTransition } from "react";
-import { useToast } from "@/app/context/ToastContext";
+import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import Navbar from "@/app/components/Navbar";
 
-interface Customer {
-  id: string;
-  name: string;
-  email: string | null;
-  phone: string | null;
-  sales: { totalAmount: number }[];
-}
-
-export default function CustomersPage({ customers }: { customers: Customer[] }) {
-  const { showToast } = useToast();
-  const [isDeleting, startDeleteTransition] = useTransition();
-
-  const handleDelete = async (id: string) => {
-    if (!confirm("Delete this customer?")) return;
-    startDeleteTransition(async () => {
-      try {
-        const res = await fetch(`/api/customers/${id}`, { method: "DELETE" });
-        if (!res.ok) throw new Error("Failed to delete");
-        showToast("Customer deleted successfully!", "success");
-        // Refresh the page
-        window.location.reload();
-      } catch (error: any) {
-        showToast(error.message || "Failed to delete customer.", "error");
-      }
-    });
-  };
+export default async function CustomersPage() {
+  const customers = await prisma.customer.findMany({
+    include: {
+      sales: { select: { totalAmount: true } },
+    },
+    orderBy: { name: "asc" },
+  });
 
   return (
     <main className="min-h-screen bg-bg text-text p-4 sm:p-8">
@@ -90,13 +68,15 @@ export default function CustomersPage({ customers }: { customers: Customer[] }) 
                             >
                               View
                             </Link>
-                            <button
-                              onClick={() => handleDelete(customer.id)}
-                              disabled={isDeleting}
-                              className="text-error hover:underline text-xs font-medium disabled:opacity-50"
-                            >
-                              Delete
-                            </button>
+                            <form action={`/api/customers/${customer.id}`} method="POST" className="inline">
+                              <input type="hidden" name="_method" value="DELETE" />
+                              <button
+                                type="submit"
+                                className="text-error hover:underline text-xs font-medium"
+                              >
+                                Delete
+                              </button>
+                            </form>
                           </div>
                         </td>
                       </tr>

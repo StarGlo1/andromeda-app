@@ -253,7 +253,7 @@ export default function SettingsPage() {
                 onClick={() => setUnitSystem("imperial")}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   unitSystem === "imperial"
-                    ? "bg-teal-600 text-white"
+                    ? "bg-[#4f8792] text-white"
                     : "bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-slate-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                 }`}
               >
@@ -263,7 +263,7 @@ export default function SettingsPage() {
                 onClick={() => setUnitSystem("metric")}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   unitSystem === "metric"
-                    ? "bg-teal-600 text-white"
+                    ? "bg-[#4f8792] text-white"
                     : "bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-slate-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                 }`}
               >
@@ -319,15 +319,15 @@ export default function SettingsPage() {
             </div>
             <button
               onClick={() => setShowConverter(!showConverter)}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full border transition-colors ${
+              className={`relative inline-flex h-8 w-16 items-center rounded-full border-2 px-0.5 transition-colors duration-300 ${
                 showConverter
-                  ? "bg-teal-500 dark:bg-teal-400 border-teal-500 dark:border-teal-400"
-                  : "bg-gray-300 dark:bg-gray-600 border-gray-400 dark:border-gray-500"
+                  ? "bg-[#4f8792] border-[#4f8792] justify-end"
+                  : "bg-transparent border-[#bfb4a4] dark:border-gray-600 justify-start"
               }`}
             >
               <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  showConverter ? "translate-x-6" : "translate-x-1"
+                className={`h-5 w-5 rounded-full shadow-md transition-all duration-300 ${
+                  showConverter ? "bg-white" : "bg-[#bfb4a4] dark:bg-gray-500"
                 }`}
               />
             </button>
@@ -346,7 +346,7 @@ export default function SettingsPage() {
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
             isDemoMode
               ? "bg-red-600 hover:bg-red-700 text-white"
-              : "bg-teal-600 hover:bg-teal-700 text-white"
+              : "bg-[#4f8792] hover:bg-[#426f79] text-white"
           }`}
         >
           {isDemoMode ? "Exit Demo Mode" : "Enter Demo Mode"}
@@ -416,7 +416,7 @@ export default function SettingsPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={handleSave}
-            className="bg-teal-600 hover:bg-teal-700 text-white text-sm font-medium px-6 py-2 rounded-lg border border-teal-600 transition-colors"
+            className="bg-[#4f8792] hover:bg-[#426f79] text-white text-sm font-medium px-6 py-2 rounded-lg border border-[#4f8792] transition-colors"
           >
             Save All Settings
           </button>

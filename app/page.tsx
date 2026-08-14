@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   Package,
   Calculator,
@@ -29,9 +30,9 @@ const QUICK_LINK_ICONS: Record<string, React.ComponentType<any>> = {
 };
 
 const DEFAULT_QUICK_LINKS = [
-  { name: 'Materials', href: '/materials', icon: 'Package', color: 'bg-teal-100 dark:bg-teal-900/40 text-teal-600 dark:text-teal-400' },
-  { name: 'Products', href: '/finished-goods', icon: 'Calculator', color: 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400' },
-  { name: 'Recipes', href: '/recipes', icon: 'FileText', color: 'bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400' },
+  { name: 'Materials', href: '/materials', icon: 'Package', color: 'bg-[#c5d9dd] text-[#3d5a60]' },
+  { name: 'Products', href: '/finished-goods', icon: 'Calculator', color: 'bg-[#d6d1e0] text-[#4d4760]' },
+  { name: 'Recipes', href: '/recipes', icon: 'FileText', color: 'bg-[#e8d9bf] text-[#5e4c30]' },
 ];
 
 const ALL_QUICK_LINKS = [
@@ -44,10 +45,25 @@ const ALL_QUICK_LINKS = [
   { name: 'Settings', href: '/settings', icon: 'Settings' },
   { name: 'Alerts', href: '/alerts', icon: 'Bell' },
   { name: 'Calculator', href: '/calculator', icon: 'Calculator' },
+  { name: 'Reports', href: '/reports', icon: 'FileText' },
+  { name: 'COGS', href: '/cogs', icon: 'Calculator' },
+  { name: 'Import / Export', href: '/import', icon: 'Truck' },
+  { name: 'Pricing', href: '/pricing', icon: 'Settings' },
 ];
 
+interface SearchResult {
+  name: string;
+  type: string;
+  href: string;
+  detail: string;
+}
+
 export default function CommandDeckPage() {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
   const [quickLinks, setQuickLinks] = useState(DEFAULT_QUICK_LINKS);
   const [editingQuickLinks, setEditingQuickLinks] = useState(false);
   const [dashboardData, setDashboardData] = useState({
@@ -127,6 +143,42 @@ export default function CommandDeckPage() {
     } catch {}
   };
 
+  useEffect(() => {
+    const searchTimer = setTimeout(async () => {
+      if (searchQuery.trim().length >= 2) {
+        setIsSearching(true);
+        try {
+          const res = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}`);
+          if (res.ok) {
+            const data = await res.json();
+            setSearchResults(data.results || []);
+            setShowSearchResults(true);
+          }
+        } catch (error) {
+          console.error("Search failed", error);
+        } finally {
+          setIsSearching(false);
+        }
+      } else {
+        setSearchResults([]);
+        setShowSearchResults(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(searchTimer);
+  }, [searchQuery]);
+
+  const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (searchResults.length > 0) {
+        router.push(searchResults[0].href);
+        setSearchQuery('');
+        setShowSearchResults(false);
+      }
+    }
+  };
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       <div>
@@ -138,19 +190,57 @@ export default function CommandDeckPage() {
 
       {/* Search Bar */}
       <div className="relative">
-        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none z-10">
           <Search className="w-4 h-4 text-gray-400 dark:text-gray-500" />
         </div>
         <input
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Quick search materials, suppliers, or product formulas..."
+          onKeyDown={handleSearch}
+          onBlur={() => setTimeout(() => setShowSearchResults(false), 200)}
+          onFocus={() => searchQuery.trim().length >= 2 && setShowSearchResults(true)}
+          placeholder="Search materials, products, suppliers, customers..."
           className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 shadow-sm"
         />
-        {searchQuery && (
-          <div className="absolute right-3 top-2.5 text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded border border-gray-200 dark:border-gray-700">
-            Press Enter to search
+
+        {showSearchResults && searchResults.length > 0 && (
+          <div className="absolute left-0 right-0 top-full mt-2 z-50 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg max-h-72 overflow-y-auto">
+            {searchResults.map((result, index) => (
+              <button
+                key={`${result.type}-${result.name}-${index}`}
+                onClick={() => {
+                  router.push(result.href);
+                  setSearchQuery('');
+                  setShowSearchResults(false);
+                }}
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              >
+                <span className="text-sm text-gray-900 dark:text-gray-100 font-medium">
+                  {result.name}
+                </span>
+                <span className="text-xs text-teal-600 dark:text-teal-400 font-medium">
+                  {result.type}
+                </span>
+                {result.detail && (
+                  <span className="ml-auto text-xs text-gray-500 dark:text-gray-400">
+                    {result.detail}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {showSearchResults && searchResults.length === 0 && searchQuery.trim().length >= 2 && !isSearching && (
+          <div className="absolute left-0 right-0 top-full mt-2 z-50 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg p-4 text-center text-sm text-gray-500 dark:text-gray-400">
+            No results found for "{searchQuery}"
+          </div>
+        )}
+
+        {isSearching && (
+          <div className="absolute right-3 top-2.5 text-xs text-gray-500 dark:text-gray-400">
+            Searching...
           </div>
         )}
       </div>
@@ -182,12 +272,12 @@ export default function CommandDeckPage() {
                     if (isSelected) {
                       saveQuickLinks(quickLinks.filter((ql) => ql.name !== link.name));
                     } else if (quickLinks.length < 3) {
-                      saveQuickLinks([...quickLinks, { ...link, color: 'bg-teal-100 dark:bg-teal-900/40 text-teal-600 dark:text-teal-400' }]);
+                      saveQuickLinks([...quickLinks, { ...link, color: 'bg-[#c5d9dd] text-[#3d5a60]' }]);
                     }
                   }}
                   className={`p-3 rounded-xl border text-sm font-medium transition-colors ${
                     isSelected
-                      ? 'bg-teal-600 text-white border-teal-600'
+                      ? 'bg-[#4f8792] text-white border-[#4f8792]'
                       : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                   }`}
                 >
@@ -204,19 +294,19 @@ export default function CommandDeckPage() {
                 <Link
                   key={link.name}
                   href={link.href}
-                  className="flex items-center justify-between p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-teal-600 dark:hover:border-teal-400 transition-colors group bg-gray-50 dark:bg-gray-800"
+                  className="flex items-center justify-between p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-[#4f8792] dark:hover:border-[#4f8792] transition-colors group bg-gray-50 dark:bg-gray-800"
                 >
                   <div className="flex items-center gap-3">
                     <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${link.color}`}>
                       <IconComponent className="w-5 h-5" />
                     </div>
                     <div>
-                      <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">
+                      <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 group-hover:text-[#4f8792] dark:group-hover:text-[#4f8792] transition-colors">
                         {link.name}
                       </h3>
                     </div>
                   </div>
-                  <ArrowRight className="w-4 h-4 text-gray-400 dark:text-gray-500 group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors" />
+                  <ArrowRight className="w-4 h-4 text-gray-400 dark:text-gray-500 group-hover:text-[#4f8792] dark:group-hover:text-[#4f8792] transition-colors" />
                 </Link>
               );
             })}

@@ -237,7 +237,7 @@ export default function DashboardWidgets({ data }: { data: any }) {
     };
 
     const widgetBody = (
-      <div className="flex flex-col h-full">
+      <>
         <div className="flex items-start gap-2 mb-1">
           <span className="text-lg shrink-0 leading-none mt-0.5">{widget.icon}</span>
           <p className="text-gray-500 dark:text-gray-400 text-xs font-semibold uppercase tracking-wider break-words leading-tight">
@@ -337,7 +337,7 @@ export default function DashboardWidgets({ data }: { data: any }) {
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">Based on total revenue and COGS</p>
           )}
         </div>
-      </div>
+      </>
     );
 
     return (
@@ -401,7 +401,7 @@ export default function DashboardWidgets({ data }: { data: any }) {
               <XAxis dataKey="name" tick={{ fill: "#6b7280" }} />
               <YAxis tick={{ fill: "#6b7280" }} />
               <Tooltip contentStyle={{ backgroundColor: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "8px" }} />
-              <Bar dataKey="profit" fill="#0d9488" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="profit" fill="#4f8792" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         ) : (
@@ -419,7 +419,7 @@ export default function DashboardWidgets({ data }: { data: any }) {
               <XAxis dataKey="name" tick={{ fill: "#6b7280" }} />
               <YAxis tick={{ fill: "#6b7280" }} />
               <Tooltip contentStyle={{ backgroundColor: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "8px" }} />
-              <Bar dataKey="quantity" fill="#0d9488" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="quantity" fill="#4f8792" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -435,7 +435,7 @@ export default function DashboardWidgets({ data }: { data: any }) {
               <XAxis dataKey="month" tick={{ fill: "#6b7280" }} />
               <YAxis tick={{ fill: "#6b7280" }} />
               <Tooltip contentStyle={{ backgroundColor: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "8px" }} />
-              <Line type="monotone" dataKey="margin" stroke="#0d9488" strokeWidth={2} dot={{ r: 4 }} />
+              <Line type="monotone" dataKey="margin" stroke="#4f8792" strokeWidth={2} dot={{ r: 4 }} />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -482,10 +482,30 @@ export default function DashboardWidgets({ data }: { data: any }) {
         <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-5">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">Quick Actions</h2>
           <div className="grid grid-cols-2 gap-2">
-            <a href="/materials" className="flex items-center justify-center gap-2 bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 hover:bg-teal-600 hover:text-white dark:hover:bg-teal-600 dark:hover:text-white px-4 py-2 rounded-full text-sm font-medium transition-colors"><span className="text-base">+</span> Material</a>
-            <a href="/finished-goods" className="flex items-center justify-center gap-2 bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 hover:bg-teal-600 hover:text-white dark:hover:bg-teal-600 dark:hover:text-white px-4 py-2 rounded-full text-sm font-medium transition-colors"><span className="text-base">+</span> Product</a>
-            <a href="/import" className="flex items-center justify-center gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-teal-600 hover:text-white dark:hover:bg-teal-600 dark:hover:text-white px-4 py-2 rounded-full text-sm font-medium transition-colors">📥 Import</a>
-            <a href="/categories" className="flex items-center justify-center gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-teal-600 hover:text-white dark:hover:bg-teal-600 dark:hover:text-white px-4 py-2 rounded-full text-sm font-medium transition-colors">📋 Categories</a>
+            <a
+              href="/materials"
+              className="flex items-center justify-center gap-2 bg-[#4f8792] text-white hover:bg-[#426f79] px-4 py-2 rounded-full text-sm font-medium transition-colors"
+            >
+              <span className="text-base">+</span> Material
+            </a>
+            <a
+              href="/finished-goods"
+              className="flex items-center justify-center gap-2 bg-[#4f8792] text-white hover:bg-[#426f79] px-4 py-2 rounded-full text-sm font-medium transition-colors"
+            >
+              <span className="text-base">+</span> Product
+            </a>
+            <a
+              href="/import"
+              className="flex items-center justify-center gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-[#4f8792] hover:text-white dark:hover:bg-[#4f8792] dark:hover:text-white px-4 py-2 rounded-full text-sm font-medium transition-colors"
+            >
+              📥 Import
+            </a>
+            <a
+              href="/categories"
+              className="flex items-center justify-center gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-[#4f8792] hover:text-white dark:hover:bg-[#4f8792] dark:hover:text-white px-4 py-2 rounded-full text-sm font-medium transition-colors"
+            >
+              📋 Categories
+            </a>
           </div>
         </div>
 

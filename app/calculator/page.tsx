@@ -1,4 +1,3 @@
-// app/calculator/page.tsx
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -89,34 +88,28 @@ function FragranceOilAutocomplete({
 }
 
 export default function CalculatorPage() {
-  // ----- Main Calculator State -----
   const [unitSystem, setUnitSystem] = useState<"imperial" | "metric">("imperial");
   const [containerCount, setContainerCount] = useState<number>(6);
   const [fillWeight, setFillWeight] = useState<number>(8.0);
   const [fragranceLoad, setFragranceLoad] = useState<number>(8);
   const [safetyBuffer, setSafetyBuffer] = useState<number>(5);
 
-  // ----- Fragrance Oil State -----
   const [primaryFO, setPrimaryFO] = useState<FragranceOil | null>(null);
   const [primaryFOInput, setPrimaryFOInput] = useState("");
 
-  // ----- Fragrance Oil Blend State -----
   const [foBlendEnabled, setFoBlendEnabled] = useState<boolean>(false);
   const [foBlends, setFoBlends] = useState<FragranceBlend[]>([
     { name: "", percentage: 100, materialId: undefined },
   ]);
   const [availableOils, setAvailableOils] = useState<FragranceOil[]>([]);
 
-  // ----- Quick Calculator State -----
   const [quickWaxWeight, setQuickWaxWeight] = useState<number>(16);
   const [quickFragranceLoad, setQuickFragranceLoad] = useState<number>(8);
 
-  // Fetch fragrance oils for autocomplete
   useEffect(() => {
     getFragranceOils().then(setAvailableOils);
   }, []);
 
-  // ----- Derived Values -----
   const flDecimal = fragranceLoad / 100;
   const bufferDecimal = safetyBuffer / 100;
 
@@ -137,7 +130,6 @@ export default function CalculatorPage() {
   const totalWaxDisplayUnits = totalWaxWithBuffer / conversionDivisor;
   const totalOilDisplayUnits = totalOilWithBuffer / conversionDivisor;
 
-  // ----- Fragrance Oil Blend Helpers -----
   const addFragranceBlend = () => {
     setFoBlends([...foBlends, { name: "", percentage: 0, materialId: undefined }]);
   };
@@ -159,11 +151,9 @@ export default function CalculatorPage() {
     setFoBlends(foBlends.map((blend, i) => (i === index ? { ...blend, percentage } : blend)));
   };
 
-  // Validation for blend total
   const blendTotal = foBlends.reduce((sum, blend) => sum + blend.percentage, 0);
   const blendError = foBlendEnabled && Math.abs(blendTotal - 100) > 0.01;
 
-  // ----- Quick Calculator Results -----
   const quickFlDecimal = quickFragranceLoad / 100;
   const quickRequiredOil = quickWaxWeight * quickFlDecimal;
 
@@ -194,8 +184,8 @@ export default function CalculatorPage() {
                 onClick={() => setUnitSystem("imperial")}
                 className={`px-4 py-2 rounded-full text-xs font-medium transition-colors ${
                   unitSystem === "imperial"
-                    ? "bg-teal-600 text-white"
-                    : "bg-bg border border-default text-text-muted hover:bg-teal-100 dark:hover:bg-teal-900"
+                    ? "bg-[#4f8792] text-white"
+                    : "bg-bg border border-default text-text-muted hover:bg-[#c5d9dd] dark:hover:bg-teal-900"
                 }`}
               >
                 Imperial
@@ -204,8 +194,8 @@ export default function CalculatorPage() {
                 onClick={() => setUnitSystem("metric")}
                 className={`px-4 py-2 rounded-full text-xs font-medium transition-colors ${
                   unitSystem === "metric"
-                    ? "bg-teal-600 text-white"
-                    : "bg-bg border border-default text-text-muted hover:bg-teal-100 dark:hover:bg-teal-900"
+                    ? "bg-[#4f8792] text-white"
+                    : "bg-bg border border-default text-text-muted hover:bg-[#c5d9dd] dark:hover:bg-teal-900"
                 }`}
               >
                 Metric
@@ -312,7 +302,7 @@ export default function CalculatorPage() {
                   setFoBlends([{ name: "", percentage: 100, materialId: undefined }]);
                 }
               }}
-              className="rounded border-default accent-teal-600"
+              className="rounded border-default accent-[#4f8792]"
             />
             I mix my own fragrance oils
           </label>
@@ -357,7 +347,7 @@ export default function CalculatorPage() {
               )}
               <button
                 onClick={addFragranceBlend}
-                className="mt-2 inline-flex items-center px-3 py-1.5 rounded-full bg-teal-100 dark:bg-teal-900 text-teal-700 dark:text-teal-300 border border-teal-300 dark:border-teal-700 hover:bg-teal-200 dark:hover:bg-teal-800 text-xs font-medium"
+                className="mt-2 inline-flex items-center px-3 py-1.5 rounded-full bg-[#c5d9dd] text-[#3d5a60] border border-[#b0c9ce] hover:bg-[#b0c9ce] text-xs font-medium dark:bg-teal-900/30 dark:text-teal-300 dark:border-teal-700 dark:hover:bg-teal-800/50"
               >
                 + Add FO
               </button>
@@ -479,7 +469,7 @@ export default function CalculatorPage() {
         <div className="mt-4 p-4 rounded-lg bg-bg border border-default">
           <div className="flex items-center justify-between">
             <span className="text-text-muted text-sm">Required Fragrance Oil:</span>
-            <span className="text-lg font-bold text-teal-600 dark:text-teal-400">
+            <span className="text-lg font-bold text-[#4f8792] dark:text-teal-400">
               {quickRequiredOil.toFixed(2)} {unitLabel}
             </span>
           </div>
@@ -515,36 +505,12 @@ export default function CalculatorPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-default">
-                <tr className="hover:bg-bg/50">
-                  <td className="px-4 py-2.5 font-medium text-text">1 oz</td>
-                  <td className="px-4 py-2.5 text-text-secondary">28.35 g</td>
-                  <td className="px-4 py-2.5 text-text-secondary">0.063 lb</td>
-                </tr>
-                <tr className="hover:bg-bg/50">
-                  <td className="px-4 py-2.5 font-medium text-text">4 oz</td>
-                  <td className="px-4 py-2.5 text-text-secondary">113.40 g</td>
-                  <td className="px-4 py-2.5 text-text-secondary">0.250 lb</td>
-                </tr>
-                <tr className="hover:bg-bg/50">
-                  <td className="px-4 py-2.5 font-medium text-text">8 oz</td>
-                  <td className="px-4 py-2.5 text-text-secondary">226.80 g</td>
-                  <td className="px-4 py-2.5 text-text-secondary">0.500 lb</td>
-                </tr>
-                <tr className="hover:bg-bg/50">
-                  <td className="px-4 py-2.5 font-medium text-text">12 oz</td>
-                  <td className="px-4 py-2.5 text-text-secondary">340.19 g</td>
-                  <td className="px-4 py-2.5 text-text-secondary">0.750 lb</td>
-                </tr>
-                <tr className="hover:bg-bg/50">
-                  <td className="px-4 py-2.5 font-medium text-text">16 oz (1 lb)</td>
-                  <td className="px-4 py-2.5 text-text-secondary">453.59 g</td>
-                  <td className="px-4 py-2.5 text-text-secondary">1.000 lb</td>
-                </tr>
-                <tr className="hover:bg-bg/50">
-                  <td className="px-4 py-2.5 font-medium text-text">35.27 oz</td>
-                  <td className="px-4 py-2.5 text-text-secondary">1,000.00 g (1 kg)</td>
-                  <td className="px-4 py-2.5 text-text-secondary">2.205 lb</td>
-                </tr>
+                <tr className="hover:bg-bg/50"><td className="px-4 py-2.5 font-medium text-text">1 oz</td><td className="px-4 py-2.5 text-text-secondary">28.35 g</td><td className="px-4 py-2.5 text-text-secondary">0.063 lb</td></tr>
+                <tr className="hover:bg-bg/50"><td className="px-4 py-2.5 font-medium text-text">4 oz</td><td className="px-4 py-2.5 text-text-secondary">113.40 g</td><td className="px-4 py-2.5 text-text-secondary">0.250 lb</td></tr>
+                <tr className="hover:bg-bg/50"><td className="px-4 py-2.5 font-medium text-text">8 oz</td><td className="px-4 py-2.5 text-text-secondary">226.80 g</td><td className="px-4 py-2.5 text-text-secondary">0.500 lb</td></tr>
+                <tr className="hover:bg-bg/50"><td className="px-4 py-2.5 font-medium text-text">12 oz</td><td className="px-4 py-2.5 text-text-secondary">340.19 g</td><td className="px-4 py-2.5 text-text-secondary">0.750 lb</td></tr>
+                <tr className="hover:bg-bg/50"><td className="px-4 py-2.5 font-medium text-text">16 oz (1 lb)</td><td className="px-4 py-2.5 text-text-secondary">453.59 g</td><td className="px-4 py-2.5 text-text-secondary">1.000 lb</td></tr>
+                <tr className="hover:bg-bg/50"><td className="px-4 py-2.5 font-medium text-text">35.27 oz</td><td className="px-4 py-2.5 text-text-secondary">1,000.00 g (1 kg)</td><td className="px-4 py-2.5 text-text-secondary">2.205 lb</td></tr>
               </tbody>
             </table>
           </div>
@@ -566,36 +532,12 @@ export default function CalculatorPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-default">
-                <tr className="hover:bg-bg/50">
-                  <td className="px-4 py-2.5 font-medium text-text">6%</td>
-                  <td className="px-4 py-2.5 text-text-secondary">0.96 oz</td>
-                  <td className="px-4 py-2.5 text-text-secondary">27.2 g</td>
-                </tr>
-                <tr className="hover:bg-bg/50">
-                  <td className="px-4 py-2.5 font-medium text-text">7%</td>
-                  <td className="px-4 py-2.5 text-text-secondary">1.12 oz</td>
-                  <td className="px-4 py-2.5 text-text-secondary">31.8 g</td>
-                </tr>
-                <tr className="hover:bg-bg/50">
-                  <td className="px-4 py-2.5 font-medium text-text">8% (Standard)</td>
-                  <td className="px-4 py-2.5 text-text-secondary">1.28 oz</td>
-                  <td className="px-4 py-2.5 text-text-secondary">36.3 g</td>
-                </tr>
-                <tr className="hover:bg-bg/50">
-                  <td className="px-4 py-2.5 font-medium text-text">9%</td>
-                  <td className="px-4 py-2.5 text-text-secondary">1.44 oz</td>
-                  <td className="px-4 py-2.5 text-text-secondary">40.8 g</td>
-                </tr>
-                <tr className="hover:bg-bg/50">
-                  <td className="px-4 py-2.5 font-medium text-text">10% (Max Heavy)</td>
-                  <td className="px-4 py-2.5 text-text-secondary">1.60 oz</td>
-                  <td className="px-4 py-2.5 text-text-secondary">45.4 g</td>
-                </tr>
-                <tr className="hover:bg-bg/50">
-                  <td className="px-4 py-2.5 font-medium text-text">12% (Melt Limit)</td>
-                  <td className="px-4 py-2.5 text-text-secondary">1.92 oz</td>
-                  <td className="px-4 py-2.5 text-text-secondary">54.4 g</td>
-                </tr>
+                <tr className="hover:bg-bg/50"><td className="px-4 py-2.5 font-medium text-text">6%</td><td className="px-4 py-2.5 text-text-secondary">0.96 oz</td><td className="px-4 py-2.5 text-text-secondary">27.2 g</td></tr>
+                <tr className="hover:bg-bg/50"><td className="px-4 py-2.5 font-medium text-text">7%</td><td className="px-4 py-2.5 text-text-secondary">1.12 oz</td><td className="px-4 py-2.5 text-text-secondary">31.8 g</td></tr>
+                <tr className="hover:bg-bg/50"><td className="px-4 py-2.5 font-medium text-text">8% (Standard)</td><td className="px-4 py-2.5 text-text-secondary">1.28 oz</td><td className="px-4 py-2.5 text-text-secondary">36.3 g</td></tr>
+                <tr className="hover:bg-bg/50"><td className="px-4 py-2.5 font-medium text-text">9%</td><td className="px-4 py-2.5 text-text-secondary">1.44 oz</td><td className="px-4 py-2.5 text-text-secondary">40.8 g</td></tr>
+                <tr className="hover:bg-bg/50"><td className="px-4 py-2.5 font-medium text-text">10% (Max Heavy)</td><td className="px-4 py-2.5 text-text-secondary">1.60 oz</td><td className="px-4 py-2.5 text-text-secondary">45.4 g</td></tr>
+                <tr className="hover:bg-bg/50"><td className="px-4 py-2.5 font-medium text-text">12% (Melt Limit)</td><td className="px-4 py-2.5 text-text-secondary">1.92 oz</td><td className="px-4 py-2.5 text-text-secondary">54.4 g</td></tr>
               </tbody>
             </table>
           </div>
