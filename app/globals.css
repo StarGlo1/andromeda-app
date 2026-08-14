@@ -139,9 +139,15 @@ html.dark {
 }
 
 /* ----- Global application ----- */
+html {
+  font-size: 16px;
+}
+
 body {
   background-color: var(--color-bg);
   color: var(--color-text);
+  font-size: 1.3005rem; /* 1.586 * 0.82 */
+  line-height: 1.55;
   transition: background-color 0.2s, color 0.2s;
 }
 
@@ -160,6 +166,16 @@ html.dark {
 body {
   background-color: inherit;
 }
+
+/* ----- GLOBAL TEXT SIZE (adjusted down 18% from previous) ----- */
+.text-xs { font-size: 0.9754rem !important; line-height: 1.35 !important; }
+.text-sm { font-size: 1.138rem !important; line-height: 1.45 !important; }
+.text-base { font-size: 1.3005rem !important; line-height: 1.55 !important; }
+.text-lg { font-size: 1.4631rem !important; line-height: 1.55 !important; }
+.text-xl { font-size: 1.6257rem !important; line-height: 1.5 !important; }
+.text-2xl { font-size: 1.9508rem !important; line-height: 1.4 !important; }
+.text-3xl { font-size: 2.4385rem !important; line-height: 1.3 !important; }
+.text-4xl { font-size: 2.9262rem !important; line-height: 1.2 !important; }
 
 /* ----- Utility classes for every role ----- */
 .bg-bg { background-color: var(--color-bg); }
@@ -232,10 +248,18 @@ html.dark select {
   background-color: #1f2937 !important;
   border-color: var(--color-border-dark) !important;
   color: var(--color-text-dark) !important;
+  font-size: 1rem !important;
+  padding: 0.6rem 0.75rem !important;
 }
 html.dark input::placeholder,
 html.dark textarea::placeholder {
   color: var(--color-text-muted-dark) !important;
+}
+
+/* ----- Button sizing to match larger text ----- */
+button {
+  font-size: inherit;
+  padding: 0.5rem 1rem;
 }
 
 /* Remove number input spinners */

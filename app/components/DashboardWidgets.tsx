@@ -237,24 +237,23 @@ export default function DashboardWidgets({ data }: { data: any }) {
     };
 
     const widgetBody = (
-      <>
+      <div className="flex flex-col h-full">
         <div className="flex items-start gap-2 mb-1">
-          <span className="text-xl shrink-0">{widget.icon}</span>
-          <p className="text-gray-500 dark:text-gray-400 text-xs font-semibold uppercase tracking-wider break-words">
+          <span className="text-lg shrink-0 leading-none mt-0.5">{widget.icon}</span>
+          <p className="text-gray-500 dark:text-gray-400 text-xs font-semibold uppercase tracking-wider break-words leading-tight">
             {widget.label}
           </p>
-          {!editMode && <span className="ml-auto" />}
         </div>
 
         {editMode && (
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center justify-between mb-1">
             <div className="flex gap-1">
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   moveWidget(index, "up");
                 }}
-                className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 text-xs px-1"
+                className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 text-xs px-1 py-0.5"
                 title="Move up"
               >
                 ▲
@@ -264,7 +263,7 @@ export default function DashboardWidgets({ data }: { data: any }) {
                   e.stopPropagation();
                   moveWidget(index, "down");
                 }}
-                className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 text-xs px-1"
+                className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 text-xs px-1 py-0.5"
                 title="Move down"
               >
                 ▼
@@ -277,7 +276,7 @@ export default function DashboardWidgets({ data }: { data: any }) {
                   e.stopPropagation();
                   setMenuOpen(menuOpen === key ? null : key);
                 }}
-                className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 text-xs px-1"
+                className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 text-xs px-1 py-0.5"
                 title="Resize"
               >
                 •••
@@ -306,37 +305,39 @@ export default function DashboardWidgets({ data }: { data: any }) {
           </div>
         )}
 
-        <p className={`${isLarge ? "text-3xl" : "text-2xl"} font-bold mt-2 ${textColor}`}>{value}</p>
+        <div className="flex-1 flex flex-col justify-center">
+          <p className={`${isLarge ? "text-2xl" : "text-xl"} font-bold ${textColor}`}>{value}</p>
 
-        {key === "topSelling" && isLarge && renderList(data.topSelling, (item) => (
-          <div className="flex justify-between text-xs text-gray-600 dark:text-gray-300">
-            <span className="truncate">{item.name}</span>
-            <span>{item.quantity} sold</span>
-          </div>
-        ), 5)}
+          {key === "topSelling" && isLarge && renderList(data.topSelling, (item) => (
+            <div className="flex justify-between text-xs text-gray-600 dark:text-gray-300">
+              <span className="truncate">{item.name}</span>
+              <span>{item.quantity} sold</span>
+            </div>
+          ), 5)}
 
-        {key === "reorderSuggestions" && renderList(data.reorderSuggestions, (item) => (
-          <div className="flex justify-between text-xs text-gray-600 dark:text-gray-300">
-            <span className="truncate">{item.name}</span>
-            <span>Order {item.suggestedOrder} {item.unit}</span>
-          </div>
-        ), isLarge ? 5 : 2)}
+          {key === "reorderSuggestions" && renderList(data.reorderSuggestions, (item) => (
+            <div className="flex justify-between text-xs text-gray-600 dark:text-gray-300">
+              <span className="truncate">{item.name}</span>
+              <span>Order {item.suggestedOrder} {item.unit}</span>
+            </div>
+          ), isLarge ? 5 : 2)}
 
-        {key === "expiringStock" && isLarge && renderList(data.expiringStock, (item) => (
-          <div className="flex justify-between text-xs text-gray-600 dark:text-gray-300">
-            <span className="truncate">{item.name}</span>
-            <span>{item.totalQuantity} {item.unit}</span>
-          </div>
-        ), 5)}
+          {key === "expiringStock" && isLarge && renderList(data.expiringStock, (item) => (
+            <div className="flex justify-between text-xs text-gray-600 dark:text-gray-300">
+              <span className="truncate">{item.name}</span>
+              <span>{item.totalQuantity} {item.unit}</span>
+            </div>
+          ), 5)}
 
-        {key === "pendingSales" && isLarge && (
-          <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-2">Awaiting payment or fulfillment</p>
-        )}
+          {key === "pendingSales" && isLarge && (
+            <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-2">Awaiting payment or fulfillment</p>
+          )}
 
-        {key === "profitMargin" && isLarge && (
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">Based on total revenue and COGS</p>
-        )}
-      </>
+          {key === "profitMargin" && isLarge && (
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">Based on total revenue and COGS</p>
+          )}
+        </div>
+      </div>
     );
 
     return (
@@ -350,7 +351,7 @@ export default function DashboardWidgets({ data }: { data: any }) {
           if (editMode) return;
           if (key === "alerts") router.push("/alerts");
         }}
-        className={`relative bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-5 transition-colors ${
+        className={`relative bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-4 transition-colors overflow-hidden ${
           editMode
             ? "cursor-grab active:cursor-grabbing ring-2 ring-teal-500"
             : key === "alerts"
@@ -372,12 +373,13 @@ export default function DashboardWidgets({ data }: { data: any }) {
 
   return (
     <div className="space-y-8">
-      <div className="grid grid-cols-12 gap-4 auto-rows-[120px]">
+      <div className={`grid grid-cols-12 gap-4 ${editMode ? "auto-rows-[160px]" : "auto-rows-[135px]"}`}>
         {order.map((key, idx) => renderWidget(key, idx))}
       </div>
 
       <div className="flex justify-end">
         <button
+          type="button"
           onClick={() => setEditMode(!editMode)}
           className={`text-sm font-medium px-4 py-2 rounded-lg transition-colors ${
             editMode
