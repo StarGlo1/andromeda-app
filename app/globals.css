@@ -86,6 +86,11 @@
   --color-info-muted-dark: #0c4a6e;
 }
 
+/* Add default sidebar width variable for layout */
+:root {
+  --sidebar-width: 16rem;
+}
+
 /* ----- BROWSER-LEVEL FIX for mobile auto-darkening ----- */
 html { color-scheme: light dark; }
 html.dark { color-scheme: dark; }

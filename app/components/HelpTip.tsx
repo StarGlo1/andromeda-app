@@ -11,18 +11,14 @@ export function HelpTip({ text }: { text: string }) {
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
     >
-      <button
-        type="button"
-        className="focus:outline-none"
-        aria-label="Help"
-      >
+      <button type="button" className="focus:outline-none" aria-label="Help">
         <span className="text-sm">☄️</span>
       </button>
 
       {open && (
         <span
           role="tooltip"
-          className="absolute z-20 bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 px-3 py-2 rounded-lg shadow-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs text-gray-700 dark:text-gray-200 text-center"
+          className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 px-3 py-2 rounded-lg shadow-xl bg-white text-gray-900 border border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600 text-xs font-medium text-center"
         >
           {text}
           <span className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-white dark:border-t-gray-800" />

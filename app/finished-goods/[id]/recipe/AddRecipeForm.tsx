@@ -1,29 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { useToast } from "@/app/context/ToastContext";
 
-function FieldTooltip({ text }: { text: string }) {
-  return (
-    <span className="relative ml-1 group">
-      <span className="cursor-help text-text-muted hover:text-text text-xs font-bold border border-default rounded-full px-1.5 py-0.5 leading-none">?</span>
-      <span
-        className="fixed invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-opacity z-50 w-52 px-3 py-2 bg-surface-elevated border border-default text-xs text-text rounded-lg shadow-lg pointer-events-none"
-        style={{ transform: "translate(-50%, -100%)", marginTop: "-0.5rem" }}
-        ref={(el) => {
-          if (el) {
-            const icon = el.previousElementSibling as HTMLElement;
-            if (icon) {
-              const rect = icon.getBoundingClientRect();
-              el.style.left = `${rect.left + rect.width / 2}px`;
-              el.style.top = `${rect.top}px`;
-            }
-          }
-        }}
-      >
-        {text}
-      </span>
-    </span>
-  );
+interface AddRecipeFormProps {
+  finishedGoodId: string;
+  materials: { id: string; name: string; unit?: string }[];
+  subAssemblies: { id: string; name: string }[];
+  addAction: (formData: FormData) => Promise<void>;
 }
 
 export function AddRecipeForm({
@@ -31,127 +15,147 @@ export function AddRecipeForm({
   materials,
   subAssemblies,
   addAction,
-}: {
-  finishedGoodId: string;
-  materials: { id: string; name: string; unit: string | null }[];
-  subAssemblies: { id: string; name: string }[];
-  addAction: (formData: FormData) => Promise<void>;
-}) {
-  const [ingredientType, setIngredientType] = useState<"raw" | "sub">("raw");
-  const [selectedMaterialId, setSelectedMaterialId] = useState("");
-  const [selectedSubAssemblyId, setSelectedSubAssemblyId] = useState("");
-  const [unit, setUnit] = useState("");
-  const [pending, setPending] = useState(false);
+}: AddRecipeFormProps) {
+  const { showToast } = useToast();
+  const [isPending, startTransition] = useTransition();
 
-  const handleMaterialChange = (id: string) => {
-    setSelectedMaterialId(id);
-    const material = materials.find((m) => m.id === id);
-    if (material && material.unit) {
-      setUnit(material.unit);
+  const [ingredientType, setIngredientType] = useState<"raw" | "core">("raw");
+  const [rawMaterialId, setRawMaterialId] = useState("");
+  const [coreElementId, setCoreElementId] = useState("");
+  const [requiredQuantity, setRequiredQuantity] = useState("");
+  const [unit, setUnit] = useState("");
+
+  const selectedMaterial = materials.find((m) => m.id === rawMaterialId);
+
+  const handleIngredientTypeChange = (type: "raw" | "core") => {
+    setIngredientType(type);
+    if (type === "raw") {
+      setCoreElementId("");
+      setUnit("");
     } else {
+      setRawMaterialId("");
       setUnit("");
     }
   };
 
-  const handleSubAssemblyChange = (id: string) => {
-    setSelectedSubAssemblyId(id);
-    setUnit("unit"); // Sub‑assemblies are counted in units
-  };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-  const handleTypeChange = (type: "raw" | "sub") => {
-    setIngredientType(type);
-    setSelectedMaterialId("");
-    setSelectedSubAssemblyId("");
-    setUnit("");
+    if (!finishedGoodId) return;
+    if (!requiredQuantity || parseFloat(requiredQuantity) <= 0) {
+      showToast("Please enter a valid quantity.", "error");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("finishedGoodId", finishedGoodId);
+    formData.append("requiredQuantity", requiredQuantity);
+    formData.append("unit", unit || "unit");
+
+    if (ingredientType === "raw") {
+      if (!rawMaterialId) {
+        showToast("Please select a raw material.", "error");
+        return;
+      }
+      formData.append("ingredientType", "raw");
+      formData.append("rawMaterialId", rawMaterialId);
+      // Auto-fill unit from selected material if available
+      if (selectedMaterial?.unit) {
+        formData.set("unit", selectedMaterial.unit);
+      }
+    } else {
+      if (!coreElementId) {
+        showToast("Please select a Core Element.", "error");
+        return;
+      }
+      formData.append("ingredientType", "core");
+      formData.append("subAssemblyId", coreElementId);
+    }
+
+    startTransition(async () => {
+      try {
+        await addAction(formData);
+        showToast("Ingredient added successfully!", "success");
+        setRawMaterialId("");
+        setCoreElementId("");
+        setRequiredQuantity("");
+        setUnit("");
+      } catch (error: any) {
+        showToast(error.message || "Failed to add ingredient.", "error");
+      }
+    });
   };
 
   return (
     <div className="bg-surface-widget border border-default rounded-xl p-6">
       <h2 className="text-lg font-semibold text-text mb-4">Add Ingredient to Recipe</h2>
-      <form
-        action={async (formData) => {
-          setPending(true);
-          try {
-            await addAction(formData);
-          } finally {
-            setPending(false);
-          }
-        }}
-        className="flex flex-wrap gap-3 items-end"
-      >
-        <input type="hidden" name="finishedGoodId" value={finishedGoodId} />
-        <input type="hidden" name="ingredientType" value={ingredientType} />
 
-        {/* Ingredient Type Toggle */}
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Ingredient Type */}
         <div>
           <label className="block text-text-muted text-xs font-medium uppercase mb-1">
             Ingredient Type
           </label>
-          <div className="flex gap-1 bg-bg border border-default rounded-lg p-1">
+          <div className="flex gap-2">
             <button
               type="button"
-              onClick={() => handleTypeChange("raw")}
-              className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+              onClick={() => handleIngredientTypeChange("raw")}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 ingredientType === "raw"
-                  ? "bg-brand text-white"
-                  : "text-text-muted hover:text-text"
+                  ? "bg-teal-600 text-white"
+                  : "bg-surface border border-default text-text-muted hover:bg-brand-muted"
               }`}
             >
               Raw Material
             </button>
             <button
               type="button"
-              onClick={() => handleTypeChange("sub")}
-              className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
-                ingredientType === "sub"
-                  ? "bg-brand text-white"
-                  : "text-text-muted hover:text-text"
+              onClick={() => handleIngredientTypeChange("core")}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                ingredientType === "core"
+                  ? "bg-teal-600 text-white"
+                  : "bg-surface border border-default text-text-muted hover:bg-brand-muted"
               }`}
             >
-              Sub‑Assembly
+              Core Element
             </button>
           </div>
         </div>
 
-        {/* Raw Material Selector */}
-        {ingredientType === "raw" && (
+        {/* Selector */}
+        {ingredientType === "raw" ? (
           <div>
-            <label className="flex items-center text-text-muted text-xs font-medium uppercase mb-1">
+            <label className="block text-text-muted text-xs font-medium uppercase mb-1">
               Raw Material
-              <FieldTooltip text="Pick a material from your inventory to add to this recipe." />
             </label>
             <select
-              name="rawMaterialId"
-              required
-              value={selectedMaterialId}
-              onChange={(e) => handleMaterialChange(e.target.value)}
-              className="w-64 px-3 py-2 bg-bg border border-default rounded-lg text-text focus:outline-none focus:ring-2 focus:ring-brand text-sm"
+              value={rawMaterialId}
+              onChange={(e) => {
+                setRawMaterialId(e.target.value);
+                const mat = materials.find((m) => m.id === e.target.value);
+                if (mat?.unit) setUnit(mat.unit);
+              }}
+              className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text focus:outline-none focus:ring-2 focus:ring-brand text-sm"
             >
               <option value="">Select material...</option>
               {materials.map((mat) => (
                 <option key={mat.id} value={mat.id}>
-                  {mat.name} ({mat.unit ?? "unit"})
+                  {mat.name}
                 </option>
               ))}
             </select>
           </div>
-        )}
-
-        {/* Sub‑Assembly Selector */}
-        {ingredientType === "sub" && (
+        ) : (
           <div>
-            <label className="flex items-center text-text-muted text-xs font-medium uppercase mb-1">
-              Sub‑Assembly
-              <FieldTooltip text="Pick a sub‑assembly product to use as an ingredient." />
+            <label className="block text-text-muted text-xs font-medium uppercase mb-1">
+              Core Element
             </label>
             <select
-              name="subAssemblyId"
-              required
-              value={selectedSubAssemblyId}
-              onChange={(e) => handleSubAssemblyChange(e.target.value)}
-              className="w-64 px-3 py-2 bg-bg border border-default rounded-lg text-text focus:outline-none focus:ring-2 focus:ring-brand text-sm"
+              value={coreElementId}
+              onChange={(e) => setCoreElementId(e.target.value)}
+              className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text focus:outline-none focus:ring-2 focus:ring-brand text-sm"
             >
-              <option value="">Select sub‑assembly...</option>
+              <option value="">Select Core Element...</option>
               {subAssemblies.map((sub) => (
                 <option key={sub.id} value={sub.id}>
                   {sub.name}
@@ -161,45 +165,41 @@ export function AddRecipeForm({
           </div>
         )}
 
-        {/* Quantity */}
-        <div>
-          <label className="flex items-center text-text-muted text-xs font-medium uppercase mb-1">
-            Quantity
-            <FieldTooltip text="How much of this ingredient goes into ONE finished product." />
-          </label>
-          <input
-            type="number"
-            name="requiredQuantity"
-            step="any"
-            required
-            placeholder="e.g. 8"
-            className="w-24 px-3 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm"
-          />
-        </div>
-
-        {/* Unit */}
-        <div>
-          <label className="flex items-center text-text-muted text-xs font-medium uppercase mb-1">
-            Unit
-            <FieldTooltip text="The unit of measurement. Auto‑filled from the material or set to 'unit' for sub‑assemblies." />
-          </label>
-          <input
-            type="text"
-            name="unit"
-            required
-            value={unit}
-            onChange={(e) => setUnit(e.target.value)}
-            placeholder={ingredientType === "raw" ? "Auto‑filled" : "unit"}
-            className="w-20 px-3 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm"
-          />
+        {/* Quantity and Unit */}
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-text-muted text-xs font-medium uppercase mb-1">
+              Quantity
+            </label>
+            <input
+              type="number"
+              step="any"
+              value={requiredQuantity}
+              onChange={(e) => setRequiredQuantity(e.target.value)}
+              placeholder="e.g. 8"
+              className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm"
+            />
+          </div>
+          <div>
+            <label className="block text-text-muted text-xs font-medium uppercase mb-1">
+              Unit
+            </label>
+            <input
+              type="text"
+              value={unit}
+              onChange={(e) => setUnit(e.target.value)}
+              placeholder="Auto-filled"
+              className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm"
+            />
+          </div>
         </div>
 
         <button
           type="submit"
-          disabled={pending}
-          className="bg-brand hover:bg-brand-hover text-white font-medium px-4 py-2 rounded-lg transition-colors text-sm h-[40px] disabled:opacity-50"
+          disabled={isPending}
+          className="w-full bg-teal-600 hover:bg-teal-700 text-white font-medium px-4 py-2 rounded-lg transition-colors text-sm disabled:opacity-50"
         >
-          {pending ? "Adding…" : "Add to Recipe"}
+          {isPending ? "Adding..." : "Add to Recipe"}
         </button>
       </form>
     </div>

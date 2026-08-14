@@ -94,21 +94,23 @@ export function FinishedGoodRow({
           <td className="p-4 text-text-secondary text-center" style={{ width: "var(--col-margin)" }}>
             {marginPercent !== null ? `${marginPercent}%` : "—"}
           </td>
-          <td className="p-4 flex gap-1 items-center justify-center flex-wrap">
-            <a href={`/finished-goods/${item.id}/recipe`} className="text-text-brand hover:underline text-xs font-medium">Recipe</a>
-            <button onClick={() => setEditing(true)} className="text-text-brand hover:underline text-xs font-medium">Edit</button>
-            <button
-              onClick={() => setShowPricing(true)}
-              className="text-text-brand hover:underline text-xs font-medium"
-              title="Pricing Guidance"
-            >
-              💰
-            </button>
-            <button onClick={() => setShowProduce(!showProduce)} className="text-text-brand hover:underline text-xs font-medium">Produce</button>
-            <form action={handleDelete}>
-              <input type="hidden" name="id" value={item.id} />
-              <button type="submit" className="text-error hover:underline text-xs font-medium">Delete</button>
-            </form>
+          <td className="p-4">
+            <div className="flex flex-col items-center gap-2">
+              <a href={`/finished-goods/${item.id}/recipe`} className="text-text-brand hover:underline text-xs font-medium text-center">Recipe</a>
+              <button onClick={() => setEditing(true)} className="text-text-brand hover:underline text-xs font-medium text-center">Edit</button>
+              <button
+                onClick={() => setShowPricing(true)}
+                className="text-text-brand hover:underline text-xs font-medium text-center"
+                title="Pricing Guidance"
+              >
+                💰
+              </button>
+              <button onClick={() => setShowProduce(!showProduce)} className="text-text-brand hover:underline text-xs font-medium text-center">Produce</button>
+              <form action={handleDelete} className="flex justify-center">
+                <input type="hidden" name="id" value={item.id} />
+                <button type="submit" className="text-error hover:underline text-xs font-medium text-center">Delete</button>
+              </form>
+            </div>
           </td>
         </tr>
 
@@ -177,20 +179,22 @@ export function FinishedGoodRow({
       <td className="p-2 text-text-muted text-xs text-center" style={{ width: "var(--col-calculatedCogs)" }}>(auto)</td>
       <td className="p-2 text-text-muted text-xs text-center" style={{ width: "var(--col-profit)" }}>—</td>
       <td className="p-2 text-text-muted text-xs text-center" style={{ width: "var(--col-margin)" }}>—</td>
-      <td className="p-2 flex gap-2 justify-center">
-        <form action={async (formData: FormData) => {
-          formData.append("id", item.id);
-          await updateAction(formData);
-          setEditing(false);
-          showToast("Product updated successfully.", "success");
-        }}>
-          <button type="submit" className="bg-brand hover:bg-brand-hover text-white text-xs px-3 py-1 rounded">Save</button>
-        </form>
-        <button onClick={() => setEditing(false)} className="text-text-muted hover:text-text text-xs px-2 py-1">Cancel</button>
-        <form action={handleDelete}>
-          <input type="hidden" name="id" value={item.id} />
-          <button type="submit" className="text-error hover:underline text-xs font-medium">Delete</button>
-        </form>
+      <td className="p-2">
+        <div className="flex flex-col items-center gap-2">
+          <form action={async (formData: FormData) => {
+            formData.append("id", item.id);
+            await updateAction(formData);
+            setEditing(false);
+            showToast("Product updated successfully.", "success");
+          }} className="flex justify-center">
+            <button type="submit" className="bg-brand hover:bg-brand-hover text-white text-xs px-3 py-1 rounded">Save</button>
+          </form>
+          <button onClick={() => setEditing(false)} className="text-text-muted hover:text-text text-xs px-2 py-1">Cancel</button>
+          <form action={handleDelete} className="flex justify-center">
+            <input type="hidden" name="id" value={item.id} />
+            <button type="submit" className="text-error hover:underline text-xs font-medium">Delete</button>
+          </form>
+        </div>
       </td>
     </tr>
   );

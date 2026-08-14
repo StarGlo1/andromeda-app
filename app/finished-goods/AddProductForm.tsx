@@ -2,7 +2,6 @@
 
 import { useTransition } from "react";
 import { useToast } from "@/app/context/ToastContext";
-import { HelpTip } from "@/app/components/HelpTip";
 
 interface AddProductFormProps {
   addAction: (formData: FormData) => Promise<void>;
@@ -58,13 +57,6 @@ export function AddProductForm({ addAction }: AddProductFormProps) {
       <div>
         <label className="block text-text-muted text-xs font-medium uppercase mb-1">Overhead %</label>
         <input type="number" step="any" name="overheadPercent" placeholder="0" className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm" />
-      </div>
-      <div className="flex items-center gap-2">
-        <input type="checkbox" name="isSubAssembly" id="isSubAssembly" className="rounded border-default accent-brand" />
-        <label htmlFor="isSubAssembly" className="flex items-center text-text-muted text-xs font-medium uppercase">
-          Is Sub‑Assembly
-          <HelpTip text="Check this if you make this product to use inside another product, not to sell by itself." />
-        </label>
       </div>
       <div>
         <button

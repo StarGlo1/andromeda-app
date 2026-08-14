@@ -43,9 +43,11 @@ export default function RootLayout({
           <ToastProvider>
             <DemoModeBanner />
             <Navbar />
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-8">
-              <div className="workspace-container">
-                {children}
+            <main className="pt-24 lg:pt-28">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
+                <div className="workspace-container">
+                  {children}
+                </div>
               </div>
             </main>
           </ToastProvider>

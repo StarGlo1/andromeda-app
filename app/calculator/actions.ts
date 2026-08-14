@@ -135,3 +135,30 @@ export async function createRecipeFromBatch(
   revalidatePath("/finished-goods");
   redirect(`/finished-goods/${product.id}/recipe`);
 }
+
+// New function for fragrance oil autocomplete
+export async function getFragranceOils() {
+  const oils = await prisma.rawMaterial.findMany({
+    where: {
+      category: {
+        name: {
+          in: ["Fragrance Oil", "Fragrance Oils"],
+        },
+      },
+    },
+    select: {
+      id: true,
+      name: true,
+      unit: true,
+    },
+    orderBy: {
+      name: "asc",
+    },
+  });
+
+  return oils.map((oil) => ({
+    id: oil.id,
+    name: oil.name,
+    unit: oil.unit ?? "oz",
+  }));
+}

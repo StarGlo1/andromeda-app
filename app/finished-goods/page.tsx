@@ -2,7 +2,6 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { SortableFinishedGoodsTable } from "@/app/components/SortableFinishedGoodsTable";
 import Navbar from "@/app/components/Navbar";
-import { HelpTip } from "@/app/components/HelpTip";
 
 async function addFinishedGood(formData: FormData) {
   "use server";
@@ -14,7 +13,6 @@ async function addFinishedGood(formData: FormData) {
   const laborCostPerUnit = parseFloat(formData.get("laborCostPerUnit") as string) || 0;
   const overheadFlat = parseFloat(formData.get("overheadFlat") as string) || 0;
   const overheadPercent = parseFloat(formData.get("overheadPercent") as string) || 0;
-  const isSubAssembly = formData.get("isSubAssembly") === "on";
 
   if (!name || !batchCode) return;
 
@@ -28,11 +26,11 @@ async function addFinishedGood(formData: FormData) {
       laborCostPerUnit,
       overheadFlat,
       overheadPercent,
-      isSubAssembly,
+      isCoreElement: false, // Core Element is set from recipe page
     },
   });
   revalidatePath("/finished-goods");
-  revalidatePath("/finished-goods/sub-assemblies");
+  revalidatePath("/finished-goods/core-elements");
 }
 
 async function updateFinishedGood(formData: FormData) {
@@ -46,7 +44,6 @@ async function updateFinishedGood(formData: FormData) {
   const laborCostPerUnit = parseFloat(formData.get("laborCostPerUnit") as string) || 0;
   const overheadFlat = parseFloat(formData.get("overheadFlat") as string) || 0;
   const overheadPercent = parseFloat(formData.get("overheadPercent") as string) || 0;
-  const isSubAssembly = formData.get("isSubAssembly") === "on";
 
   if (!id || !name || !batchCode) return;
 
@@ -61,11 +58,10 @@ async function updateFinishedGood(formData: FormData) {
       laborCostPerUnit,
       overheadFlat,
       overheadPercent,
-      isSubAssembly,
     },
   });
   revalidatePath("/finished-goods");
-  revalidatePath("/finished-goods/sub-assemblies");
+  revalidatePath("/finished-goods/core-elements");
 }
 
 async function deleteFinishedGood(formData: FormData) {
@@ -73,18 +69,17 @@ async function deleteFinishedGood(formData: FormData) {
   const id = formData.get("id") as string;
   if (!id) return;
 
-  // Check if this product is used as a sub‑assembly anywhere
-  const usedAsSubAssembly = await prisma.recipeItem.findFirst({
+  const usedAsCoreElement = await prisma.recipeItem.findFirst({
     where: { subAssemblyId: id },
   });
 
-  if (usedAsSubAssembly) {
-    throw new Error("Cannot delete: this product is used as a sub‑assembly in another recipe.");
+  if (usedAsCoreElement) {
+    throw new Error("Cannot delete: this product is used as a Core Element in another recipe.");
   }
 
   await prisma.finishedGood.delete({ where: { id } });
   revalidatePath("/finished-goods");
-  revalidatePath("/finished-goods/sub-assemblies");
+  revalidatePath("/finished-goods/core-elements");
 }
 
 async function produceBatch(formData: FormData) {
@@ -95,13 +90,9 @@ async function produceBatch(formData: FormData) {
 
   try {
     await prisma.$transaction(async (tx) => {
-      // 1. Get recipe and product
       const recipeItems = await tx.recipeItem.findMany({
         where: { finishedGoodId },
-        include: {
-          rawMaterial: true,
-          subAssembly: true,
-        },
+        include: { rawMaterial: true, subAssembly: true },
       });
 
       if (recipeItems.length === 0) {
@@ -113,10 +104,8 @@ async function produceBatch(formData: FormData) {
 
       let materialCost = 0;
 
-      // 2. Process each ingredient
       for (const item of recipeItems) {
         if (item.rawMaterialId) {
-          // Raw material – deduct from stock
           const material = item.rawMaterial;
           if (!material) throw new Error(`Raw material not found for item ${item.id}`);
           const required = item.requiredQuantity * batchSize;
@@ -130,9 +119,8 @@ async function produceBatch(formData: FormData) {
           });
           materialCost += required * (material.costPerUnit ?? 0);
         } else if (item.subAssemblyId) {
-          // Sub‑assembly – deduct from sub‑assembly stock
           const subAssembly = item.subAssembly;
-          if (!subAssembly) throw new Error(`Sub‑assembly not found for item ${item.id}`);
+          if (!subAssembly) throw new Error(`Core Element not found for item ${item.id}`);
           const required = item.requiredQuantity * batchSize;
           const currentStock = subAssembly.quantityOnHand;
           if (currentStock < required) {
@@ -142,12 +130,10 @@ async function produceBatch(formData: FormData) {
             where: { id: subAssembly.id },
             data: { quantityOnHand: currentStock - required },
           });
-          // Add the sub‑assembly's COGS to material cost
           materialCost += required * (subAssembly.calculatedCogs ?? 0);
         }
       }
 
-      // 3. Calculate labor & overhead
       const laborCost = (product.laborCostPerUnit ?? 0) * batchSize;
       const overheadFlat = product.overheadFlat ?? 0;
       const overheadPercent = (product.overheadPercent ?? 0) / 100;
@@ -155,7 +141,6 @@ async function produceBatch(formData: FormData) {
       const totalBatchCost = materialCost + laborCost + overheadFlat + overheadVar;
       const newUnitCost = totalBatchCost / batchSize;
 
-      // 4. Update product's calculatedCogs (weighted average)
       const currentTotalUnits = product.quantityOnHand;
       const currentTotalCost = currentTotalUnits * (product.calculatedCogs ?? 0);
       const newTotalUnits = currentTotalUnits + batchSize;
@@ -163,15 +148,12 @@ async function produceBatch(formData: FormData) {
 
       await tx.finishedGood.update({
         where: { id: finishedGoodId },
-        data: {
-          quantityOnHand: newTotalUnits,
-          calculatedCogs: newAvgCost,
-        },
+        data: { quantityOnHand: newTotalUnits, calculatedCogs: newAvgCost },
       });
     });
 
     revalidatePath("/finished-goods");
-    revalidatePath("/finished-goods/sub-assemblies");
+    revalidatePath("/finished-goods/core-elements");
     revalidatePath("/");
     return { success: true };
   } catch (error: any) {
@@ -179,17 +161,14 @@ async function produceBatch(formData: FormData) {
   }
 }
 
-// ─── Page Components ───
-
 export default async function FinishedGoodsPage() {
-  // Only show products that are NOT sub‑assemblies
   const goods = await prisma.finishedGood.findMany({
-    where: { isSubAssembly: false },
+    where: { isCoreElement: false },
     orderBy: { createdAt: "desc" },
   });
 
-  const subAssemblies = await prisma.finishedGood.findMany({
-    where: { isSubAssembly: true },
+  const coreElements = await prisma.finishedGood.findMany({
+    where: { isCoreElement: true },
     orderBy: { createdAt: "desc" },
   });
 
@@ -198,15 +177,14 @@ export default async function FinishedGoodsPage() {
       <div className="max-w-6xl mx-auto space-y-8">
         <Navbar />
 
-        {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="bg-surface-widget border border-default rounded-xl p-5">
             <p className="text-text-muted text-xs font-semibold uppercase tracking-wider">Total Products</p>
             <p className="text-3xl font-bold mt-2 text-text">{goods.length}</p>
           </div>
           <div className="bg-surface-widget border border-default rounded-xl p-5">
-            <p className="text-text-muted text-xs font-semibold uppercase tracking-wider">Sub‑Assemblies</p>
-            <p className="text-3xl font-bold mt-2 text-text-brand">{subAssemblies.length}</p>
+            <p className="text-text-muted text-xs font-semibold uppercase tracking-wider">Core Elements</p>
+            <p className="text-3xl font-bold mt-2 text-text-brand">{coreElements.length}</p>
           </div>
           <div className="bg-surface-widget border border-default rounded-xl p-5">
             <p className="text-text-muted text-xs font-semibold uppercase tracking-wider">Avg COGS</p>
@@ -254,13 +232,6 @@ export default async function FinishedGoodsPage() {
               <label className="block text-text-muted text-xs font-medium uppercase mb-1">Overhead %</label>
               <input type="number" step="any" name="overheadPercent" placeholder="0" className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm" />
             </div>
-            <div className="flex items-center gap-2">
-              <input type="checkbox" name="isSubAssembly" id="isSubAssembly" className="rounded border-default accent-brand" />
-              <label htmlFor="isSubAssembly" className="flex items-center text-text-muted text-xs font-medium uppercase">
-                Is Sub‑Assembly
-                <HelpTip text="Check this if you make this product to use inside another product, not to sell by itself." />
-              </label>
-            </div>
             <div>
               <button
                 type="submit"
@@ -270,6 +241,9 @@ export default async function FinishedGoodsPage() {
               </button>
             </div>
           </form>
+          <p className="text-text-muted text-xs mt-3">
+            You can mark this product as a Core Element later from its recipe page.
+          </p>
         </div>
 
         {/* Products Table */}
@@ -289,15 +263,15 @@ export default async function FinishedGoodsPage() {
           )}
         </div>
 
-        {/* Sub‑Assemblies Section */}
-        {subAssemblies.length > 0 && (
+        {/* Core Elements Section */}
+        {coreElements.length > 0 && (
           <div className="bg-surface-widget border border-default rounded-xl overflow-hidden border-text-brand">
             <div className="p-5 border-b border-text-brand bg-brand-muted dark:bg-brand-muted-dark">
-              <h2 className="text-lg font-semibold text-text-brand text-center">🧩 Sub‑Assemblies</h2>
-              <p className="text-text-muted text-xs text-center mt-1">Intermediate products used as ingredients in other recipes</p>
+              <h2 className="text-lg font-semibold text-text-brand text-center">Core Elements</h2>
+              <p className="text-text-muted text-xs text-center mt-1">Intermediate products used in other recipes</p>
             </div>
             <SortableFinishedGoodsTable
-              goods={subAssemblies}
+              goods={coreElements}
               updateAction={updateFinishedGood}
               deleteAction={deleteFinishedGood}
               produceAction={produceBatch}

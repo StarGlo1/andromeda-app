@@ -5,6 +5,7 @@ import UnitConverter from "@/app/components/UnitConverter";
 import { AddRecipeForm } from "./AddRecipeForm";
 import { RecipeTableClient } from "./RecipeTableClient";
 import { convertToPricingUnit } from "@/app/lib/units";
+import { HelpTip } from "@/app/components/HelpTip";
 
 // ─── Helper: recalculate COGS (recursive) ───
 async function recalcCogs(finishedGoodId: string): Promise<number> {
@@ -20,7 +21,6 @@ async function recalcCogs(finishedGoodId: string): Promise<number> {
 
   for (const item of recipeItems) {
     if (item.rawMaterialId && item.rawMaterial) {
-      // Raw material – convert to pricing unit and multiply by cost
       const convertedQty = convertToPricingUnit(
         item.requiredQuantity,
         item.unit,
@@ -28,7 +28,6 @@ async function recalcCogs(finishedGoodId: string): Promise<number> {
       );
       totalCogs += convertedQty * (item.rawMaterial.costPerUnit ?? 0);
     } else if (item.subAssemblyId && item.subAssembly) {
-      // Sub‑assembly – recursively calculate its COGS
       const subCogs = await recalcCogs(item.subAssemblyId);
       totalCogs += item.requiredQuantity * subCogs;
     }
@@ -49,40 +48,28 @@ async function addRecipeItem(formData: FormData) {
 
   if (!finishedGoodId || !unit) return;
 
-  // Validate: must have either raw material OR sub‑assembly
   if (ingredientType === "raw" && !rawMaterialId) return;
-  if (ingredientType === "sub" && !subAssemblyId) return;
+  if (ingredientType === "core" && !subAssemblyId) return;
 
-  // Check for duplicate
   if (rawMaterialId) {
     const existing = await prisma.recipeItem.findFirst({
-      where: {
-        finishedGoodId,
-        rawMaterialId,
-      },
+      where: { finishedGoodId, rawMaterialId },
     });
-    if (existing) {
-      throw new Error("This raw material is already in the recipe.");
-    }
+    if (existing) throw new Error("This raw material is already in the recipe.");
   }
 
   if (subAssemblyId) {
     const existing = await prisma.recipeItem.findFirst({
-      where: {
-        finishedGoodId,
-        subAssemblyId,
-      },
+      where: { finishedGoodId, subAssemblyId },
     });
-    if (existing) {
-      throw new Error("This sub‑assembly is already in the recipe.");
-    }
+    if (existing) throw new Error("This Core Element is already in the recipe.");
   }
 
   await prisma.recipeItem.create({
     data: {
       finishedGoodId,
       rawMaterialId: ingredientType === "raw" ? rawMaterialId : null,
-      subAssemblyId: ingredientType === "sub" ? subAssemblyId : null,
+      subAssemblyId: ingredientType === "core" ? subAssemblyId : null,
       requiredQuantity,
       unit,
     },
@@ -140,6 +127,23 @@ async function deleteRecipeItem(formData: FormData) {
   revalidatePath(`/finished-goods/${finishedGoodId}/recipe`);
 }
 
+async function toggleCoreElement(formData: FormData) {
+  "use server";
+  const id = formData.get("id") as string;
+  const isCoreElement = formData.get("isCoreElement") === "on";
+
+  if (!id) return;
+
+  await prisma.finishedGood.update({
+    where: { id },
+    data: { isCoreElement },
+  });
+
+  revalidatePath(`/finished-goods/${id}/recipe`);
+  revalidatePath("/finished-goods");
+  revalidatePath("/finished-goods/core-elements");
+}
+
 // ─── Page Component ───
 export default async function RecipePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -152,14 +156,12 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
           rawMaterial: true,
           subAssembly: true,
         },
-        orderBy: { createdAt: "asc" },
       },
     },
   });
 
   if (!finishedGood) notFound();
 
-  // Recalculate and update COGS
   if (finishedGood.recipeItems.length > 0) {
     const newCogs = await recalcCogs(finishedGood.id);
     if (newCogs !== finishedGood.calculatedCogs) {
@@ -175,7 +177,6 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
               rawMaterial: true,
               subAssembly: true,
             },
-            orderBy: { createdAt: "asc" },
           },
         },
       });
@@ -187,10 +188,10 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
     orderBy: { name: "asc" },
   });
 
-  const subAssemblies = await prisma.finishedGood.findMany({
+  const coreElements = await prisma.finishedGood.findMany({
     where: {
-      isSubAssembly: true,
-      id: { not: id }, // Don't allow self‑reference
+      isCoreElement: true,
+      id: { not: id },
     },
     orderBy: { name: "asc" },
   });
@@ -209,9 +210,9 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
           <div>
             <h1 className="text-2xl font-bold text-text">
               Recipe: {finishedGood.name}
-              {finishedGood.isSubAssembly && (
+              {finishedGood.isCoreElement && (
                 <span className="ml-2 text-xs bg-brand-muted dark:bg-brand-muted-dark text-text-brand px-2 py-1 rounded-full">
-                  Sub‑Assembly
+                  Core Element
                 </span>
               )}
             </h1>
@@ -224,6 +225,31 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
               </span>
             </p>
           </div>
+        </div>
+
+        {/* Core Element Toggle */}
+        <div className="bg-surface-widget border border-default rounded-xl p-5">
+          <form action={toggleCoreElement} className="flex items-center gap-3">
+            <input type="hidden" name="id" value={finishedGood.id} />
+            <input
+              type="checkbox"
+              name="isCoreElement"
+              id="isCoreElement"
+              defaultChecked={finishedGood.isCoreElement}
+              className="rounded border-default accent-brand"
+            />
+            <label htmlFor="isCoreElement" className="flex items-center text-text text-sm font-medium">
+              Mark as Core Element
+              <HelpTip text="A Core Element is a product you make once and then reuse as an ingredient in other products — like a ready-made building block." />
+            </label>
+            <button
+              type="submit"
+              className="ml-auto bg-teal-600 hover:bg-teal-700 text-white text-xs font-medium px-4 py-2 rounded-full"
+            >
+              Save
+            </button>
+            <HelpTip text="Saves the Core Element setting for this product." />
+          </form>
         </div>
 
         {finishedGood.vesselSizeOz != null && (
@@ -244,7 +270,7 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
         <AddRecipeForm
           finishedGoodId={finishedGood.id}
           materials={allMaterials}
-          subAssemblies={subAssemblies}
+          subAssemblies={coreElements}
           addAction={addRecipeItem}
         />
 
