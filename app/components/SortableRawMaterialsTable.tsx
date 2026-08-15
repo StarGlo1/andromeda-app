@@ -15,15 +15,15 @@ type SortKey =
   | "reorderThreshold";
 
 const COLUMNS: { key: SortKey; label: string; defaultWidth: number }[] = [
-  { key: "name", label: "Material Name", defaultWidth: 160 },
-  { key: "category", label: "Category", defaultWidth: 120 },
-  { key: "totalQuantity", label: "Qty", defaultWidth: 80 },
-  { key: "sizePerUnit", label: "Size", defaultWidth: 70 },
-  { key: "unit", label: "Unit", defaultWidth: 70 },
-  { key: "availableStock", label: "Stock", defaultWidth: 160 },
-  { key: "costPerUnit", label: "Unit Cost", defaultWidth: 110 },
-  { key: "supplier", label: "Supplier", defaultWidth: 130 },
-  { key: "reorderThreshold", label: "Reorder", defaultWidth: 90 },
+  { key: "name", label: "Material\nName", defaultWidth: 130 },
+  { key: "category", label: "Category", defaultWidth: 90 },
+  { key: "totalQuantity", label: "Containers", defaultWidth: 75 },
+  { key: "sizePerUnit", label: "Size / Unit", defaultWidth: 75 },
+  { key: "unit", label: "Unit", defaultWidth: 50 },
+  { key: "availableStock", label: "Total\nStock", defaultWidth: 100 },
+  { key: "costPerUnit", label: "Unit\nCost", defaultWidth: 75 },
+  { key: "supplier", label: "Supplier", defaultWidth: 90 },
+  { key: "reorderThreshold", label: "Reorder", defaultWidth: 65 },
 ];
 
 const PAGE_SIZE = 15;
@@ -57,7 +57,9 @@ export function SortableRawMaterialsTable({
 }) {
   const [sortKey, setSortKey] = useState<SortKey>("name");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
-  const [colWidths, setColWidths] = useState(loadSavedWidths);
+  const [colWidths, setColWidths] = useState<Record<string, number>>(
+    Object.fromEntries(COLUMNS.map((c) => [c.key, c.defaultWidth]))
+  );
   const [mounted, setMounted] = useState(false);
 
   const [showFilters, setShowFilters] = useState(false);
@@ -79,6 +81,8 @@ export function SortableRawMaterialsTable({
 
   useEffect(() => {
     setMounted(true);
+    const saved = loadSavedWidths();
+    setColWidths(saved);
   }, []);
 
   useEffect(() => {
@@ -87,34 +91,29 @@ export function SortableRawMaterialsTable({
     }
   }, [colWidths, mounted]);
 
-  const resizing = useRef<{ key: string; startX: number; startWidth: number } | null>(null);
+  const resizingRef = useRef<{ key: string; startX: number; startWidth: number } | null>(null);
 
-  const handleMouseDown = (e: React.MouseEvent, key: string) => {
+  const startResize = (e: React.MouseEvent, key: string) => {
     e.preventDefault();
-    resizing.current = { key, startX: e.clientX, startWidth: colWidths[key] };
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
+    resizingRef.current = { key, startX: e.clientX, startWidth: colWidths[key] };
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp);
   };
 
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (!resizing.current) return;
-    const diff = e.clientX - resizing.current.startX;
-    const newWidth = Math.max(50, resizing.current.startWidth + diff);
-    setColWidths((prev) => ({ ...prev, [resizing.current!.key]: newWidth }));
+  const onMouseMove = useCallback((e: MouseEvent) => {
+    const current = resizingRef.current;
+    if (!current) return;
+    const diff = e.clientX - current.startX;
+    const newWidth = Math.max(40, current.startWidth + diff);
+    const key = current.key;
+    setColWidths((prev) => ({ ...prev, [key]: newWidth }));
   }, []);
 
-  const handleMouseUp = useCallback(() => {
-    resizing.current = null;
-    document.removeEventListener("mousemove", handleMouseMove);
-    document.removeEventListener("mouseup", handleMouseUp);
-  }, [handleMouseMove]);
-
-  const activeWidths = mounted
-    ? colWidths
-    : Object.fromEntries(COLUMNS.map((c) => [c.key, c.defaultWidth]));
-  const cssVars = Object.fromEntries(
-    COLUMNS.map((c) => [`--col-${c.key}`, `${activeWidths[c.key]}px`])
-  ) as React.CSSProperties;
+  const onMouseUp = useCallback(() => {
+    resizingRef.current = null;
+    document.removeEventListener("mousemove", onMouseMove);
+    document.removeEventListener("mouseup", onMouseUp);
+  }, [onMouseMove]);
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -198,39 +197,48 @@ export function SortableRawMaterialsTable({
     setCurrentPage(page);
   };
 
-  const SortHeader = ({ label, column }: { label: string; column: SortKey }) => (
-    <th
-      className="relative p-4 cursor-pointer hover:text-text transition-colors text-text-muted text-xs uppercase tracking-wider text-center select-none"
-      style={{ width: `var(--col-${column})` }}
-      onClick={() => handleSort(column)}
-    >
-      <span className="flex items-center justify-center gap-1">
-        {label}
-        {sortKey === column && <span className="text-xs">{sortDir === "asc" ? "▲" : "▼"}</span>}
-      </span>
-      <div
-        className="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize bg-gray-400/15 dark:bg-gray-500/15 hover:bg-brand/40 dark:hover:bg-brand/30 transition-colors"
-        onMouseDown={(e) => handleMouseDown(e, column)}
-      />
-    </th>
-  );
+  const SortHeader = ({ label, column }: { label: string; column: SortKey }) => {
+    const lines = label.split("\n");
+    const isSingleWord = lines.length === 1;
+
+    return (
+      <th
+        className="relative p-3 cursor-pointer hover:text-text transition-colors text-text-muted text-[15px] uppercase tracking-wider text-center select-none whitespace-nowrap"
+        style={{ width: `${colWidths[column]}px`, minWidth: `${colWidths[column]}px` }}
+        onClick={() => handleSort(column)}
+      >
+        <span
+          className={`flex ${isSingleWord ? "items-center" : "flex-col items-center justify-center gap-0.5 leading-tight"}`}
+        >
+          {lines.map((line, i) => (
+            <span key={i} className="block">{line}</span>
+          ))}
+        </span>
+        {sortKey === column && <span className="text-[15px]">{sortDir === "asc" ? "▲" : "▼"}</span>}
+        <div
+          className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize bg-gray-400/10 dark:bg-gray-500/10 hover:bg-brand/30 dark:hover:bg-brand/30 transition-colors"
+          onMouseDown={(e) => startResize(e, column)}
+        />
+      </th>
+    );
+  };
 
   return (
-    <div>
+    <div className="w-full">
       {/* Filter bar */}
-      <div className="p-4 border-b border-default flex items-center gap-3 flex-wrap">
+      <div className="p-3 border-b border-default flex items-center gap-2 flex-wrap">
         <button
           onClick={() => setShowFilters(!showFilters)}
           className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
             showFilters
-              ? "bg-teal-600 text-white"
+              ? "bg-[#4f8792] text-white"
               : "bg-surface border border-default text-text-muted hover:bg-brand-muted"
           }`}
         >
           Filters {filtered.length < materials.length ? `(${filtered.length})` : ""}
         </button>
         {showFilters && (
-          <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap">
             <select
               value={filterCategory}
               onChange={(e) => setFilterCategory(e.target.value)}
@@ -267,7 +275,7 @@ export function SortableRawMaterialsTable({
                 </option>
               ))}
             </select>
-            <label className="flex items-center gap-2 text-xs text-text-muted">
+            <label className="flex items-center gap-1.5 text-xs text-text-muted">
               <input
                 type="checkbox"
                 checked={filterLowStockOnly}
@@ -291,21 +299,21 @@ export function SortableRawMaterialsTable({
         )}
       </div>
 
-      {/* Scrollable table wrapper */}
+      {/* Table wrapper */}
       <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse" style={cssVars}>
+        <table className="w-full text-left border-collapse" style={{ tableLayout: "auto" }}>
           <thead>
-            <tr className="border-b border-default bg-surface-widget">
+            <tr className="border-b border-default bg-[#d3dfe1]">
               {COLUMNS.map((col) => (
                 <SortHeader key={col.key} label={col.label} column={col.key} />
               ))}
-              <th className="p-4 text-text-muted text-xs uppercase tracking-wider text-center min-w-[110px]">
+              <th className="p-3 text-text-muted text-[15px] uppercase tracking-wider text-center whitespace-nowrap">
                 Actions
               </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-default text-sm">
-            {paginated.map((item) => (
+            {paginated.map((item, index) => (
               <MaterialRow
                 key={item.id}
                 item={item}
@@ -315,6 +323,7 @@ export function SortableRawMaterialsTable({
                 deleteAction={deleteAction}
                 addCategoryAction={addCategoryAction}
                 addSupplierAction={addSupplierAction}
+                rowIndex={index}
               />
             ))}
           </tbody>
@@ -322,7 +331,7 @@ export function SortableRawMaterialsTable({
       </div>
 
       {/* Pagination */}
-      <div className="p-4 border-t border-default flex items-center justify-between text-xs">
+      <div className="p-3 border-t border-default flex items-center justify-between text-xs">
         <div className="flex items-center gap-2">
           <button
             onClick={() => setViewAll(!viewAll)}
@@ -358,7 +367,7 @@ export function SortableRawMaterialsTable({
                 onClick={() => goToPage(page)}
                 className={`px-2 py-1 rounded-full border ${
                   page === currentPage
-                    ? "bg-teal-600 text-white border-teal-600"
+                    ? "bg-[#4f8792] text-white border-[#4f8792]"
                     : "bg-surface border-default text-text-muted hover:bg-brand-muted"
                 }`}
               >

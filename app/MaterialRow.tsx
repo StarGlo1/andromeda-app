@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useId } from "react";
+import { useState, useId, useTransition } from "react";
 
 export function MaterialRow({
   item,
@@ -10,6 +10,7 @@ export function MaterialRow({
   deleteAction,
   addCategoryAction,
   addSupplierAction,
+  rowIndex = 0,
 }: {
   item: any;
   categories: { id: string; name: string }[];
@@ -18,8 +19,10 @@ export function MaterialRow({
   deleteAction: (formData: FormData) => Promise<void>;
   addCategoryAction: (formData: FormData) => Promise<void>;
   addSupplierAction: (formData: FormData) => Promise<void>;
+  rowIndex?: number;
 }) {
   const [editing, setEditing] = useState(false);
+  const [isPending, startTransition] = useTransition();
   const formId = useId();
 
   const isLowStock =
@@ -31,9 +34,39 @@ export function MaterialRow({
     (item.committedQuantity ?? 0) +
     (item.onOrderQuantity ?? 0);
 
+  const handleUpdate = async (formData: FormData) => {
+    formData.append("id", item.id);
+    startTransition(async () => {
+      try {
+        await updateAction(formData);
+        setEditing(false);
+      } catch (error: any) {
+        console.error("Failed to update material:", error);
+      }
+    });
+  };
+
+  const handleDelete = async (formData: FormData) => {
+    if (!confirm("Delete this material permanently?")) return;
+    formData.append("id", item.id);
+    startTransition(async () => {
+      try {
+        await deleteAction(formData);
+      } catch (error: any) {
+        console.error("Failed to delete material:", error);
+      }
+    });
+  };
+
   if (!editing) {
     return (
-      <tr className="hover:bg-brand-muted dark:hover:bg-brand-muted-dark transition-colors">
+      <tr
+        className={`${
+          rowIndex % 2 === 0
+            ? "bg-[#ede6dc] hover:bg-[#c5d9dd]"
+            : "bg-[#e0d6c9] hover:bg-[#c5d9dd]"
+        } transition-colors`}
+      >
         {/* Name */}
         <td className="p-4 font-medium text-text">
           <a href={`/materials/${item.id}`} className="hover:underline">
@@ -48,13 +81,13 @@ export function MaterialRow({
           </span>
         </td>
 
-        {/* Qty (containers) */}
+        {/* Containers */}
         <td className={`p-4 text-center ${isLowStock ? 'text-warning font-medium' : 'text-text-secondary'}`}>
           {item.quantity ?? 0}
           <a href={`/materials/${item.id}`} className="ml-1 text-text-muted hover:text-text text-xs" title="View details">ⓘ</a>
         </td>
 
-        {/* Size per unit */}
+        {/* Size per container */}
         <td className="p-4 text-text-secondary text-center">
           {item.sizePerUnit ?? "—"}
         </td>
@@ -64,11 +97,14 @@ export function MaterialRow({
           {item.unit ?? "—"}
         </td>
 
-        {/* Stock breakdown */}
+        {/* Total Stock */}
         <td className="p-4 text-center">
           <div className="flex flex-col items-center">
             <span className={`font-medium ${availableStock < 0 ? 'text-error' : 'text-text'}`}>
               {item.totalQuantity ?? 0} {item.unit}
+            </span>
+            <span className="text-xs text-text-muted">
+              = {item.quantity ?? 0} × {item.sizePerUnit ?? 0} {item.unit}
             </span>
             {item.onOrderQuantity > 0 && (
               <span className="text-blue-500 text-xs">
@@ -80,9 +116,6 @@ export function MaterialRow({
                 -{item.committedQuantity} committed
               </span>
             )}
-            <span className="text-xs text-text-muted">
-              = {availableStock} available
-            </span>
           </div>
         </td>
 
@@ -103,25 +136,20 @@ export function MaterialRow({
           {item.reorderThreshold ?? "—"}
         </td>
 
-        {/* Actions */}
-        <td className="p-4">
-          <div className="flex items-center justify-center gap-2 whitespace-nowrap">
+        {/* Actions — STACKED: Edit on top of Delete */}
+        <td className="p-3">
+          <div className="flex flex-col items-center gap-2">
             <button
               type="button"
-              onClick={() => {
-                console.log("Edit clicked for", item.name);
-                setEditing(true);
-              }}
+              onClick={() => setEditing(true)}
               className="text-text-brand hover:underline text-xs font-medium"
             >
               Edit
             </button>
-            <form action={async (formData: FormData) => {
-              if (!confirm("Delete this material permanently?")) return;
-              formData.append("id", item.id);
-              await deleteAction(formData);
-            }}>
-              <button type="submit" className="text-error hover:underline text-xs font-medium">Delete</button>
+            <form action={handleDelete}>
+              <button type="submit" disabled={isPending} className="text-error hover:underline text-xs font-medium disabled:opacity-50">
+                Delete
+              </button>
             </form>
           </div>
         </td>
@@ -129,7 +157,7 @@ export function MaterialRow({
     );
   }
 
-  // Edit mode
+  // Edit mode — Actions STACKED: Save, Cancel, Delete
   return (
     <tr className="bg-brand-muted dark:bg-brand-muted-dark">
       {/* Name */}
@@ -158,7 +186,7 @@ export function MaterialRow({
         </select>
       </td>
 
-      {/* Quantity (containers) */}
+      {/* Containers */}
       <td className="p-2">
         <input
           type="number"
@@ -171,7 +199,7 @@ export function MaterialRow({
         />
       </td>
 
-      {/* Size per unit */}
+      {/* Size per container */}
       <td className="p-2">
         <input
           type="number"
@@ -196,12 +224,12 @@ export function MaterialRow({
         />
       </td>
 
-      {/* Stock breakdown is not editable here; shown in read mode only */}
+      {/* Stock — read-only */}
       <td className="p-2 text-center text-xs text-text-muted">
         {availableStock} {item.unit}
       </td>
 
-      {/* Unit Cost (editable via purchase total) */}
+      {/* Unit Cost */}
       <td className="p-2">
         <input
           type="number"
@@ -241,24 +269,18 @@ export function MaterialRow({
         />
       </td>
 
-      {/* Actions */}
+      {/* Actions — STACKED: Save, Cancel, Delete */}
       <td className="p-2">
-        <div className="flex items-center justify-center gap-2 whitespace-nowrap">
-          <form
-            id={formId}
-            action={async (formData: FormData) => {
-              formData.append("id", item.id);
-              await updateAction(formData);
-              setEditing(false);
-            }}
-          >
+        <div className="flex flex-col items-center gap-2">
+          <form id={formId} action={handleUpdate}>
             <input type="hidden" name="committedQuantity" value={item.committedQuantity ?? 0} />
             <input type="hidden" name="onOrderQuantity" value={item.onOrderQuantity ?? 0} />
             <button
               type="submit"
-              className="bg-teal-600 hover:bg-teal-700 text-white text-xs px-3 py-1 rounded-full"
+              disabled={isPending}
+              className="bg-[#4f8792] hover:bg-[#426f79] text-white text-xs px-3 py-1 rounded-full disabled:opacity-50"
             >
-              Save
+              {isPending ? "Saving..." : "Save"}
             </button>
           </form>
           <button
@@ -268,16 +290,11 @@ export function MaterialRow({
           >
             Cancel
           </button>
-          <form
-            action={async (formData: FormData) => {
-              if (!confirm("Delete this material permanently?")) return;
-              formData.append("id", item.id);
-              await deleteAction(formData);
-            }}
-          >
+          <form action={handleDelete}>
             <button
               type="submit"
-              className="text-error hover:underline text-xs font-medium"
+              disabled={isPending}
+              className="text-error hover:underline text-xs font-medium disabled:opacity-50"
             >
               Delete
             </button>

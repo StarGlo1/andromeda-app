@@ -122,14 +122,21 @@ export function SortableFinishedGoodsTable({
     <div className="overflow-x-auto">
       <table className="w-full text-left border-collapse" style={cssVars}>
         <thead>
-          <tr className="border-b border-default bg-surface-widget">
+          <tr className="border-b border-default bg-[#d3dfe1]">
             {COLUMNS.map((col) => <SortHeader key={col.key} label={col.label} column={col.key} />)}
             <th className="p-4 text-text-muted text-xs uppercase tracking-wider text-center">Actions</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-default text-sm">
-          {sorted.map((item) => (
-            <FinishedGoodRow key={item.id} item={item} updateAction={updateAction} deleteAction={deleteAction} produceAction={produceAction} />
+          {sorted.map((item, index) => (
+            <FinishedGoodRow
+              key={item.id}
+              item={item}
+              updateAction={updateAction}
+              deleteAction={deleteAction}
+              produceAction={produceAction}
+              rowIndex={index}
+            />
           ))}
         </tbody>
       </table>

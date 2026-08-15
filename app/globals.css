@@ -8,7 +8,7 @@
   --color-surface: #e5dcd0;
   --color-surface-elevated: #ede6dc;
   --color-surface-nav: #ede6dc;
-  --color-surface-widget: #e5dcd0;
+  --color-surface-widget: #e0d6c9;
 
   --color-text: #332d26;
   --color-text-secondary: #4a423a;
@@ -32,7 +32,7 @@
   --color-nav-border: #d0c6b8;
   --color-nav-active: #4f8792;
 
-  --color-widget-bg: #e5dcd0;
+  --color-widget-bg: #e0d6c9;
   --color-widget-border: #d0c6b8;
 
   --color-success: #286f4e;
@@ -219,14 +219,22 @@ html.dark .text-warning { color: var(--color-warning-dark); }
 .text-error { color: var(--color-error); }
 html.dark .text-error { color: var(--color-error-dark); }
 
-/* ===== FORCE LIGHT MODE OVERRIDES ===== */
-/* This ensures ALL white/gray backgrounds use the warm palette in light mode */
+/* ===== FORCE LIGHT MODE OVERRIDES — EXPANDED ===== */
 
-html:not(.dark) .bg-white {
-  background-color: #e5dcd0 !important;
+/* Cards and surfaces should be DARKER than background */
+html:not(.dark) .bg-white,
+html:not(.dark) .bg-gray-900,
+html:not(.dark) .bg-slate-100,
+html:not(.dark) .bg-slate-200,
+html:not(.dark) .bg-surface-widget,
+html:not(.dark) .bg-surface {
+  background-color: #e0d6c9 !important;
 }
 
-html:not(.dark) .bg-gray-50 {
+/* Background should be LIGHTER */
+html:not(.dark) .bg-gray-50,
+html:not(.dark) .bg-slate-50,
+html:not(.dark) .bg-bg {
   background-color: #ede6dc !important;
 }
 
@@ -242,31 +250,75 @@ html:not(.dark) .bg-gray-800 {
   background-color: #d0c6b8 !important;
 }
 
-html:not(.dark) .bg-gray-900 {
-  background-color: #e5dcd0 !important;
-}
-
-/* Force text colors in light mode */
-html:not(.dark) .text-gray-900 {
+/* Text colors */
+html:not(.dark) .text-gray-900,
+html:not(.dark) .text-slate-900 {
   color: #332d26 !important;
 }
 
 html:not(.dark) .text-gray-700,
-html:not(.dark) .text-gray-600 {
+html:not(.dark) .text-gray-600,
+html:not(.dark) .text-slate-700,
+html:not(.dark) .text-slate-600 {
   color: #4a423a !important;
 }
 
 html:not(.dark) .text-gray-500,
-html:not(.dark) .text-gray-400 {
+html:not(.dark) .text-gray-400,
+html:not(.dark) .text-slate-500,
+html:not(.dark) .text-slate-400 {
   color: #615950 !important;
 }
 
-/* Force borders in light mode */
+/* Borders */
 html:not(.dark) .border-gray-200,
 html:not(.dark) .border-gray-300,
-html:not(.dark) .border-gray-700 {
+html:not(.dark) .border-gray-700,
+html:not(.dark) .border-slate-200,
+html:not(.dark) .border-slate-300,
+html:not(.dark) .border-slate-700 {
   border-color: #d0c6b8 !important;
 }
+
+/* ===== TABLE HEADER STYLING ===== */
+
+/* Header row — soft sage teal */
+html:not(.dark) thead tr {
+  background-color: #d3dfe1 !important;
+}
+
+/* Data rows — alternating sand/cream */
+html:not(.dark) tbody tr:nth-child(odd) {
+  background-color: #e0d6c9 !important;
+}
+
+html:not(.dark) tbody tr:nth-child(even) {
+  background-color: #ede6dc !important;
+}
+
+/* Hover state */
+html:not(.dark) tbody tr:hover {
+  background-color: #c5d9dd !important;
+}
+
+/* Dark mode */
+html.dark thead tr {
+  background-color: #1e3a42 !important;
+}
+
+html.dark tbody tr:nth-child(odd) {
+  background-color: #000000 !important;
+}
+
+html.dark tbody tr:nth-child(even) {
+  background-color: #111111 !important;
+}
+
+html.dark tbody tr:hover {
+  background-color: #1e3a42 !important;
+}
+
+/* ===== END TABLE STYLING ===== */
 
 /* ===== END FORCE LIGHT MODE OVERRIDES ===== */
 

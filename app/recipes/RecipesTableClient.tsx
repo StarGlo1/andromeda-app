@@ -74,7 +74,7 @@ export function RecipesTableClient({ goods }: { goods: any[] }) {
   return (
     <table className="w-full text-left border-collapse">
       <thead>
-        <tr className="border-b border-default bg-surface-widget text-text-muted text-xs uppercase tracking-wider">
+        <tr className="border-b border-default bg-[#d3dfe1] text-text-muted text-xs uppercase tracking-wider">
           <SortHeader label="Product" column="name" />
           <SortHeader label="Ingredients" column="ingredients" />
           <SortHeader label="COGS" column="cogs" />
@@ -84,8 +84,15 @@ export function RecipesTableClient({ goods }: { goods: any[] }) {
         </tr>
       </thead>
       <tbody className="divide-y divide-default text-sm">
-        {sorted.map((good) => (
-          <tr key={good.id} className="hover:bg-brand-muted dark:hover:bg-brand-muted-dark transition-colors">
+        {sorted.map((good, index) => (
+          <tr
+            key={good.id}
+            className={`${
+              index % 2 === 0
+                ? "bg-[#ede6dc] hover:bg-[#c5d9dd]"
+                : "bg-[#e0d6c9] hover:bg-[#c5d9dd]"
+            } transition-colors`}
+          >
             <td className="p-4 font-medium text-text">{good.name}</td>
             <td className="p-4 text-text-secondary">
               {good.recipeItems.length} ingredient{good.recipeItems.length !== 1 && "s"}

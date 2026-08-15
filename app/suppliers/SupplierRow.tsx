@@ -7,10 +7,12 @@ export function SupplierRow({
   supplier,
   updateAction,
   deleteAction,
+  rowIndex = 0,
 }: {
   supplier: any;
   updateAction: (formData: FormData) => Promise<void>;
   deleteAction: (formData: FormData) => Promise<void>;
+  rowIndex?: number;
 }) {
   const { showToast } = useToast();
   const [editing, setEditing] = useState(false);
@@ -43,7 +45,13 @@ export function SupplierRow({
 
   if (!editing) {
     return (
-      <tr className="hover:bg-brand-muted dark:hover:bg-brand-muted-dark transition-colors">
+      <tr
+        className={`${
+          rowIndex % 2 === 0
+            ? "bg-[#ede6dc] hover:bg-[#c5d9dd]"
+            : "bg-[#e0d6c9] hover:bg-[#c5d9dd]"
+        } transition-colors`}
+      >
         <td className="p-4 font-medium text-text text-center">{supplier.name}</td>
         <td className="p-4 text-text-secondary text-center">{supplier.contact || "—"}</td>
         <td className="p-4 text-text-secondary text-center">
@@ -69,7 +77,6 @@ export function SupplierRow({
     );
   }
 
-  // Edit mode
   return (
     <tr className="bg-brand-muted dark:bg-brand-muted-dark">
       <td className="p-2">
@@ -87,7 +94,7 @@ export function SupplierRow({
       <td className="p-2 flex gap-2 justify-center">
         <form id={`edit-${supplier.id}`} action={handleUpdate}>
           <input type="hidden" name="id" value={supplier.id} />
-          <button type="submit" disabled={isUpdating} className="bg-brand hover:bg-brand-hover text-white text-xs px-3 py-1 rounded disabled:opacity-50">
+          <button type="submit" disabled={isUpdating} className="bg-[#4f8792] hover:bg-[#426f79] text-white text-xs px-3 py-1 rounded disabled:opacity-50">
             {isUpdating ? "..." : "Save"}
           </button>
         </form>

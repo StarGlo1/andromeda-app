@@ -9,11 +9,13 @@ export function FinishedGoodRow({
   updateAction,
   deleteAction,
   produceAction,
+  rowIndex = 0,
 }: {
   item: any;
   updateAction: (formData: FormData) => Promise<void>;
   deleteAction: (formData: FormData) => Promise<void>;
   produceAction: (formData: FormData) => Promise<{ success: boolean; error?: string }>;
+  rowIndex?: number;
 }) {
   const { showToast } = useToast();
   const [editing, setEditing] = useState(false);
@@ -57,7 +59,13 @@ export function FinishedGoodRow({
   if (!editing) {
     return (
       <>
-        <tr className="hover:bg-brand-muted dark:hover:bg-brand-muted-dark transition-colors">
+        <tr
+          className={`${
+            rowIndex % 2 === 0
+              ? "bg-[#ede6dc] hover:bg-[#c5d9dd]"
+              : "bg-[#e0d6c9] hover:bg-[#c5d9dd]"
+          } transition-colors`}
+        >
           <td className="p-4 font-medium text-text" style={{ width: "var(--col-name)" }}>{item.name}</td>
           <td className="p-4 text-text-secondary text-center" style={{ width: "var(--col-sku)" }}>{item.sku ?? "—"}</td>
           <td className="p-4 text-text-secondary text-center" style={{ width: "var(--col-batchCode)" }}>{item.batchCode}</td>
@@ -127,7 +135,7 @@ export function FinishedGoodRow({
                 <button
                   type="submit"
                   disabled={isProducing}
-                  className="bg-brand hover:bg-brand-hover text-white text-xs px-3 py-1 rounded disabled:opacity-50"
+                  className="bg-[#4f8792] hover:bg-[#426f79] text-white text-xs px-3 py-1 rounded disabled:opacity-50"
                 >
                   {isProducing ? "..." : "Produce"}
                 </button>
@@ -187,7 +195,7 @@ export function FinishedGoodRow({
             setEditing(false);
             showToast("Product updated successfully.", "success");
           }} className="flex justify-center">
-            <button type="submit" className="bg-brand hover:bg-brand-hover text-white text-xs px-3 py-1 rounded">Save</button>
+            <button type="submit" className="bg-[#4f8792] hover:bg-[#426f79] text-white text-xs px-3 py-1 rounded">Save</button>
           </form>
           <button onClick={() => setEditing(false)} className="text-text-muted hover:text-text text-xs px-2 py-1">Cancel</button>
           <form action={handleDelete} className="flex justify-center">

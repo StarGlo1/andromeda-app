@@ -59,7 +59,7 @@ const NAV_GROUPS = [
     icon: BarChart3,
     items: [
       { name: "Reports", href: "/reports", icon: BarChart3 },
-      { name: "COGS", href: "/cogs", icon: DollarSign },
+      { name: "COGS", href: "/reports/cogs", icon: DollarSign },
       { name: "Alerts", href: "/alerts", icon: Bell },
     ],
   },
@@ -72,9 +72,6 @@ const NAV_GROUPS = [
     ],
   },
 ];
-
-// Toggle between "orbit" and "waves" for the open state
-const OPEN_ICON_STYLE: "orbit" | "waves" = "orbit";
 
 function AnimatedMenuIcon({ open }: { open: boolean }) {
   return (
@@ -90,42 +87,27 @@ function AnimatedMenuIcon({ open }: { open: boolean }) {
       }}
     >
       {open ? (
-        OPEN_ICON_STYLE === "orbit" ? (
-          /* Orbit rings — 20% bigger */
-          <g
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            fill="none"
-            transform="translate(-1.5 -1.5) scale(1.2)"
-          >
-            <circle cx="11" cy="14" r="4" fill="currentColor" stroke="none" />
-            <ellipse
-              cx="12.5"
-              cy="14"
-              rx="13"
-              ry="5.5"
-              transform="rotate(-22 12.5 14)"
-            />
-            <circle cx="25.5" cy="5.5" r="1.8" fill="currentColor" stroke="none" />
-          </g>
-        ) : (
-          /* Three stacked waves */
-          <g
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            fill="none"
-          >
-            <path d="M4 6.5C6.5 5 9 8 14 6.5C19 5 21.5 8 24 6.5" />
-            <path d="M4 14C6.5 12.5 9 15.5 14 14C19 12.5 21.5 15.5 24 14" />
-            <path d="M4 21.5C6.5 20 9 23 14 21.5C19 20 21.5 23 24 21.5" />
-          </g>
-        )
+        /* Orbit rings */
+        <g
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          fill="none"
+          transform="translate(-1.5 -1.5) scale(1.2)"
+        >
+          <circle cx="11" cy="14" r="4" fill="currentColor" stroke="none" />
+          <ellipse
+            cx="12.5"
+            cy="14"
+            rx="13"
+            ry="5.5"
+            transform="rotate(-22 12.5 14)"
+          />
+          <circle cx="25.5" cy="5.5" r="1.8" fill="currentColor" stroke="none" />
+        </g>
       ) : (
-        /* Pinwheel — adjusted to fit fully in viewBox */
+        /* Pinwheel */
         <g
           stroke="currentColor"
           strokeWidth="1.5"
@@ -133,7 +115,6 @@ function AnimatedMenuIcon({ open }: { open: boolean }) {
           strokeLinejoin="round"
           transform="translate(-2 -2) scale(1.15)"
         >
-          {/* Blade 0 (Top) */}
           <g>
             <polygon
               points="14,0.5 5.5,14 14,9.8"
@@ -143,7 +124,6 @@ function AnimatedMenuIcon({ open }: { open: boolean }) {
             <polygon points="14,0.5 22.5,14 14,9.8" fill="none" />
             <line x1="5.5" y1="14" x2="22.5" y2="14" />
           </g>
-          {/* Blade 1 (Right) */}
           <g transform="rotate(90 14 14)">
             <polygon
               points="14,0.5 5.5,14 14,9.8"
@@ -153,7 +133,6 @@ function AnimatedMenuIcon({ open }: { open: boolean }) {
             <polygon points="14,0.5 22.5,14 14,9.8" fill="none" />
             <line x1="5.5" y1="14" x2="22.5" y2="14" />
           </g>
-          {/* Blade 2 (Bottom) */}
           <g transform="rotate(180 14 14)">
             <polygon
               points="14,0.5 5.5,14 14,9.8"
@@ -163,7 +142,6 @@ function AnimatedMenuIcon({ open }: { open: boolean }) {
             <polygon points="14,0.5 22.5,14 14,9.8" fill="none" />
             <line x1="5.5" y1="14" x2="22.5" y2="14" />
           </g>
-          {/* Blade 3 (Left) */}
           <g transform="rotate(270 14 14)">
             <polygon
               points="14,0.5 5.5,14 14,9.8"

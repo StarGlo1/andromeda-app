@@ -10,7 +10,6 @@ import {
 import Navbar from "@/app/components/Navbar";
 
 type ImportType = "rawMaterials" | "finishedGoods" | "recipeItems";
-
 const importActions: Record<ImportType, (data: any[]) => Promise<{ created: number; skipped: number }>> = {
   rawMaterials: importRawMaterials,
   finishedGoods: importFinishedGoods,
@@ -29,14 +28,18 @@ export default function ImportPage() {
     const file = e.target.files?.[0];
     if (!file) return;
     setFileName(file.name);
-
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
       complete: (results) => {
-        setHeaders(results.meta.fields || []);
-        setCsvData(results.data);
-        setMessage(null);
+        if (results.errors.length > 0) {
+          setMessage(`CSV parse error: ${results.errors[0].message}`);
+          setCsvData(null);
+        } else {
+          setHeaders(results.meta.fields || []);
+          setCsvData(results.data);
+          setMessage(null);
+        }
       },
       error: (err) => {
         setMessage(`CSV parse error: ${err.message}`);
@@ -50,10 +53,8 @@ export default function ImportPage() {
       setMessage("No data to import.");
       return;
     }
-
     setIsLoading(true);
     setMessage(null);
-
     try {
       const result = await importActions[importType](csvData);
       setMessage(
@@ -73,7 +74,6 @@ export default function ImportPage() {
     <main className="min-h-screen bg-bg text-text p-8">
       <div className="max-w-6xl mx-auto space-y-8">
         <Navbar />
-
         <div className="bg-surface-widget border border-default rounded-xl p-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <h2 className="text-sm font-semibold uppercase tracking-wider text-text-muted">
@@ -101,7 +101,6 @@ export default function ImportPage() {
               </select>
             </div>
           </div>
-
           <label className="flex flex-col items-center justify-center gap-3 p-8 border-2 border-dashed border-default rounded-xl cursor-pointer hover:border-text-muted transition-colors">
             <span className="text-3xl">📂</span>
             <span className="text-sm text-text font-medium">
@@ -117,7 +116,6 @@ export default function ImportPage() {
               className="hidden"
             />
           </label>
-
           {csvData && (
             <div className="mt-6">
               <div className="flex items-center justify-between mb-3">
@@ -162,13 +160,11 @@ export default function ImportPage() {
             </div>
           )}
         </div>
-
         {message && (
           <div className="bg-brand-muted dark:bg-brand-muted-dark border border-default rounded-xl p-4">
             <p className="text-sm text-text">{message}</p>
           </div>
         )}
-
         <section className="bg-surface-widget border border-default rounded-xl p-5 text-xs text-text-muted">
           <p className="font-semibold mb-2 text-text">Supported columns</p>
           <ul className="list-disc list-inside space-y-1.5">

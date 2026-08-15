@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { CategoryManager } from "@/app/components/CategoryManager";
-import Navbar from "@/app/components/Navbar";
 
 async function addCategory(formData: FormData) {
   "use server";
@@ -31,19 +30,21 @@ async function deleteCategory(formData: FormData) {
 export default async function CategoriesPage() {
   const categories = await prisma.category.findMany({
     orderBy: { name: "asc" },
+    include: {
+      rawMaterials: {
+        select: { id: true },
+      },
+    },
   });
 
   return (
-    <main className="min-h-screen bg-bg text-text p-8">
-      <div className="max-w-6xl mx-auto space-y-8">
-        <Navbar />
-        <CategoryManager
-          categories={categories}
-          addAction={addCategory}
-          updateAction={updateCategory}
-          deleteAction={deleteCategory}
-        />
-      </div>
-    </main>
+    <div className="max-w-6xl mx-auto space-y-8">
+      <CategoryManager
+        categories={categories}
+        addAction={addCategory}
+        updateAction={updateCategory}
+        deleteAction={deleteCategory}
+      />
+    </div>
   );
 }

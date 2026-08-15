@@ -61,7 +61,7 @@ export function SupplierTable({
   return (
     <table className="w-full text-left border-collapse">
       <thead>
-        <tr className="border-b border-default bg-surface-widget">
+        <tr className="border-b border-default bg-[#d3dfe1]">
           <SortHeader label="Name" column="name" />
           <SortHeader label="Contact" column="contact" />
           <SortHeader label="Website" column="website" />
@@ -70,12 +70,13 @@ export function SupplierTable({
         </tr>
       </thead>
       <tbody className="divide-y divide-default text-sm">
-        {sorted.map((supplier) => (
+        {sorted.map((supplier, index) => (
           <SupplierRow
             key={supplier.id}
             supplier={supplier}
             updateAction={updateAction}
             deleteAction={deleteAction}
+            rowIndex={index}
           />
         ))}
       </tbody>
