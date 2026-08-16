@@ -17,7 +17,7 @@ export default function DemoModeBanner() {
     exitDemoMode();
     await exitDemoModeAction();
     showToast("Demo mode exited. Your real data is safe.", "success");
-    router.refresh();
+    window.location.href = "/";
   };
 
   return (

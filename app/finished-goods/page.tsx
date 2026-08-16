@@ -175,9 +175,7 @@ export default async function FinishedGoodsPage() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-8">
-      <h1 className="text-2xl font-bold tracking-tight text-text mt-3">Finished Goods</h1>      <h1 className="text-2xl font-bold tracking-tight text-text mt-3">Finished Goods</h1>
-      <h1 className="text-2xl font-bold tracking-tight text-text mt-3">Finished Goods</h1>
-      <h1 className="text-2xl font-bold tracking-tight text-text mt-3">Finished Goods</h1>
+      <h1 className="text-2xl font-bold tracking-tight text-text mt-3">Creations</h1>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-surface-widget border border-default rounded-xl p-5">
           <p className="text-text-muted text-xs font-semibold uppercase tracking-wider">Total Products</p>

@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { isDemoModeActive } from "@/app/lib/demoMode";
 
 export async function getCustomersAction() {
   const customers = await prisma.customer.findMany({
@@ -29,6 +30,11 @@ export async function createCustomerAction(
     throw new Error("Customer name is required.");
   }
 
+  // Check demo mode
+  if (isDemoModeActive()) {
+    return { id: "demo-customer", name: name.trim(), email, phone, notes };
+  }
+
   const customer = await prisma.customer.create({
     data: {
       name: name.trim(),
@@ -54,6 +60,11 @@ export async function createSaleAction(data: {
 }) {
   if (!data.items || data.items.length === 0) {
     throw new Error("At least one product is required.");
+  }
+
+  // Check demo mode
+  if (isDemoModeActive()) {
+    return { id: "demo-sale", ...data };
   }
 
   const sale = await prisma.sale.create({

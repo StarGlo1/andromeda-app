@@ -28,7 +28,29 @@ export async function GET(request: NextRequest) {
     take: 100,
   });
 
-  return new Response(JSON.stringify(alerts), {
+  // Enrich alerts with material/category info for LOW_STOCK
+  const enrichedAlerts = await Promise.all(
+    alerts.map(async (alert) => {
+      if (alert.type === "LOW_STOCK" && alert.referenceId) {
+        const material = await prisma.rawMaterial.findUnique({
+          where: { id: alert.referenceId },
+          include: { category: { select: { name: true } } },
+        });
+        if (material) {
+          return {
+            ...alert,
+            materialName: material.name,
+            categoryName: material.category?.name || "",
+            currentStock: material.totalQuantity,
+            reorderThreshold: material.reorderThreshold,
+          };
+        }
+      }
+      return alert;
+    })
+  );
+
+  return new Response(JSON.stringify(enrichedAlerts), {
     headers: { "Content-Type": "application/json" },
   });
 }

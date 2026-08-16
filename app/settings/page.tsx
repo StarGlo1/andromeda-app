@@ -140,7 +140,7 @@ export default function SettingsPage() {
           showToast("Demo mode enabled. Sample data already exists or failed to load.", "success");
         }
       }
-      router.refresh();
+      window.location.href = "/";
     } catch {
       showToast("Something went wrong. Please try again.", "error");
     } finally {

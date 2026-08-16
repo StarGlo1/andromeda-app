@@ -1,11 +1,7 @@
-import { cookies } from "next/headers";
-
 export function isDemoModeActive(): boolean {
-  try {
-    const cookieStore = cookies();
-    const demoMode = cookieStore.get("demoMode");
-    return demoMode?.value === "true";
-  } catch {
-    return false;
+  // Check in-memory flag first (faster and more reliable)
+  if (globalThis.isDemoMode === true) {
+    return true;
   }
+  return false;
 }

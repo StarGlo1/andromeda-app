@@ -3,11 +3,16 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import Link from "next/link";
-
-// ─── Server Actions ───
+import { cookies } from "next/headers";
 
 async function deleteSale(formData: FormData) {
   "use server";
+  
+  const cookieStore = cookies();
+  if (cookieStore.get("demoMode")?.value === "true") {
+    return;
+  }
+
   const id = formData.get("id") as string;
   if (!id) return;
 
@@ -32,8 +37,6 @@ async function deleteSale(formData: FormData) {
   revalidatePath("/");
 }
 
-// ─── Page Component ───
-
 export default async function SalesPage() {
   const sales = await prisma.sale.findMany({
     include: {
@@ -53,7 +56,7 @@ export default async function SalesPage() {
   return (
     <div className="max-w-6xl mx-auto space-y-8">
       <h1 className="text-2xl font-bold tracking-tight text-text mt-3">Sales</h1>
-      {/* Stats */}
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-surface-widget border border-default rounded-xl p-5">
           <p className="text-text-muted text-xs font-semibold uppercase tracking-wider">Total Sales</p>
@@ -71,7 +74,6 @@ export default async function SalesPage() {
         </div>
       </div>
 
-      {/* New Sale Button - TEAL BUBBLE */}
       <div className="flex justify-end">
         <Link
           href="/sales/new"
@@ -81,7 +83,6 @@ export default async function SalesPage() {
         </Link>
       </div>
 
-      {/* Sales Table */}
       <div className="bg-surface-widget border border-default rounded-xl overflow-hidden">
         <div className="p-5 border-b border-default">
           <h2 className="text-lg font-semibold text-text">All Sales</h2>
