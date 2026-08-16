@@ -148,6 +148,23 @@ body {
   transition: background-color 0.2s, color 0.2s;
 }
 
+/* ===== WARM CREAM GRADIENT — LIGHT MODE ONLY ===== */
+html:not(.dark) body {
+  background: linear-gradient(
+    to bottom,
+    #e5dcd0 0%,
+    #d0c6b8 15%,
+    #bfb4a4 30%,
+    #8a7a65 50%,
+    #4a423a 65%,
+    #1a1a1a 75%,
+    #000000 80%,
+    #000000 100%
+  );
+  min-height: 100vh;
+  background-attachment: fixed;
+}
+
 html.dark body {
   background-color: #000000;
   color: var(--color-text-dark);

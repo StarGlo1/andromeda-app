@@ -1,3 +1,5 @@
+// prisma/schema.prisma
+
 datasource db {
   provider = "sqlite"
   url      = env("DATABASE_URL")
@@ -76,6 +78,7 @@ model FinishedGood {
   usedAsSubAssembly RecipeItem[] @relation("SubAssemblyRecipe")
   saleItems         SaleItem[]
   lots              Lot[]
+  consignmentItems  ConsignmentBatchItem[]
 
   @@map("finished_goods")
 }
@@ -163,6 +166,8 @@ model Sale {
   tax         Float      @default(0)
   status      String     @default("Paid")
   notes       String?
+  eventId     String?
+  event       Event?     @relation(fields: [eventId], references: [id])
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
   items       SaleItem[]
@@ -231,4 +236,69 @@ model LotRawMaterial {
 
   @@unique([finishedGoodLotId, rawMaterialLotId])
   @@map("lot_raw_materials")
+}
+
+// ─── Consignment Models ───
+
+model ConsignmentLocation {
+  id          String              @id @default(uuid())
+  name        String
+  type        String              @default("storefront")
+  address     String?
+  contactName String?
+  phone       String?
+  email       String?
+  notes       String?
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  batches     ConsignmentBatch[]
+
+  @@map("consignment_locations")
+}
+
+model ConsignmentBatch {
+  id                 String                @id @default(uuid())
+  locationId         String
+  location           ConsignmentLocation   @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  datePlaced         DateTime              @default(now())
+  expectedReturnDate DateTime?
+  returnedDate       DateTime?
+  status             String                @default("active")
+  notes              String?
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+  items              ConsignmentBatchItem[]
+
+  @@map("consignment_batches")
+}
+
+model ConsignmentBatchItem {
+  id             String           @id @default(uuid())
+  batchId        String
+  batch          ConsignmentBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  finishedGoodId String
+  finishedGood   FinishedGood     @relation(fields: [finishedGoodId], references: [id])
+  quantity       Int
+  unitPrice      Float            @default(0)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@unique([batchId, finishedGoodId])
+  @@map("consignment_batch_items")
+}
+
+// ─── Event Model for Quick-Log ───
+
+model Event {
+  id        String   @id @default(uuid())
+  name      String
+  date      DateTime @default(now())
+  location  String?
+  type      String   @default("popup")
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  sales     Sale[]
+
+  @@map("events")
 }

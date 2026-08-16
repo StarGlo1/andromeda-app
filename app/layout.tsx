@@ -1,8 +1,11 @@
+// app/layout.tsx
+
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import Navbar from '@/app/components/Navbar';
 import { ToastProvider } from '@/app/context/ToastContext';
 import { DemoModeProvider } from '@/app/context/DemoModeContext';
+import { LogoProvider } from '@/app/context/LogoContext';
 import DemoModeBanner from '@/app/components/DemoModeBanner';
 import '@/app/globals.css';
 
@@ -40,17 +43,19 @@ export default function RootLayout({
       </head>
       <body className={`${inter.className} bg-gray-50 dark:bg-black min-h-screen text-gray-900 dark:text-gray-100 antialiased`}>
         <DemoModeProvider>
-          <ToastProvider>
-            <DemoModeBanner />
-            <Navbar />
-            <main className="pt-24 lg:pt-28">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
-                <div className="workspace-container">
-                  {children}
+          <LogoProvider>
+            <ToastProvider>
+              <DemoModeBanner />
+              <Navbar />
+              <main className="pt-36 lg:pt-40">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
+                  <div className="workspace-container">
+                    {children}
+                  </div>
                 </div>
-              </div>
-            </main>
-          </ToastProvider>
+              </main>
+            </ToastProvider>
+          </LogoProvider>
         </DemoModeProvider>
       </body>
     </html>
