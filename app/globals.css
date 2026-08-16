@@ -165,8 +165,20 @@ html:not(.dark) body {
   background-attachment: fixed;
 }
 
+/* ===== DARK MODE GRADIENT - MIRRORS HEADER COLOR ===== */
 html.dark body {
-  background-color: #000000;
+  background: linear-gradient(
+    to bottom,
+    #4b5563 0%,
+    #374151 15%,
+    #1f2937 30%,
+    #111111 50%,
+    #000000 65%,
+    #000000 80%,
+    #000000 100%
+  );
+  min-height: 100vh;
+  background-attachment: fixed;
   color: var(--color-text-dark);
 }
 
@@ -341,7 +353,7 @@ html.dark tbody tr:hover {
 
 /* ----- Dark mode workspace ----- */
 html.dark .workspace-container {
-  background-color: #1e293b !important;
+  background-color: transparent !important;
   border-radius: 1rem !important;
   padding: 1.5rem !important;
 }

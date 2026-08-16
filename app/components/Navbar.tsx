@@ -174,16 +174,24 @@ export default function Navbar() {
     setIsDark(document.documentElement.classList.contains("dark"));
   }, []);
 
+  // Auto-expand the group that contains the current page
+  useEffect(() => {
+    const currentGroup = NAV_GROUPS.find((group) =>
+      group.items.some((item) => item.href === pathname)
+    );
+    if (currentGroup) {
+      setExpandedGroup(currentGroup.label);
+    }
+  }, [pathname]);
+
   useEffect(() => {
     setDrawerOpen(false);
-    setExpandedGroup(null);
   }, [pathname]);
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         setDrawerOpen(false);
-        setExpandedGroup(null);
       }
     };
     window.addEventListener("keydown", handleKey);
@@ -298,7 +306,7 @@ export default function Navbar() {
 
               {/* Row 2: MENU title */}
               <div className="w-full px-6 sm:px-8 lg:px-10 py-3">
-                <span className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                <span className="text-4xl font-bold text-gray-900 dark:text-gray-100">
                   MENU
                 </span>
               </div>
@@ -311,13 +319,9 @@ export default function Navbar() {
                 <Link
                   href="/"
                   onClick={() => setDrawerOpen(false)}
-                  className={`flex items-center gap-3 px-5 py-4 rounded-lg text-xl font-medium mb-1 ${
-                    pathname === "/"
-                      ? "bg-teal-600 text-white"
-                      : "text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-700 hover:text-gray-900 dark:hover:text-gray-100"
-                  }`}
+                  className="flex items-center gap-3 px-5 py-3.5 rounded-lg text-lg font-medium mb-1 text-gray-600 dark:text-gray-300 hover:bg-[#8a7a65] dark:hover:bg-slate-700 hover:text-white dark:hover:text-gray-100 transition-colors"
                 >
-                  <LayoutDashboard className="w-7 h-7 shrink-0" />
+                  <LayoutDashboard className="w-6 h-6 shrink-0" />
                   Command Deck
                 </Link>
 
@@ -330,13 +334,9 @@ export default function Navbar() {
                         onClick={() =>
                           setExpandedGroup(isExpanded ? null : group.label)
                         }
-                        className={`w-full flex items-center px-5 py-4 rounded-lg text-xl font-medium transition-colors ${
-                          isExpanded
-                            ? "bg-teal-600 text-white"
-                            : "text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-700 hover:text-gray-900 dark:hover:text-gray-100"
-                        }`}
+                        className="w-full flex items-center px-5 py-3.5 rounded-lg text-lg font-medium text-gray-600 dark:text-gray-300 hover:bg-[#8a7a65] dark:hover:bg-slate-700 hover:text-white dark:hover:text-gray-100 transition-colors"
                       >
-                        <Icon className="w-7 h-7 shrink-0 mr-3" />
+                        <Icon className="w-6 h-6 shrink-0 mr-3" />
                         <span>{group.label}</span>
                       </button>
 
@@ -344,19 +344,14 @@ export default function Navbar() {
                         <div className="ml-4 mt-1 space-y-1 border-l-2 border-gray-200 dark:border-slate-700 pl-3">
                           {group.items.map((item) => {
                             const SubIcon = item.icon;
-                            const isActive = pathname === item.href;
                             return (
                               <Link
                                 href={item.href}
                                 key={item.name}
                                 onClick={() => setDrawerOpen(false)}
-                                className={`flex items-center gap-3 px-4 py-3 rounded-lg text-xl font-medium transition-colors ${
-                                  isActive
-                                    ? "bg-teal-600 text-white"
-                                    : "text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-700 hover:text-gray-900 dark:hover:text-gray-100"
-                                }`}
+                                className="flex items-center gap-3 px-4 py-3 rounded-lg text-lg font-medium text-gray-600 dark:text-gray-300 hover:bg-[#8a7a65] dark:hover:bg-slate-700 hover:text-white dark:hover:text-gray-100 transition-colors"
                               >
-                                <SubIcon className="w-6 h-6 shrink-0" />
+                                <SubIcon className="w-5 h-5 shrink-0" />
                                 {item.name}
                               </Link>
                             );
