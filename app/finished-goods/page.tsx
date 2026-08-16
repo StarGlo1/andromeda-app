@@ -1,7 +1,8 @@
+// app/finished-goods/page.tsx
+
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { SortableFinishedGoodsTable } from "@/app/components/SortableFinishedGoodsTable";
-import Navbar from "@/app/components/Navbar";
 
 async function addFinishedGood(formData: FormData) {
   "use server";
@@ -26,7 +27,7 @@ async function addFinishedGood(formData: FormData) {
       laborCostPerUnit,
       overheadFlat,
       overheadPercent,
-      isCoreElement: false, // Core Element is set from recipe page
+      isCoreElement: false,
     },
   });
   revalidatePath("/finished-goods");
@@ -173,121 +174,117 @@ export default async function FinishedGoodsPage() {
   });
 
   return (
-    <main className="min-h-screen bg-bg text-text p-4 sm:p-8">
-      <div className="max-w-6xl mx-auto space-y-8">
-        <Navbar />
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-surface-widget border border-default rounded-xl p-5">
-            <p className="text-text-muted text-xs font-semibold uppercase tracking-wider">Total Products</p>
-            <p className="text-3xl font-bold mt-2 text-text">{goods.length}</p>
-          </div>
-          <div className="bg-surface-widget border border-default rounded-xl p-5">
-            <p className="text-text-muted text-xs font-semibold uppercase tracking-wider">Core Elements</p>
-            <p className="text-3xl font-bold mt-2 text-text-brand">{coreElements.length}</p>
-          </div>
-          <div className="bg-surface-widget border border-default rounded-xl p-5">
-            <p className="text-text-muted text-xs font-semibold uppercase tracking-wider">Avg COGS</p>
-            <p className="text-3xl font-bold mt-2 text-warning">
-              {goods.length > 0
-                ? `$${(goods.reduce((sum, g) => sum + g.calculatedCogs, 0) / goods.length).toFixed(2)}`
-                : "—"}
-            </p>
-          </div>
+    <div className="max-w-6xl mx-auto space-y-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-surface-widget border border-default rounded-xl p-5">
+          <p className="text-text-muted text-xs font-semibold uppercase tracking-wider">Total Products</p>
+          <p className="text-3xl font-bold mt-2 text-text">{goods.length}</p>
         </div>
-
-        {/* Add Product Form */}
-        <div className="bg-surface-widget border border-default rounded-xl p-6">
-          <h2 className="text-lg font-semibold text-text mb-4">Add New Product</h2>
-          <form action={addFinishedGood} className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
-            <div>
-              <label className="block text-text-muted text-xs font-medium uppercase mb-1">Product Name</label>
-              <input type="text" name="name" required placeholder="e.g. 8oz Spiced Vanilla Candle" className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm" />
-            </div>
-            <div>
-              <label className="block text-text-muted text-xs font-medium uppercase mb-1">SKU</label>
-              <input type="text" name="sku" placeholder="e.g. CAN-SV-8" className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm" />
-            </div>
-            <div>
-              <label className="block text-text-muted text-xs font-medium uppercase mb-1">Batch Code</label>
-              <input type="text" name="batchCode" required placeholder="e.g. B001-2026" className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm" />
-            </div>
-            <div>
-              <label className="block text-text-muted text-xs font-medium uppercase mb-1">Retail Price</label>
-              <input type="number" step="any" name="retailPrice" placeholder="0.00" className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm" />
-            </div>
-            <div>
-              <label className="block text-text-muted text-xs font-medium uppercase mb-1">Qty on Hand</label>
-              <input type="number" name="quantityOnHand" placeholder="0" className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm" />
-            </div>
-            <div>
-              <label className="block text-text-muted text-xs font-medium uppercase mb-1">Labor $/unit</label>
-              <input type="number" step="any" name="laborCostPerUnit" placeholder="0.00" className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm" />
-            </div>
-            <div>
-              <label className="block text-text-muted text-xs font-medium uppercase mb-1">Overhead Flat $</label>
-              <input type="number" step="any" name="overheadFlat" placeholder="0.00" className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm" />
-            </div>
-            <div>
-              <label className="block text-text-muted text-xs font-medium uppercase mb-1">Overhead %</label>
-              <input type="number" step="any" name="overheadPercent" placeholder="0" className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm" />
-            </div>
-            <div>
-              <button
-                type="submit"
-                className="w-fit px-6 mx-auto bg-teal-600 hover:bg-teal-700 text-white font-medium py-2 rounded-full shadow-md transition-colors text-sm h-[40px]"
-              >
-                + Add Product
-              </button>
-            </div>
-          </form>
-          <p className="text-text-muted text-xs mt-3">
-            You can mark this product as a Core Element later from its recipe page.
+        <div className="bg-surface-widget border border-default rounded-xl p-5">
+          <p className="text-text-muted text-xs font-semibold uppercase tracking-wider">Core Elements</p>
+          <p className="text-3xl font-bold mt-2 text-text-brand">{coreElements.length}</p>
+        </div>
+        <div className="bg-surface-widget border border-default rounded-xl p-5">
+          <p className="text-text-muted text-xs font-semibold uppercase tracking-wider">Avg COGS</p>
+          <p className="text-3xl font-bold mt-2 text-warning">
+            {goods.length > 0
+              ? `$${(goods.reduce((sum, g) => sum + g.calculatedCogs, 0) / goods.length).toFixed(2)}`
+              : "—"}
           </p>
         </div>
-
-        {/* Products Table */}
-        <div className="bg-surface-widget border border-default rounded-xl overflow-hidden">
-          <div className="p-5 border-b border-default">
-            <h2 className="text-lg font-semibold text-text text-center">Products</h2>
-          </div>
-          {goods.length === 0 ? (
-            <div className="text-center py-12 text-text-muted">No products yet. Add your first product above!</div>
-          ) : (
-            <SortableFinishedGoodsTable
-              goods={goods}
-              updateAction={updateFinishedGood}
-              deleteAction={deleteFinishedGood}
-              produceAction={produceBatch}
-            />
-          )}
-        </div>
-
-        {/* Core Elements Section */}
-        {coreElements.length > 0 && (
-          <div className="bg-surface-widget border border-default rounded-xl overflow-hidden border-text-brand">
-            <div className="p-5 border-b border-text-brand bg-brand-muted dark:bg-brand-muted-dark">
-              <h2 className="text-lg font-semibold text-text-brand text-center">Core Elements</h2>
-              <p className="text-text-muted text-xs text-center mt-1">Intermediate products used in other recipes</p>
-            </div>
-            <SortableFinishedGoodsTable
-              goods={coreElements}
-              updateAction={updateFinishedGood}
-              deleteAction={deleteFinishedGood}
-              produceAction={produceBatch}
-            />
-          </div>
-        )}
-
-        <div className="flex justify-end">
-          <a
-            href="/recipes"
-            className="inline-flex items-center gap-2 bg-brand hover:bg-brand-hover text-white font-medium px-4 py-2 rounded-lg transition-colors text-sm"
-          >
-            🧪 Recipes
-          </a>
-        </div>
       </div>
-    </main>
+
+      {/* Add Product Form */}
+      <div className="bg-surface-widget border border-default rounded-xl p-6">
+        <h2 className="text-lg font-semibold text-text mb-4">Add New Product</h2>
+        <form action={addFinishedGood} className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+          <div>
+            <label className="block text-text-muted text-xs font-medium uppercase mb-1">Product Name</label>
+            <input type="text" name="name" required placeholder="e.g. 8oz Spiced Vanilla Candle" className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm" />
+          </div>
+          <div>
+            <label className="block text-text-muted text-xs font-medium uppercase mb-1">SKU</label>
+            <input type="text" name="sku" placeholder="e.g. CAN-SV-8" className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm" />
+          </div>
+          <div>
+            <label className="block text-text-muted text-xs font-medium uppercase mb-1">Batch Code</label>
+            <input type="text" name="batchCode" required placeholder="e.g. B001-2026" className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm" />
+          </div>
+          <div>
+            <label className="block text-text-muted text-xs font-medium uppercase mb-1">Retail Price</label>
+            <input type="number" step="any" name="retailPrice" placeholder="0.00" className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm" />
+          </div>
+          <div>
+            <label className="block text-text-muted text-xs font-medium uppercase mb-1">Qty on Hand</label>
+            <input type="number" name="quantityOnHand" placeholder="0" className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm" />
+          </div>
+          <div>
+            <label className="block text-text-muted text-xs font-medium uppercase mb-1">Labor $/unit</label>
+            <input type="number" step="any" name="laborCostPerUnit" placeholder="0.00" className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm" />
+          </div>
+          <div>
+            <label className="block text-text-muted text-xs font-medium uppercase mb-1">Overhead Flat $</label>
+            <input type="number" step="any" name="overheadFlat" placeholder="0.00" className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm" />
+          </div>
+          <div>
+            <label className="block text-text-muted text-xs font-medium uppercase mb-1">Overhead %</label>
+            <input type="number" step="any" name="overheadPercent" placeholder="0" className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm" />
+          </div>
+          <div>
+            <button
+              type="submit"
+              className="w-fit px-6 mx-auto bg-teal-600 hover:bg-teal-700 text-white font-medium py-2 rounded-full shadow-md transition-colors text-sm h-[40px]"
+            >
+              + Add Product
+            </button>
+          </div>
+        </form>
+        <p className="text-text-muted text-xs mt-3">
+          You can mark this product as a Core Element later from its recipe page.
+        </p>
+      </div>
+
+      {/* Products Table */}
+      <div className="bg-surface-widget border border-default rounded-xl overflow-hidden">
+        <div className="p-5 border-b border-default">
+          <h2 className="text-lg font-semibold text-text text-center">Products</h2>
+        </div>
+        {goods.length === 0 ? (
+          <div className="text-center py-12 text-text-muted">No products yet. Add your first product above!</div>
+        ) : (
+          <SortableFinishedGoodsTable
+            goods={goods}
+            updateAction={updateFinishedGood}
+            deleteAction={deleteFinishedGood}
+            produceAction={produceBatch}
+          />
+        )}
+      </div>
+
+      {/* Core Elements Section */}
+      {coreElements.length > 0 && (
+        <div className="bg-surface-widget border border-default rounded-xl overflow-hidden border-text-brand">
+          <div className="p-5 border-b border-text-brand bg-brand-muted dark:bg-brand-muted-dark">
+            <h2 className="text-lg font-semibold text-text-brand text-center">Core Elements</h2>
+            <p className="text-text-muted text-xs text-center mt-1">Intermediate products used in other recipes</p>
+          </div>
+          <SortableFinishedGoodsTable
+            goods={coreElements}
+            updateAction={updateFinishedGood}
+            deleteAction={deleteFinishedGood}
+            produceAction={produceBatch}
+          />
+        </div>
+      )}
+
+      <div className="flex justify-end">
+        <a
+          href="/recipes"
+          className="inline-flex items-center gap-2 bg-brand hover:bg-brand-hover text-white font-medium px-4 py-2 rounded-lg transition-colors text-sm"
+        >
+          🧪 Recipes
+        </a>
+      </div>
+    </div>
   );
 }

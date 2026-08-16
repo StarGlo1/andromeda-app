@@ -351,11 +351,15 @@ html.dark tbody tr:hover {
 
 /* ===== END FORCE LIGHT MODE OVERRIDES ===== */
 
+/* ----- Workspace container - SAME padding both modes ----- */
+.workspace-container {
+  border-radius: 1rem !important;
+  padding: 1.5rem !important;
+}
+
 /* ----- Dark mode workspace ----- */
 html.dark .workspace-container {
   background-color: transparent !important;
-  border-radius: 1rem !important;
-  padding: 1.5rem !important;
 }
 
 html.dark .workspace-container section,

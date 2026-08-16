@@ -1,5 +1,6 @@
+// app/reports/page.tsx
+
 import { prisma } from "@/lib/prisma";
-import Navbar from "@/app/components/Navbar";
 import ReportsClient from "./ReportsClient";
 
 interface ReportData {
@@ -104,25 +105,22 @@ export default async function ReportsPage({
   const cogsScheduleC = data.inventoryValue + totalPurchases - data.inventoryValue;
 
   return (
-    <main className="min-h-screen bg-bg text-text p-4 sm:p-8">
-      <div className="max-w-6xl mx-auto space-y-8">
-        <Navbar />
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-text">Reports Dashboard</h1>
-          <a
-            href="/reports/cogs"
-            className="bg-gray-200 text-black hover:bg-gray-300 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600 text-sm font-medium px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
-          >
-            📋 Detailed COGS Calculator
-          </a>
-        </div>
-        <ReportsClient
-          data={data}
-          cogsScheduleC={cogsScheduleC}
-          startDate={startDate?.toISOString()}
-          endDate={endDate?.toISOString()}
-        />
+    <div className="max-w-6xl mx-auto space-y-8">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-text">Reports Dashboard</h1>
+        <a
+          href="/reports/cogs"
+          className="bg-gray-200 text-black hover:bg-gray-300 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600 text-sm font-medium px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
+        >
+          📋 Detailed COGS Calculator
+        </a>
       </div>
-    </main>
+      <ReportsClient
+        data={data}
+        cogsScheduleC={cogsScheduleC}
+        startDate={startDate?.toISOString()}
+        endDate={endDate?.toISOString()}
+      />
+    </div>
   );
 }

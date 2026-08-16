@@ -29,6 +29,8 @@ interface Props {
 
 const inputClass = "w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-[#faf8f5] dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent";
 
+const cardClass = "bg-[#e0d6c9] dark:bg-black border border-gray-300 dark:border-slate-700 rounded-xl p-6";
+
 export function QuickLogManager({
   events,
   finishedGoods,
@@ -112,7 +114,7 @@ export function QuickLogManager({
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Left: Product Grid */}
       <div className="lg:col-span-2 space-y-4">
-        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-6">
+        <div className={cardClass}>
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
             Products
           </h2>
@@ -121,7 +123,7 @@ export function QuickLogManager({
               <button
                 key={product.id}
                 onClick={() => handleAddToCart(product)}
-                className="p-4 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-center hover:bg-[#8a7a65] dark:hover:bg-slate-700 hover:text-white dark:hover:text-gray-100 transition-colors group"
+                className="p-4 bg-[#ede6dc] dark:bg-gray-900 border border-gray-300 dark:border-slate-700 rounded-xl text-center hover:bg-[#8a7a65] dark:hover:bg-slate-700 hover:text-white dark:hover:text-gray-100 transition-colors group"
               >
                 <p className="text-sm font-medium text-gray-900 dark:text-gray-100 group-hover:text-white dark:group-hover:text-gray-100">
                   {product.name}
@@ -140,7 +142,7 @@ export function QuickLogManager({
 
       {/* Right: Cart */}
       <div className="space-y-4">
-        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-6">
+        <div className={cardClass}>
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
             Event
           </h2>
@@ -210,7 +212,7 @@ export function QuickLogManager({
           )}
         </div>
 
-        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-6">
+        <div className={cardClass}>
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
             Cart ({cart.length} items)
           </h2>
@@ -228,7 +230,7 @@ export function QuickLogManager({
                 return (
                   <div
                     key={item.finishedGoodId}
-                    className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 rounded-lg p-3"
+                    className="flex items-center justify-between bg-[#ede6dc] dark:bg-gray-900 rounded-lg p-3"
                   >
                     <div>
                       <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
@@ -265,7 +267,7 @@ export function QuickLogManager({
                 );
               })}
 
-              <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
+              <div className="border-t border-gray-300 dark:border-gray-700 pt-3">
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
                     Total
