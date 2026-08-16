@@ -18,7 +18,6 @@ export function LogoUpload() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file client-side
     const validTypes = ["image/png", "image/jpeg", "image/jpg", "image/svg+xml", "image/webp"];
     if (!validTypes.includes(file.type)) {
       setError("Please upload a PNG, JPG, SVG, or WebP file.");
@@ -52,7 +51,6 @@ export function LogoUpload() {
       setLogoUrl(data.imagePath);
       setSuccess(true);
 
-      // Clear success message after 3 seconds
       setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to upload logo");
@@ -74,7 +72,6 @@ export function LogoUpload() {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-6">
-        {/* Current Logo Display */}
         <div className="w-24 h-24 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center overflow-hidden bg-gray-50 dark:bg-gray-800">
           {logoUrl ? (
             <Image
@@ -83,6 +80,7 @@ export function LogoUpload() {
               width={96}
               height={96}
               className="object-contain"
+              unoptimized
             />
           ) : (
             <Upload className="w-8 h-8 text-gray-400 dark:text-gray-500" />
@@ -135,7 +133,6 @@ export function LogoUpload() {
         </div>
       </div>
 
-      {/* Status Messages */}
       {error && (
         <div className="flex items-center gap-2 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg p-3">
           <X className="w-4 h-4 shrink-0" />

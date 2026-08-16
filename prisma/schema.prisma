@@ -238,8 +238,6 @@ model LotRawMaterial {
   @@map("lot_raw_materials")
 }
 
-// ─── Consignment Models ───
-
 model ConsignmentLocation {
   id          String              @id @default(uuid())
   name        String
@@ -287,8 +285,6 @@ model ConsignmentBatchItem {
   @@map("consignment_batch_items")
 }
 
-// ─── Event Model for Quick-Log ───
-
 model Event {
   id        String   @id @default(uuid())
   name      String
@@ -301,4 +297,14 @@ model Event {
   sales     Sale[]
 
   @@map("events")
+}
+
+model Setting {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("settings")
 }

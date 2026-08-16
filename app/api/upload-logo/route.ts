@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
+import { prisma } from "@/lib/prisma";
 
 export async function POST(request: NextRequest) {
   try {
@@ -45,19 +46,18 @@ export async function POST(request: NextRequest) {
 
     const imagePath = `/images/${filename}`;
 
-    const response = NextResponse.json({
+    // Save to database
+    await prisma.setting.upsert({
+      where: { key: "andromedaLogo" },
+      update: { value: imagePath },
+      create: { key: "andromedaLogo", value: imagePath },
+    });
+
+    return NextResponse.json({
       success: true,
       imagePath,
       message: "Logo uploaded successfully"
     });
-
-    response.cookies.set("andromedaLogo", imagePath, {
-      path: "/",
-      maxAge: 31536000,
-      sameSite: "lax",
-    });
-
-    return response;
   } catch (error) {
     console.error("Logo upload error:", error);
     return NextResponse.json(

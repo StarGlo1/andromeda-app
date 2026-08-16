@@ -84,8 +84,8 @@ const NAV_GROUPS = [
 function AnimatedMenuIcon({ open }: { open: boolean }) {
   return (
     <svg
-      width="34"
-      height="34"
+      width="30"
+      height="30"
       viewBox="0 0 28 28"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
@@ -228,37 +228,37 @@ export default function Navbar() {
   return (
     <>
       <header className="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-600 border-b border-gray-200 dark:border-gray-500 rounded-b-2xl shadow-sm transition-transform duration-700">
-        <div className="w-full px-6 sm:px-8 lg:px-10">
-          <div className="relative flex items-center justify-center py-7">
+        <div className="w-full px-4 sm:px-8 lg:px-10">
+          <div className="relative flex items-center justify-center py-5 sm:py-7">
             <button
               onClick={() => (drawerOpen ? closeDrawer() : setDrawerOpen(true))}
-              className="absolute left-0 p-3.5 rounded-xl bg-gray-100 dark:bg-gray-700 border-2 border-black dark:border-gray-500 text-gray-600 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-500 transition-all duration-300"
+              className="absolute left-0 p-3 sm:p-3.5 rounded-xl bg-gray-100 dark:bg-gray-700 border-2 border-black dark:border-gray-500 text-gray-600 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-500 transition-all duration-300"
               aria-label={drawerOpen ? "Close Menu" : "Open Menu"}
             >
               <AnimatedMenuIcon open={drawerOpen} />
             </button>
 
-            <Link className="flex items-center gap-5 group" href="/">
-              <div className="w-20 h-20 flex items-center justify-center shrink-0">
+            <Link className="flex items-center gap-3 sm:gap-5 group" href="/">
+              <div className="w-14 h-14 sm:w-20 sm:h-20 flex items-center justify-center shrink-0">
                 {logoUrl ? (
                   <Image
                     src={logoUrl}
                     alt="Andromeda Studios Logo"
-                    width={80}
-                    height={80}
+                    width={56}
+                    height={56}
                     className="object-contain w-full h-full"
                     priority
                     unoptimized
                   />
                 ) : (
-                  <Boxes className="w-10 h-10 text-teal-600 dark:text-teal-400" />
+                  <Boxes className="w-8 h-8 sm:w-10 sm:h-10 text-teal-600 dark:text-teal-400" />
                 )}
               </div>
               <div className="flex flex-col items-center">
-                <span className="text-4xl sm:text-5xl font-bold tracking-[0.25em] text-gray-900 dark:text-gray-100 leading-none">
+                <span className="text-2xl sm:text-4xl lg:text-5xl font-bold tracking-[0.15em] sm:tracking-[0.25em] text-gray-900 dark:text-gray-100 leading-none">
                   ANDROMEDA
                 </span>
-                <span className="text-lg sm:text-xl font-medium tracking-[0.3em] text-gray-600 dark:text-gray-300 mt-1 uppercase">
+                <span className="text-sm sm:text-lg lg:text-xl font-medium tracking-[0.2em] sm:tracking-[0.3em] text-gray-600 dark:text-gray-300 mt-0.5 sm:mt-1 uppercase">
                   Studios
                 </span>
               </div>
@@ -280,7 +280,7 @@ export default function Navbar() {
               onClick={closeDrawer}
             />
             <div
-              className="fixed left-0 top-0 bottom-0 w-[28rem] max-w-[90vw] bg-white dark:bg-black border-r border-gray-200 dark:border-slate-700 shadow-xl flex flex-col z-[70]"
+              className="fixed left-0 top-0 bottom-0 w-full sm:w-[28rem] max-w-[100vw] sm:max-w-[90vw] bg-white dark:bg-black border-r border-gray-200 dark:border-slate-700 shadow-xl flex flex-col z-[70]"
               style={{
                 height: "100vh",
                 top: 0,
@@ -290,24 +290,24 @@ export default function Navbar() {
                   : "slideInLeftSmooth 0.7s cubic-bezier(0.16, 1, 0.3, 1)",
               }}
             >
-              <div className="w-full px-6 sm:px-8 lg:px-10">
-                <div className="flex items-center justify-between py-11">
+              <div className="w-full px-4 sm:px-8 lg:px-10">
+                <div className="flex items-center justify-between py-8 sm:py-11">
                   <button
                     onClick={closeDrawer}
-                    className="p-3.5 rounded-xl bg-gray-100 dark:bg-gray-700 border-2 border-black dark:border-gray-500 text-gray-600 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-500 transition-all duration-300"
+                    className="p-3 sm:p-3.5 rounded-xl bg-gray-100 dark:bg-gray-700 border-2 border-black dark:border-gray-500 text-gray-600 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-500 transition-all duration-300"
                     aria-label="Close Menu"
                   >
                     <AnimatedMenuIcon open={drawerOpen} />
                   </button>
                   <button
                     onClick={toggleTheme}
-                    className="p-3 rounded-xl bg-gray-100 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors duration-300"
+                    className="p-2.5 sm:p-3 rounded-xl bg-gray-100 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors duration-300"
                     aria-label="Toggle Theme"
                   >
                     {isDark ? (
-                      <Sun className="w-7 h-7 text-amber-400" />
+                      <Sun className="w-6 h-6 sm:w-7 sm:h-7 text-amber-400" />
                     ) : (
-                      <Moon className="w-7 h-7 text-indigo-600" />
+                      <Moon className="w-6 h-6 sm:w-7 sm:h-7 text-indigo-600" />
                     )}
                   </button>
                 </div>
@@ -315,21 +315,21 @@ export default function Navbar() {
 
               <div className="border-b border-gray-300 dark:border-gray-700"></div>
 
-              <div className="w-full px-6 sm:px-8 lg:px-10 py-3">
-                <span className="text-4xl font-bold text-gray-900 dark:text-gray-100">
+              <div className="w-full px-4 sm:px-8 lg:px-10 py-2 sm:py-3">
+                <span className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-gray-100">
                   MENU
                 </span>
               </div>
 
               <div className="border-b border-gray-200 dark:border-gray-800"></div>
 
-              <div className="flex-1 overflow-y-auto p-6 pt-4">
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6 pt-3 sm:pt-4">
                 <Link
                   href="/"
                   onClick={closeDrawer}
-                  className="flex items-center gap-3 px-5 py-3.5 rounded-lg text-lg font-medium mb-1 text-gray-600 dark:text-gray-300 hover:bg-[#8a7a65] dark:hover:bg-slate-700 hover:text-white dark:hover:text-gray-100 transition-all duration-300"
+                  className="flex items-center gap-3 px-4 sm:px-5 py-3 sm:py-3.5 rounded-lg text-base sm:text-lg font-medium mb-1 text-gray-600 dark:text-gray-300 hover:bg-[#8a7a65] dark:hover:bg-slate-700 hover:text-white dark:hover:text-gray-100 transition-all duration-300"
                 >
-                  <LayoutDashboard className="w-6 h-6 shrink-0" />
+                  <LayoutDashboard className="w-5 h-5 sm:w-6 sm:h-6 shrink-0" />
                   Command Deck
                 </Link>
 
@@ -342,15 +342,15 @@ export default function Navbar() {
                         onClick={() =>
                           setExpandedGroup(isExpanded ? null : group.label)
                         }
-                        className="w-full flex items-center px-5 py-3.5 rounded-lg text-lg font-medium text-gray-600 dark:text-gray-300 hover:bg-[#8a7a65] dark:hover:bg-slate-700 hover:text-white dark:hover:text-gray-100 transition-all duration-300"
+                        className="w-full flex items-center px-4 sm:px-5 py-3 sm:py-3.5 rounded-lg text-base sm:text-lg font-medium text-gray-600 dark:text-gray-300 hover:bg-[#8a7a65] dark:hover:bg-slate-700 hover:text-white dark:hover:text-gray-100 transition-all duration-300"
                       >
-                        <Icon className="w-6 h-6 shrink-0 mr-3" />
+                        <Icon className="w-5 h-5 sm:w-6 sm:h-6 shrink-0 mr-3" />
                         <span>{group.label}</span>
                       </button>
 
                       {isExpanded && (
                         <div
-                          className="ml-4 mt-1 space-y-1 border-l-2 border-gray-200 dark:border-slate-700 pl-3"
+                          className="ml-3 sm:ml-4 mt-1 space-y-1 border-l-2 border-gray-200 dark:border-slate-700 pl-2 sm:pl-3"
                           style={{
                             animation: "slideDownSmooth 0.5s cubic-bezier(0.16, 1, 0.3, 1)",
                           }}
@@ -362,9 +362,9 @@ export default function Navbar() {
                                 href={item.href}
                                 key={item.name}
                                 onClick={closeDrawer}
-                                className="flex items-center gap-3 px-4 py-3 rounded-lg text-lg font-medium text-gray-600 dark:text-gray-300 hover:bg-[#8a7a65] dark:hover:bg-slate-700 hover:text-white dark:hover:text-gray-100 transition-all duration-300"
+                                className="flex items-center gap-3 px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg text-base sm:text-lg font-medium text-gray-600 dark:text-gray-300 hover:bg-[#8a7a65] dark:hover:bg-slate-700 hover:text-white dark:hover:text-gray-100 transition-all duration-300"
                               >
-                                <SubIcon className="w-5 h-5 shrink-0" />
+                                <SubIcon className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
                                 {item.name}
                               </Link>
                             );

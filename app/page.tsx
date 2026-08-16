@@ -1,3 +1,5 @@
+// app/page.tsx
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -46,7 +48,7 @@ const ALL_QUICK_LINKS = [
   { name: 'Alerts', href: '/alerts', icon: 'Bell' },
   { name: 'Calculator', href: '/calculator', icon: 'Calculator' },
   { name: 'Reports', href: '/reports', icon: 'FileText' },
-  { name: 'COGS', href: '/cogs', icon: 'Calculator' },
+  { name: 'COGS', href: '/reports/cogs', icon: 'Calculator' },
   { name: 'Import / Export', href: '/import', icon: 'Truck' },
   { name: 'Pricing', href: '/pricing', icon: 'Settings' },
 ];
@@ -180,7 +182,7 @@ export default function CommandDeckPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div className="space-y-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6" suppressHydrationWarning>
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">Command Deck</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">

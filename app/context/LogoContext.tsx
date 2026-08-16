@@ -2,7 +2,7 @@
 
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState } from "react";
 
 interface LogoContextType {
   logoUrl: string | null;
@@ -23,20 +23,6 @@ export function LogoProvider({
 
   const handleSetLogoUrl = (url: string | null) => {
     setLogoUrl(url);
-    
-    if (typeof window !== "undefined") {
-      if (url) {
-        document.cookie = `andromedaLogo=${encodeURIComponent(url)}; path=/; max-age=31536000; SameSite=Lax`;
-        try {
-          localStorage.setItem("andromedaLogo", url);
-        } catch {}
-      } else {
-        document.cookie = "andromedaLogo=; path=/; max-age=0; SameSite=Lax";
-        try {
-          localStorage.removeItem("andromedaLogo");
-        } catch {}
-      }
-    }
   };
 
   const resetLogo = () => {

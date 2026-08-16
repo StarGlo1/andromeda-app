@@ -1,14 +1,15 @@
 // app/actions/getLogo.ts
 
-import { cookies } from 'next/headers';
+import { prisma } from "@/lib/prisma";
 
 export async function getLogo(): Promise<string | null> {
-  const cookieStore = cookies();
-  const logoCookie = cookieStore.get('andromedaLogo');
-  
-  if (logoCookie) {
-    return decodeURIComponent(logoCookie.value);
+  try {
+    const setting = await prisma.setting.findUnique({
+      where: { key: "andromedaLogo" },
+    });
+    
+    return setting?.value || null;
+  } catch {
+    return null;
   }
-  
-  return null;
 }
