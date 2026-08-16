@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -28,6 +28,7 @@ import {
   Upload,
   Bell,
   Network,
+  Zap,
 } from "lucide-react";
 
 const NAV_GROUPS = [
@@ -57,6 +58,7 @@ const NAV_GROUPS = [
     icon: ShoppingCart,
     items: [
       { name: "Sales", href: "/sales", icon: ShoppingCart },
+      { name: "Quick Log", href: "/quick-log", icon: Zap },
       { name: "Customers", href: "/customers", icon: Users },
     ],
   },
@@ -88,7 +90,7 @@ function AnimatedMenuIcon({ open }: { open: boolean }) {
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       style={{
-        transition: "all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
+        transition: "all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
         overflow: "visible",
       }}
     >
@@ -165,6 +167,7 @@ function AnimatedMenuIcon({ open }: { open: boolean }) {
 
 export default function Navbar() {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
   const [isDark, setIsDark] = useState(false);
   const pathname = usePathname();
@@ -184,18 +187,12 @@ export default function Navbar() {
     }
   }, [pathname]);
 
-  useEffect(() => {
-    setDrawerOpen(false);
-  }, [pathname]);
-
-  useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setDrawerOpen(false);
-      }
-    };
-    window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
+  const closeDrawer = useCallback(() => {
+    setDrawerOpen(false); // Immediately revert icon to pinwheel
+    setIsClosing(true);
+    setTimeout(() => {
+      setIsClosing(false);
+    }, 700);
   }, []);
 
   useEffect(() => {
@@ -208,6 +205,16 @@ export default function Navbar() {
       document.body.style.overflow = "";
     };
   }, [drawerOpen]);
+
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        closeDrawer();
+      }
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [closeDrawer]);
 
   const toggleTheme = () => {
     const newDark = !isDark;
@@ -224,12 +231,12 @@ export default function Navbar() {
   return (
     <>
       {/* Fixed top header with hamburger and brand */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-600 border-b border-gray-200 dark:border-gray-500 rounded-b-2xl shadow-sm transition-transform duration-300">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-600 border-b border-gray-200 dark:border-gray-500 rounded-b-2xl shadow-sm transition-transform duration-700">
         <div className="w-full px-6 sm:px-8 lg:px-10">
           <div className="relative flex items-center justify-center py-7">
             {/* Left: Hamburger - stays in header, animates pinwheel/orbital */}
             <button
-              onClick={() => setDrawerOpen(!drawerOpen)}
+              onClick={() => (drawerOpen ? closeDrawer() : setDrawerOpen(true))}
               className="absolute left-0 p-3.5 rounded-xl bg-gray-100 dark:bg-gray-700 border-2 border-black dark:border-gray-500 text-gray-600 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-500 transition-all duration-300"
               aria-label={drawerOpen ? "Close Menu" : "Open Menu"}
             >
@@ -247,6 +254,7 @@ export default function Navbar() {
                     height={80}
                     className="object-contain w-full h-full"
                     priority
+                    unoptimized
                   />
                 ) : (
                   <Boxes className="w-10 h-10 text-teal-600 dark:text-teal-400" />
@@ -266,22 +274,34 @@ export default function Navbar() {
       </header>
 
       {/* Slide-out Drawer */}
-      {drawerOpen &&
+      {(drawerOpen || isClosing) &&
         createPortal(
           <>
             <div
               className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm"
-              onClick={() => setDrawerOpen(false)}
+              style={{
+                animation: isClosing
+                  ? "fadeOut 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards"
+                  : "fadeIn 0.7s cubic-bezier(0.16, 1, 0.3, 1)",
+              }}
+              onClick={closeDrawer}
             />
             <div
-              className="fixed left-0 top-0 bottom-0 w-[28rem] max-w-[90vw] bg-white dark:bg-black border-r border-gray-200 dark:border-slate-700 shadow-xl animate-slide-in-left flex flex-col z-[70]"
-              style={{ height: "100vh", top: 0, left: 0 }}
+              className="fixed left-0 top-0 bottom-0 w-[28rem] max-w-[90vw] bg-white dark:bg-black border-r border-gray-200 dark:border-slate-700 shadow-xl flex flex-col z-[70]"
+              style={{
+                height: "100vh",
+                top: 0,
+                left: 0,
+                animation: isClosing
+                  ? "slideOutLeftSmooth 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards"
+                  : "slideInLeftSmooth 0.7s cubic-bezier(0.16, 1, 0.3, 1)",
+              }}
             >
               {/* Row 1: Close button + Theme toggle */}
               <div className="w-full px-6 sm:px-8 lg:px-10">
                 <div className="flex items-center justify-between py-11">
                   <button
-                    onClick={() => setDrawerOpen(false)}
+                    onClick={closeDrawer}
                     className="p-3.5 rounded-xl bg-gray-100 dark:bg-gray-700 border-2 border-black dark:border-gray-500 text-gray-600 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-500 transition-all duration-300"
                     aria-label="Close Menu"
                   >
@@ -289,7 +309,7 @@ export default function Navbar() {
                   </button>
                   <button
                     onClick={toggleTheme}
-                    className="p-3 rounded-xl bg-gray-100 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
+                    className="p-3 rounded-xl bg-gray-100 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors duration-300"
                     aria-label="Toggle Theme"
                   >
                     {isDark ? (
@@ -318,8 +338,8 @@ export default function Navbar() {
               <div className="flex-1 overflow-y-auto p-6 pt-4">
                 <Link
                   href="/"
-                  onClick={() => setDrawerOpen(false)}
-                  className="flex items-center gap-3 px-5 py-3.5 rounded-lg text-lg font-medium mb-1 text-gray-600 dark:text-gray-300 hover:bg-[#8a7a65] dark:hover:bg-slate-700 hover:text-white dark:hover:text-gray-100 transition-colors"
+                  onClick={closeDrawer}
+                  className="flex items-center gap-3 px-5 py-3.5 rounded-lg text-lg font-medium mb-1 text-gray-600 dark:text-gray-300 hover:bg-[#8a7a65] dark:hover:bg-slate-700 hover:text-white dark:hover:text-gray-100 transition-all duration-300"
                 >
                   <LayoutDashboard className="w-6 h-6 shrink-0" />
                   Command Deck
@@ -334,22 +354,27 @@ export default function Navbar() {
                         onClick={() =>
                           setExpandedGroup(isExpanded ? null : group.label)
                         }
-                        className="w-full flex items-center px-5 py-3.5 rounded-lg text-lg font-medium text-gray-600 dark:text-gray-300 hover:bg-[#8a7a65] dark:hover:bg-slate-700 hover:text-white dark:hover:text-gray-100 transition-colors"
+                        className="w-full flex items-center px-5 py-3.5 rounded-lg text-lg font-medium text-gray-600 dark:text-gray-300 hover:bg-[#8a7a65] dark:hover:bg-slate-700 hover:text-white dark:hover:text-gray-100 transition-all duration-300"
                       >
                         <Icon className="w-6 h-6 shrink-0 mr-3" />
                         <span>{group.label}</span>
                       </button>
 
                       {isExpanded && (
-                        <div className="ml-4 mt-1 space-y-1 border-l-2 border-gray-200 dark:border-slate-700 pl-3">
+                        <div
+                          className="ml-4 mt-1 space-y-1 border-l-2 border-gray-200 dark:border-slate-700 pl-3"
+                          style={{
+                            animation: "slideDownSmooth 0.5s cubic-bezier(0.16, 1, 0.3, 1)",
+                          }}
+                        >
                           {group.items.map((item) => {
                             const SubIcon = item.icon;
                             return (
                               <Link
                                 href={item.href}
                                 key={item.name}
-                                onClick={() => setDrawerOpen(false)}
-                                className="flex items-center gap-3 px-4 py-3 rounded-lg text-lg font-medium text-gray-600 dark:text-gray-300 hover:bg-[#8a7a65] dark:hover:bg-slate-700 hover:text-white dark:hover:text-gray-100 transition-colors"
+                                onClick={closeDrawer}
+                                className="flex items-center gap-3 px-4 py-3 rounded-lg text-lg font-medium text-gray-600 dark:text-gray-300 hover:bg-[#8a7a65] dark:hover:bg-slate-700 hover:text-white dark:hover:text-gray-100 transition-all duration-300"
                               >
                                 <SubIcon className="w-5 h-5 shrink-0" />
                                 {item.name}

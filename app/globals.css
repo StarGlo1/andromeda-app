@@ -416,3 +416,57 @@ body, .bg-bg, .bg-surface, .bg-surface-nav, .bg-surface-widget, input, textarea,
   to { transform: translateX(0); }
 }
 .animate-slide-in-left { animation: slideInLeft 0.3s ease-out; }
+
+/* ===== SMOOTH DRAWER ANIMATIONS ===== */
+@keyframes slideInLeftSmooth {
+  from {
+    transform: translateX(-100%);
+    opacity: 0.5;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutLeftSmooth {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(-100%);
+    opacity: 0.5;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes slideDownSmooth {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 500px;
+  }
+}
