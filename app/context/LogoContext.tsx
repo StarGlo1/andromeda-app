@@ -12,31 +12,30 @@ interface LogoContextType {
 
 const LogoContext = createContext<LogoContextType | undefined>(undefined);
 
-export function LogoProvider({ children }: { children: React.ReactNode }) {
-  const [logoUrl, setLogoUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    // Load logo from localStorage on mount
-    try {
-      const savedLogo = localStorage.getItem("andromedaLogo");
-      if (savedLogo) {
-        setLogoUrl(savedLogo);
-      }
-    } catch (error) {
-      console.error("Failed to load logo:", error);
-    }
-  }, []);
+export function LogoProvider({ 
+  children, 
+  initialLogoUrl 
+}: { 
+  children: React.ReactNode;
+  initialLogoUrl: string | null;
+}) {
+  const [logoUrl, setLogoUrl] = useState<string | null>(initialLogoUrl);
 
   const handleSetLogoUrl = (url: string | null) => {
     setLogoUrl(url);
-    try {
+    
+    if (typeof window !== "undefined") {
       if (url) {
-        localStorage.setItem("andromedaLogo", url);
+        document.cookie = `andromedaLogo=${encodeURIComponent(url)}; path=/; max-age=31536000; SameSite=Lax`;
+        try {
+          localStorage.setItem("andromedaLogo", url);
+        } catch {}
       } else {
-        localStorage.removeItem("andromedaLogo");
+        document.cookie = "andromedaLogo=; path=/; max-age=0; SameSite=Lax";
+        try {
+          localStorage.removeItem("andromedaLogo");
+        } catch {}
       }
-    } catch (error) {
-      console.error("Failed to save logo:", error);
     }
   };
 

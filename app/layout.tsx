@@ -6,6 +6,7 @@ import Navbar from '@/app/components/Navbar';
 import { ToastProvider } from '@/app/context/ToastContext';
 import { DemoModeProvider } from '@/app/context/DemoModeContext';
 import { LogoProvider } from '@/app/context/LogoContext';
+import { getLogo } from '@/app/actions/getLogo';
 import DemoModeBanner from '@/app/components/DemoModeBanner';
 import '@/app/globals.css';
 
@@ -16,11 +17,13 @@ export const metadata: Metadata = {
   description: 'Inventory and COGS calculator for small-batch makers',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const logoUrl = await getLogo();
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -43,7 +46,7 @@ export default function RootLayout({
       </head>
       <body className={`${inter.className} bg-gray-50 dark:bg-black min-h-screen text-gray-900 dark:text-gray-100 antialiased`}>
         <DemoModeProvider>
-          <LogoProvider>
+          <LogoProvider initialLogoUrl={logoUrl}>
             <ToastProvider>
               <DemoModeBanner />
               <Navbar />

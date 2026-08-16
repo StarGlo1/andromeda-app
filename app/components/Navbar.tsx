@@ -95,7 +95,6 @@ function AnimatedMenuIcon({ open }: { open: boolean }) {
       }}
     >
       {open ? (
-        /* Orbit rings */
         <g
           stroke="currentColor"
           strokeWidth="2"
@@ -115,7 +114,6 @@ function AnimatedMenuIcon({ open }: { open: boolean }) {
           <circle cx="25.5" cy="5.5" r="1.8" fill="currentColor" stroke="none" />
         </g>
       ) : (
-        /* Pinwheel */
         <g
           stroke="currentColor"
           strokeWidth="1.5"
@@ -177,7 +175,6 @@ export default function Navbar() {
     setIsDark(document.documentElement.classList.contains("dark"));
   }, []);
 
-  // Auto-expand the group that contains the current page
   useEffect(() => {
     const currentGroup = NAV_GROUPS.find((group) =>
       group.items.some((item) => item.href === pathname)
@@ -188,7 +185,7 @@ export default function Navbar() {
   }, [pathname]);
 
   const closeDrawer = useCallback(() => {
-    setDrawerOpen(false); // Immediately revert icon to pinwheel
+    setDrawerOpen(false);
     setIsClosing(true);
     setTimeout(() => {
       setIsClosing(false);
@@ -230,11 +227,9 @@ export default function Navbar() {
 
   return (
     <>
-      {/* Fixed top header with hamburger and brand */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-600 border-b border-gray-200 dark:border-gray-500 rounded-b-2xl shadow-sm transition-transform duration-700">
         <div className="w-full px-6 sm:px-8 lg:px-10">
           <div className="relative flex items-center justify-center py-7">
-            {/* Left: Hamburger - stays in header, animates pinwheel/orbital */}
             <button
               onClick={() => (drawerOpen ? closeDrawer() : setDrawerOpen(true))}
               className="absolute left-0 p-3.5 rounded-xl bg-gray-100 dark:bg-gray-700 border-2 border-black dark:border-gray-500 text-gray-600 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-500 transition-all duration-300"
@@ -243,7 +238,6 @@ export default function Navbar() {
               <AnimatedMenuIcon open={drawerOpen} />
             </button>
 
-            {/* Brand - Logo + Text together, centered, seamless */}
             <Link className="flex items-center gap-5 group" href="/">
               <div className="w-20 h-20 flex items-center justify-center shrink-0">
                 {logoUrl ? (
@@ -273,7 +267,6 @@ export default function Navbar() {
         </div>
       </header>
 
-      {/* Slide-out Drawer */}
       {(drawerOpen || isClosing) &&
         createPortal(
           <>
@@ -297,7 +290,6 @@ export default function Navbar() {
                   : "slideInLeftSmooth 0.7s cubic-bezier(0.16, 1, 0.3, 1)",
               }}
             >
-              {/* Row 1: Close button + Theme toggle */}
               <div className="w-full px-6 sm:px-8 lg:px-10">
                 <div className="flex items-center justify-between py-11">
                   <button
@@ -321,20 +313,16 @@ export default function Navbar() {
                 </div>
               </div>
 
-              {/* Line separator */}
               <div className="border-b border-gray-300 dark:border-gray-700"></div>
 
-              {/* Row 2: MENU title */}
               <div className="w-full px-6 sm:px-8 lg:px-10 py-3">
                 <span className="text-4xl font-bold text-gray-900 dark:text-gray-100">
                   MENU
                 </span>
               </div>
 
-              {/* Small thin break line */}
               <div className="border-b border-gray-200 dark:border-gray-800"></div>
 
-              {/* Drawer Navigation */}
               <div className="flex-1 overflow-y-auto p-6 pt-4">
                 <Link
                   href="/"
