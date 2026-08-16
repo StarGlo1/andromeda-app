@@ -1,42 +1,38 @@
-"use client";
+// app/sales/[id]/page.tsx
 
-import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { useToast } from "@/app/context/ToastContext";
-import Navbar from "@/app/components/Navbar";
+import { DeleteSaleButton } from "./DeleteSaleButton";
 
-interface SaleItem {
-  id: string;
-  quantity: number;
-  unitPrice: number;
-  totalPrice: number;
-  finishedGood: {
-    name: string;
-  };
-}
+export default async function SaleDetailPage({
+  params,
+}: {
+  params: { id: string };
+}) {
+  const sale = await prisma.sale.findUnique({
+    where: { id: params.id },
+    include: {
+      customer: true,
+      items: {
+        include: {
+          finishedGood: {
+            select: { id: true, name: true },
+          },
+        },
+      },
+    },
+  });
 
-interface Sale {
-  id: string;
-  saleDate: string;
-  totalAmount: number;
-  discount: number;
-  tax: number;
-  status: string;
-  notes: string | null;
-  customer: {
-    name: string;
-    email: string | null;
-    phone: string | null;
-    address: string | null;
-  } | null;
-  items: SaleItem[];
-}
-
-export default function SaleDetailPage({ sale }: { sale: Sale }) {
-  const { showToast } = useToast();
-  const router = useRouter();
-  const [isDeleting, startDeleteTransition] = useTransition();
+  if (!sale) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-text-muted">Sale not found.</p>
+        <Link href="/sales" className="text-text-brand hover:underline text-sm mt-2 inline-block">
+          ← Back to Sales
+        </Link>
+      </div>
+    );
+  }
 
   const statusColors: Record<string, string> = {
     Draft: "bg-warning-muted dark:bg-warning-muted-dark text-warning",
@@ -45,170 +41,138 @@ export default function SaleDetailPage({ sale }: { sale: Sale }) {
     Refunded: "bg-error-muted dark:bg-error-muted-dark text-error",
   };
 
-  const handleDelete = () => {
-    if (!confirm("Delete this sale? This will restore inventory.")) return;
-    startDeleteTransition(async () => {
-      try {
-        const res = await fetch(`/api/sales/${sale.id}`, { method: "DELETE" });
-        if (!res.ok) throw new Error("Failed to delete sale");
-        showToast("Sale deleted successfully! Inventory restored.", "success");
-        router.push("/sales");
-      } catch (error: any) {
-        showToast(error.message || "Failed to delete sale.", "error");
-      }
-    });
-  };
+  const subtotal = sale.items.reduce((sum, item) => sum + item.totalPrice, 0);
+  const discountAmount = sale.discount > 0 ? (subtotal * sale.discount) / 100 : 0;
+  const taxAmount = sale.tax > 0 ? ((subtotal - discountAmount) * sale.tax) / 100 : 0;
 
   return (
-    <main className="min-h-screen bg-bg text-text p-4 sm:p-8">
-      <div className="max-w-4xl mx-auto space-y-8">
-        <Navbar />
+    <div className="max-w-4xl mx-auto space-y-8">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-text">
+            Sale #{sale.id.slice(0, 8)}
+          </h1>
+          <p className="text-text-muted text-sm">
+            {new Date(sale.saleDate).toLocaleString()}
+          </p>
+        </div>
+        <Link href="/sales" className="text-text-muted hover:text-text text-sm">
+          ← Back to Sales
+        </Link>
+      </div>
 
-        <div className="flex items-center justify-between">
+      {/* Status Badge */}
+      <div className="flex items-center gap-4">
+        <span
+          className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[sale.status] || "bg-default text-text-muted"}`}
+        >
+          {sale.status}
+        </span>
+        <span className="text-text-muted text-sm">
+          Total: <span className="font-bold text-text-brand">${sale.totalAmount.toFixed(2)}</span>
+        </span>
+      </div>
+
+      {/* Customer Info */}
+      <div className="bg-surface-widget border border-default rounded-xl p-6">
+        <h2 className="text-lg font-semibold text-text mb-2">Customer</h2>
+        {sale.customer ? (
           <div>
-            <h1 className="text-2xl font-bold text-text">
-              Sale #{sale.id.slice(0, 8)}
-            </h1>
-            <p className="text-text-muted text-sm">
-              {new Date(sale.saleDate).toLocaleString()}
-            </p>
+            <p className="font-medium text-text">{sale.customer.name}</p>
+            {sale.customer.email && (
+              <p className="text-text-muted text-sm">{sale.customer.email}</p>
+            )}
+            {sale.customer.phone && (
+              <p className="text-text-muted text-sm">{sale.customer.phone}</p>
+            )}
+            {sale.customer.address && (
+              <p className="text-text-muted text-sm">{sale.customer.address}</p>
+            )}
           </div>
-          <Link href="/sales" className="text-text-muted hover:text-text text-sm">
-            ← Back to Sales
-          </Link>
-        </div>
-
-        {/* Status Badge */}
-        <div className="flex items-center gap-4">
-          <span
-            className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[sale.status] || "bg-default text-text-muted"}`}
-          >
-            {sale.status}
-          </span>
-          <span className="text-text-muted text-sm">
-            Total: <span className="font-bold text-text-brand">${sale.totalAmount.toFixed(2)}</span>
-          </span>
-        </div>
-
-        {/* Customer Info */}
-        <div className="bg-surface-widget border border-default rounded-xl p-6">
-          <h2 className="text-lg font-semibold text-text mb-2">Customer</h2>
-          {sale.customer ? (
-            <div>
-              <p className="font-medium text-text">{sale.customer.name}</p>
-              {sale.customer.email && (
-                <p className="text-text-muted text-sm">{sale.customer.email}</p>
-              )}
-              {sale.customer.phone && (
-                <p className="text-text-muted text-sm">{sale.customer.phone}</p>
-              )}
-              {sale.customer.address && (
-                <p className="text-text-muted text-sm">{sale.customer.address}</p>
-              )}
-            </div>
-          ) : (
-            <p className="text-text-muted text-sm">Walk-in Customer</p>
-          )}
-          {sale.notes && (
-            <div className="mt-4 pt-4 border-t border-default">
-              <p className="text-text-muted text-xs font-medium uppercase mb-1">Notes</p>
-              <p className="text-text text-sm">{sale.notes}</p>
-            </div>
-          )}
-        </div>
-
-        {/* Items */}
-        <div className="bg-surface-widget border border-default rounded-xl overflow-hidden">
-          <div className="p-5 border-b border-default">
-            <h2 className="text-lg font-semibold text-text">Items</h2>
+        ) : (
+          <p className="text-text-muted text-sm">Walk-in Customer</p>
+        )}
+        {sale.notes && (
+          <div className="mt-4 pt-4 border-t border-default">
+            <p className="text-text-muted text-xs font-medium uppercase mb-1">Notes</p>
+            <p className="text-text text-sm">{sale.notes}</p>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-default bg-surface-widget text-text-muted text-xs uppercase tracking-wider">
-                  <th className="p-4">Product</th>
-                  <th className="p-4 text-center">Qty</th>
-                  <th className="p-4 text-right">Unit Price</th>
-                  <th className="p-4 text-right">Total</th>
+        )}
+      </div>
+
+      {/* Items */}
+      <div className="bg-surface-widget border border-default rounded-xl overflow-hidden">
+        <div className="p-5 border-b border-default">
+          <h2 className="text-lg font-semibold text-text">Items</h2>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="border-b border-default bg-surface-widget text-text-muted text-xs uppercase tracking-wider">
+                <th className="p-4">Product</th>
+                <th className="p-4 text-center">Qty</th>
+                <th className="p-4 text-right">Unit Price</th>
+                <th className="p-4 text-right">Total</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-default text-sm">
+              {sale.items.map((item) => (
+                <tr key={item.id}>
+                  <td className="p-4 font-medium text-text">{item.finishedGood.name}</td>
+                  <td className="p-4 text-center text-text-secondary">{item.quantity}</td>
+                  <td className="p-4 text-right text-text-secondary">${item.unitPrice.toFixed(2)}</td>
+                  <td className="p-4 text-right font-medium text-text-brand">
+                    ${item.totalPrice.toFixed(2)}
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-default text-sm">
-                {sale.items.map((item) => (
-                  <tr key={item.id}>
-                    <td className="p-4 font-medium text-text">{item.finishedGood.name}</td>
-                    <td className="p-4 text-center text-text-secondary">{item.quantity}</td>
-                    <td className="p-4 text-right text-text-secondary">${item.unitPrice.toFixed(2)}</td>
-                    <td className="p-4 text-right font-medium text-text-brand">
-                      ${item.totalPrice.toFixed(2)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-              <tfoot className="border-t-2 border-default">
+              ))}
+            </tbody>
+            <tfoot className="border-t-2 border-default">
+              <tr>
+                <td colSpan={3} className="p-4 text-right font-medium text-text">
+                  Subtotal
+                </td>
+                <td className="p-4 text-right font-medium text-text">
+                  ${subtotal.toFixed(2)}
+                </td>
+              </tr>
+              {sale.discount > 0 && (
                 <tr>
-                  <td colSpan={3} className="p-4 text-right font-medium text-text">
-                    Subtotal
+                  <td colSpan={3} className="p-4 text-right text-error">
+                    Discount ({sale.discount}%)
                   </td>
-                  <td className="p-4 text-right font-medium text-text">
-                    ${(sale.totalAmount + sale.discount - sale.tax).toFixed(2)}
-                  </td>
-                </tr>
-                {sale.discount > 0 && (
-                  <tr>
-                    <td colSpan={3} className="p-4 text-right text-error">
-                      Discount ({sale.discount}%)
-                    </td>
-                    <td className="p-4 text-right text-error">
-                      -${((sale.totalAmount + sale.discount - sale.tax) * sale.discount / 100).toFixed(2)}
-                    </td>
-                  </tr>
-                )}
-                {sale.tax > 0 && (
-                  <tr>
-                    <td colSpan={3} className="p-4 text-right text-text-muted">
-                      Tax ({sale.tax}%)
-                    </td>
-                    <td className="p-4 text-right text-text-muted">
-                      ${(sale.totalAmount * sale.tax / (100 + sale.tax)).toFixed(2)}
-                    </td>
-                  </tr>
-                )}
-                <tr className="border-t border-default">
-                  <td colSpan={3} className="p-4 text-right font-bold text-text">
-                    Total
-                  </td>
-                  <td className="p-4 text-right font-bold text-text-brand text-lg">
-                    ${sale.totalAmount.toFixed(2)}
+                  <td className="p-4 text-right text-error">
+                    -${discountAmount.toFixed(2)}
                   </td>
                 </tr>
-              </tfoot>
-            </table>
-          </div>
-        </div>
-
-        {/* Actions */}
-        <div className="flex gap-3">
-          <button
-            onClick={() => window.print()}
-            className="bg-surface border border-default text-text hover:bg-surface-elevated font-medium px-4 py-2 rounded-lg transition-colors text-sm"
-          >
-            🖨️ Print Receipt
-          </button>
-          <Link
-            href={`/sales/${sale.id}/edit`}
-            className="bg-brand hover:bg-brand-hover text-white font-medium px-4 py-2 rounded-lg transition-colors text-sm"
-          >
-            Edit Sale
-          </Link>
-          <button
-            onClick={handleDelete}
-            disabled={isDeleting}
-            className="bg-error hover:bg-red-700 text-white font-medium px-4 py-2 rounded-lg transition-colors text-sm disabled:opacity-50"
-          >
-            {isDeleting ? "Deleting..." : "Delete Sale"}
-          </button>
+              )}
+              {sale.tax > 0 && (
+                <tr>
+                  <td colSpan={3} className="p-4 text-right text-text-muted">
+                    Tax ({sale.tax}%)
+                  </td>
+                  <td className="p-4 text-right text-text-muted">
+                    ${taxAmount.toFixed(2)}
+                  </td>
+                </tr>
+              )}
+              <tr className="border-t border-default">
+                <td colSpan={3} className="p-4 text-right font-bold text-text">
+                  Total
+                </td>
+                <td className="p-4 text-right font-bold text-text-brand text-lg">
+                  ${sale.totalAmount.toFixed(2)}
+                </td>
+              </tr>
+            </tfoot>
+          </table>
         </div>
       </div>
-    </main>
+
+      {/* Actions */}
+      <div className="flex gap-3">
+        <DeleteSaleButton saleId={sale.id} />
+      </div>
+    </div>
   );
 }

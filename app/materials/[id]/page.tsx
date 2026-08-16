@@ -303,7 +303,7 @@ export default async function MaterialDetailPage({ params }: { params: Promise<{
 
                 <button
                   type="submit"
-                  className="w-full bg-teal-600 hover:bg-teal-700 text-white text-sm font-medium px-4 py-2 rounded-full transition-colors"
+                  className="w-full bg-[#4f8792] hover:bg-[#426f79] text-white text-sm font-medium px-4 py-2 rounded-full transition-colors"
                 >
                   Save Changes
                 </button>

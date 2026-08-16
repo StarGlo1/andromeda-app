@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useRef } from "react";
 import UnitConverter from "@/app/components/UnitConverter";
-import { getFragranceOils } from "./actions";
+import { getFragranceOils, getFinishedGoodsForBatchSave, saveBatchNoteToProduct } from "./actions";
+import { ChevronDown, ChevronUp, Save } from "lucide-react";
+import { useToast } from "@/app/context/ToastContext";
 
 interface FragranceBlend {
   name: string;
@@ -14,6 +16,12 @@ interface FragranceOil {
   id: string;
   name: string;
   unit: string | null;
+}
+
+interface FinishedGoodOption {
+  id: string;
+  name: string;
+  batchCode: string;
 }
 
 function FragranceOilAutocomplete({
@@ -61,7 +69,7 @@ function FragranceOilAutocomplete({
           if (input.length > 0) setShowDropdown(true);
         }}
         onBlur={() => setTimeout(() => setShowDropdown(false), 150)}
-        placeholder="Fragrance oil name"
+        placeholder="Oil name"
         className="w-full px-2 py-1 bg-bg border border-default rounded text-text text-sm"
       />
       {showDropdown && filtered.length > 0 && (
@@ -87,28 +95,75 @@ function FragranceOilAutocomplete({
   );
 }
 
+function CollapsibleSection({
+  title,
+  subtitle,
+  defaultOpen = true,
+  children,
+}: {
+  title: string;
+  subtitle?: string;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+
+  return (
+    <div className="bg-surface-widget border border-default rounded-xl shadow-sm overflow-hidden">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between p-5 text-left hover:bg-bg/50 transition-colors"
+      >
+        <div>
+          <h2 className="text-lg font-semibold text-text">{title}</h2>
+          {subtitle && <p className="text-sm text-text-muted mt-0.5">{subtitle}</p>}
+        </div>
+        {isOpen ? (
+          <ChevronUp className="w-5 h-5 text-text-muted shrink-0" />
+        ) : (
+          <ChevronDown className="w-5 h-5 text-text-muted shrink-0" />
+        )}
+      </button>
+      {isOpen && <div className="px-5 pb-5 space-y-4">{children}</div>}
+    </div>
+  );
+}
+
 export default function CalculatorPage() {
+  const { showToast } = useToast();
   const [unitSystem, setUnitSystem] = useState<"imperial" | "metric">("imperial");
   const [containerCount, setContainerCount] = useState<number>(6);
   const [fillWeight, setFillWeight] = useState<number>(8.0);
   const [fragranceLoad, setFragranceLoad] = useState<number>(8);
   const [safetyBuffer, setSafetyBuffer] = useState<number>(5);
 
-  const [primaryFO, setPrimaryFO] = useState<FragranceOil | null>(null);
-  const [primaryFOInput, setPrimaryFOInput] = useState("");
-
-  const [foBlendEnabled, setFoBlendEnabled] = useState<boolean>(false);
   const [foBlends, setFoBlends] = useState<FragranceBlend[]>([
     { name: "", percentage: 100, materialId: undefined },
   ]);
   const [availableOils, setAvailableOils] = useState<FragranceOil[]>([]);
 
-  const [quickWaxWeight, setQuickWaxWeight] = useState<number>(16);
-  const [quickFragranceLoad, setQuickFragranceLoad] = useState<number>(8);
+  // Save to Recipe state
+  const [finishedGoods, setFinishedGoods] = useState<FinishedGoodOption[]>([]);
+  const [selectedProductId, setSelectedProductId] = useState("");
+  const [showSaveSection, setShowSaveSection] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Results display unit
+  const [displayUnit, setDisplayUnit] = useState<"oz" | "lb" | "g" | "kg">("oz");
 
   useEffect(() => {
     getFragranceOils().then(setAvailableOils);
+    getFinishedGoodsForBatchSave().then(setFinishedGoods);
   }, []);
+
+  // Auto-adjust display unit when system changes
+  useEffect(() => {
+    if (unitSystem === "imperial") {
+      setDisplayUnit("oz");
+    } else {
+      setDisplayUnit("g");
+    }
+  }, [unitSystem]);
 
   const flDecimal = fragranceLoad / 100;
   const bufferDecimal = safetyBuffer / 100;
@@ -125,10 +180,24 @@ export default function CalculatorPage() {
   const totalBatchWeight = totalWaxWithBuffer + totalOilWithBuffer;
 
   const unitLabel = unitSystem === "imperial" ? "oz" : "g";
-  const conversionDivisor = unitSystem === "imperial" ? 16 : 1000;
 
-  const totalWaxDisplayUnits = totalWaxWithBuffer / conversionDivisor;
-  const totalOilDisplayUnits = totalOilWithBuffer / conversionDivisor;
+  // Conversion function for display
+  const convertDisplay = (valueOz: number, targetUnit: string): string => {
+    switch (targetUnit) {
+      case "oz":
+        return valueOz.toFixed(1);
+      case "lb":
+        return (valueOz / 16).toFixed(2);
+      case "g":
+        return (valueOz * 28.3495).toFixed(1);
+      case "kg":
+        return (valueOz / 35.274).toFixed(3);
+      default:
+        return valueOz.toFixed(1);
+    }
+  };
+
+  const displayUnitLabel = displayUnit === "oz" ? "oz" : displayUnit === "lb" ? "lb" : displayUnit === "g" ? "g" : "kg";
 
   const addFragranceBlend = () => {
     setFoBlends([...foBlends, { name: "", percentage: 0, materialId: undefined }]);
@@ -152,397 +221,381 @@ export default function CalculatorPage() {
   };
 
   const blendTotal = foBlends.reduce((sum, blend) => sum + blend.percentage, 0);
-  const blendError = foBlendEnabled && Math.abs(blendTotal - 100) > 0.01;
+  const blendError = Math.abs(blendTotal - 100) > 0.01;
 
-  const quickFlDecimal = quickFragranceLoad / 100;
-  const quickRequiredOil = quickWaxWeight * quickFlDecimal;
+  const generateBatchNote = () => {
+    const lines: string[] = [];
+    lines.push(`Vessels: ${containerCount}`);
+    lines.push(`Fill Weight: ${fillWeight} ${unitLabel} per vessel`);
+    lines.push(`Fragrance Load: ${fragranceLoad}%`);
+    lines.push(`Safety Buffer: ${safetyBuffer}%`);
+    lines.push(`Wax Needed: ${convertDisplay(totalWaxWithBuffer, "oz")} oz`);
+    lines.push(`Wax Needed: ${convertDisplay(totalWaxWithBuffer, "lb")} lb`);
+    lines.push(`Wax Needed: ${convertDisplay(totalWaxWithBuffer, "g")} g`);
+    lines.push(`Oil Needed: ${convertDisplay(totalOilWithBuffer, "oz")} oz`);
+    lines.push(`Oil Needed: ${convertDisplay(totalOilWithBuffer, "lb")} lb`);
+    lines.push(`Oil Needed: ${convertDisplay(totalOilWithBuffer, "g")} g`);
+    lines.push(`Total Batch: ${convertDisplay(totalBatchWeight, "oz")} oz`);
+    lines.push(`Total Batch: ${convertDisplay(totalBatchWeight, "g")} g`);
+    
+    if (foBlends.length > 1 || foBlends[0].name) {
+      lines.push("");
+      lines.push("Oil Breakdown:");
+      foBlends.forEach((blend, i) => {
+        const amount = (totalOilWithBuffer * blend.percentage) / 100;
+        lines.push(`  ${blend.name || `Oil ${i + 1}`}: ${convertDisplay(amount, "oz")} oz (${blend.percentage}%)`);
+      });
+    }
+    
+    return lines.join("\n");
+  };
+
+  const handleSaveToRecipe = async () => {
+    if (!selectedProductId) {
+      showToast("Please select a product to save to.", "error");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const note = generateBatchNote();
+      await saveBatchNoteToProduct(selectedProductId, note);
+      showToast("Batch calculation saved to recipe!", "success");
+      setShowSaveSection(false);
+      setSelectedProductId("");
+    } catch (error: any) {
+      showToast(error.message || "Failed to save.", "error");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const availableDisplayUnits = unitSystem === "imperial" 
+    ? ["oz", "lb"] 
+    : ["g", "kg"];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 max-w-4xl">
       {/* Page Header */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-text">Batch & Unit Calculator</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-text mt-3">Batch Calculator</h1>
         <p className="text-sm text-text-muted mt-1">
-          Calculate exact wax and fragrance oil ratios, utilize modular unit converters, and manage production batches.
+          Enter your batch details — wax, fragrance oils, and results update together.
         </p>
       </div>
 
-      {/* Batch Setup Card */}
-      <div className="bg-surface-widget border border-default rounded-xl p-6 space-y-6 shadow-sm">
-        <div>
-          <h2 className="text-lg font-semibold text-text border-b border-default pb-3">Batch Setup</h2>
-          <p className="text-sm text-text-muted mt-3">
-            Enter the core production numbers to calculate wax and fragrance oil requirements.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-text-muted text-xs font-medium uppercase mb-1">Unit System</label>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setUnitSystem("imperial")}
-                className={`px-4 py-2 rounded-full text-xs font-medium transition-colors ${
-                  unitSystem === "imperial"
-                    ? "bg-[#4f8792] text-white"
-                    : "bg-bg border border-default text-text-muted hover:bg-[#c5d9dd] dark:hover:bg-teal-900"
-                }`}
-              >
-                Imperial
-              </button>
-              <button
-                onClick={() => setUnitSystem("metric")}
-                className={`px-4 py-2 rounded-full text-xs font-medium transition-colors ${
-                  unitSystem === "metric"
-                    ? "bg-[#4f8792] text-white"
-                    : "bg-bg border border-default text-text-muted hover:bg-[#c5d9dd] dark:hover:bg-teal-900"
-                }`}
-              >
-                Metric
-              </button>
-            </div>
-            <p className="text-xs text-text-muted mt-1">
-              Example: {unitSystem === "imperial" ? "8 oz per vessel" : "226 g per vessel"}
-            </p>
-          </div>
-
-          <div>
-            <label className="block text-text-muted text-xs font-medium uppercase mb-1">Number of Vessels</label>
-            <input
-              type="number"
-              min="1"
-              value={containerCount}
-              onChange={(e) => setContainerCount(Math.max(1, Number(e.target.value)))}
-              className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text text-sm focus:outline-none focus:ring-2 focus:ring-brand"
-            />
-          </div>
-
-          <div>
-            <label className="block text-text-muted text-xs font-medium uppercase mb-1">
-              Fill Weight per Vessel ({unitLabel})
-            </label>
-            <input
-              type="number"
-              step="0.1"
-              min="0.1"
-              value={fillWeight}
-              onChange={(e) => setFillWeight(Math.max(0.1, Number(e.target.value)))}
-              className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text text-sm focus:outline-none focus:ring-2 focus:ring-brand"
-            />
-          </div>
-
-          <div>
-            <label className="block text-text-muted text-xs font-medium uppercase mb-1">
-              Fragrance Load (%)
-            </label>
-            <input
-              type="number"
-              step="0.5"
-              min="0"
-              max="20"
-              value={fragranceLoad}
-              onChange={(e) => setFragranceLoad(Math.max(0, Number(e.target.value)))}
-              className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text text-sm focus:outline-none focus:ring-2 focus:ring-brand"
-            />
-            <p className="text-xs text-text-muted mt-1">Standard range: 6% – 10%</p>
-          </div>
-
-          <div className="sm:col-span-2">
-            <label className="block text-text-muted text-xs font-medium uppercase mb-1">
-              Safety / Waste Buffer (%)
-            </label>
-            <input
-              type="number"
-              step="1"
-              min="0"
-              max="25"
-              value={safetyBuffer}
-              onChange={(e) => setSafetyBuffer(Math.max(0, Number(e.target.value)))}
-              className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text text-sm focus:outline-none focus:ring-2 focus:ring-brand"
-            />
-            <p className="text-xs text-text-muted mt-1">Accounts for pour residue, testing spillage, and pitcher clinging.</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Fragrance Details Card */}
-      <div className="bg-surface-widget border border-default rounded-xl p-6 space-y-6 shadow-sm">
-        <div>
-          <h2 className="text-lg font-semibold text-text border-b border-default pb-3">Fragrance Details</h2>
-          <p className="text-sm text-text-muted mt-3">
-            Optionally identify your fragrance oil and mix multiple oils.
-          </p>
-        </div>
-
-        <div>
-          <label className="block text-text-muted text-xs font-medium uppercase mb-1">
-            Fragrance Oil Name (Optional)
-          </label>
-          <FragranceOilAutocomplete
-            oils={availableOils}
-            value={primaryFOInput}
-            onSelect={(oil) => {
-              setPrimaryFO(oil);
-              setPrimaryFOInput(oil.name);
-            }}
-          />
-          <p className="text-xs text-text-muted mt-1">
-            Enter your primary fragrance oil for reference.
-          </p>
-        </div>
-
-        <div className="pt-4 border-t border-default">
-          <label className="flex items-center gap-2 text-text-muted text-xs font-medium">
-            <input
-              type="checkbox"
-              checked={foBlendEnabled}
-              onChange={(e) => {
-                setFoBlendEnabled(e.target.checked);
-                if (e.target.checked && foBlends.length === 0) {
-                  setFoBlends([{ name: "", percentage: 100, materialId: undefined }]);
-                }
-              }}
-              className="rounded border-default accent-[#4f8792]"
-            />
-            I mix my own fragrance oils
-          </label>
-          <p className="text-xs text-text-muted mt-1">
-            When enabled, specify multiple fragrance oils and their percentages (must total 100%).
-          </p>
-
-          {foBlendEnabled && (
-            <div className="mt-4 space-y-2">
-              {foBlends.map((blend, index) => (
-                <div key={index} className="flex items-center gap-2">
-                  <FragranceOilAutocomplete
-                    oils={availableOils}
-                    value={blend.name}
-                    onSelect={(oil) => updateFragranceBlendName(index, oil.name, oil.id)}
-                  />
-                  <input
-                    type="number"
-                    step="0.1"
-                    min="0"
-                    max="100"
-                    value={blend.percentage}
-                    onChange={(e) => updateFragranceBlendPercentage(index, parseFloat(e.target.value) || 0)}
-                    className="w-20 px-2 py-1 bg-bg border border-default rounded text-text text-sm"
-                    placeholder="%"
-                  />
-                  <span className="text-text-muted text-xs">%</span>
-                  {foBlends.length > 1 && (
-                    <button
-                      onClick={() => removeFragranceBlend(index)}
-                      className="text-error hover:underline text-xs"
-                    >
-                      ✕
-                    </button>
-                  )}
-                </div>
-              ))}
-              {blendError && (
-                <p className="text-error text-xs mt-1">
-                  Fragrance oil blend must total 100% (currently {blendTotal}%).
-                </p>
-              )}
-              <button
-                onClick={addFragranceBlend}
-                className="mt-2 inline-flex items-center px-3 py-1.5 rounded-full bg-[#c5d9dd] text-[#3d5a60] border border-[#b0c9ce] hover:bg-[#b0c9ce] text-xs font-medium dark:bg-teal-900/30 dark:text-teal-300 dark:border-teal-700 dark:hover:bg-teal-800/50"
-              >
-                + Add FO
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Batch Requirements Card */}
-      <div className="bg-surface-widget border border-default rounded-xl p-6 space-y-6 shadow-sm">
-        <div>
-          <h2 className="text-lg font-semibold text-text border-b border-default pb-3 mb-4">Batch Requirements</h2>
-        </div>
-
-        <div className="space-y-4">
-          <div className="bg-bg border border-default rounded-lg p-4">
-            <span className="block text-text-muted text-xs font-medium uppercase">Required Wax</span>
-            <div className="text-2xl font-bold text-text mt-1">
-              {totalWaxWithBuffer.toFixed(1)} <span className="text-sm font-normal text-text-muted">{unitLabel}</span>
-            </div>
-            {unitSystem === "imperial" && (
-              <div className="text-xs text-text-muted mt-0.5">
-                ≈ {totalWaxDisplayUnits.toFixed(2)} lbs
+      {/* MAIN CARD */}
+      <div className="bg-surface-widget border border-default rounded-xl shadow-sm overflow-hidden">
+        {/* Inputs */}
+        <div className="p-6 border-b border-default">
+          <h2 className="text-base font-semibold text-text mb-4">Batch Inputs</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-text-muted text-xs font-medium uppercase mb-1">Unit System</label>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setUnitSystem("imperial")}
+                  className={`px-4 py-2 rounded-full text-xs font-medium transition-colors ${
+                    unitSystem === "imperial"
+                      ? "bg-[#4f8792] text-white"
+                      : "bg-bg border border-default text-text-muted hover:bg-[#c5d9dd]"
+                  }`}
+                >
+                  Imperial
+                </button>
+                <button
+                  onClick={() => setUnitSystem("metric")}
+                  className={`px-4 py-2 rounded-full text-xs font-medium transition-colors ${
+                    unitSystem === "metric"
+                      ? "bg-[#4f8792] text-white"
+                      : "bg-bg border border-default text-text-muted hover:bg-[#c5d9dd]"
+                  }`}
+                >
+                  Metric
+                </button>
               </div>
+            </div>
+
+            <div>
+              <label className="block text-text-muted text-xs font-medium uppercase mb-1">Vessels</label>
+              <input
+                type="number"
+                min="1"
+                value={containerCount}
+                onChange={(e) => setContainerCount(Math.max(1, Number(e.target.value)))}
+                className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text text-sm"
+              />
+            </div>
+
+            <div>
+              <label className="block text-text-muted text-xs font-medium uppercase mb-1">
+                Fill Weight ({unitLabel})
+              </label>
+              <input
+                type="number"
+                step="0.1"
+                min="0.1"
+                value={fillWeight}
+                onChange={(e) => setFillWeight(Math.max(0.1, Number(e.target.value)))}
+                className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text text-sm"
+              />
+            </div>
+
+            <div>
+              <label className="block text-text-muted text-xs font-medium uppercase mb-1">
+                Fragrance Load (%)
+              </label>
+              <input
+                type="number"
+                step="0.5"
+                min="0"
+                max="20"
+                value={fragranceLoad}
+                onChange={(e) => setFragranceLoad(Math.max(0, Number(e.target.value)))}
+                className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text text-sm"
+              />
+            </div>
+
+            <div className="sm:col-span-2">
+              <label className="block text-text-muted text-xs font-medium uppercase mb-1">
+                Safety Buffer (%)
+              </label>
+              <input
+                type="number"
+                step="1"
+                min="0"
+                max="25"
+                value={safetyBuffer}
+                onChange={(e) => setSafetyBuffer(Math.max(0, Number(e.target.value)))}
+                className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text text-sm"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Fragrance Oils */}
+        <div className="p-6 border-b border-default">
+          <h2 className="text-base font-semibold text-text mb-4">Fragrance Oils</h2>
+          <div className="space-y-2">
+            {foBlends.map((blend, index) => (
+              <div key={index} className="flex items-center gap-2">
+                <FragranceOilAutocomplete
+                  oils={availableOils}
+                  value={blend.name}
+                  onSelect={(oil) => updateFragranceBlendName(index, oil.name, oil.id)}
+                />
+                <input
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  max="100"
+                  value={blend.percentage}
+                  onChange={(e) => updateFragranceBlendPercentage(index, parseFloat(e.target.value) || 0)}
+                  className="w-20 px-2 py-1 bg-bg border border-default rounded text-text text-sm text-center"
+                  placeholder="%"
+                />
+                <span className="text-text-muted text-xs">%</span>
+                {foBlends.length > 1 && (
+                  <button
+                    onClick={() => removeFragranceBlend(index)}
+                    className="text-error hover:underline text-xs"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            ))}
+            {blendError && (
+              <p className="text-error text-xs mt-1">
+                Blend must total 100% (currently {blendTotal}%).
+              </p>
             )}
+            <button
+              onClick={addFragranceBlend}
+              className="mt-2 inline-flex items-center px-3 py-1.5 rounded-full bg-[#c5d9dd] text-[#3d5a60] border border-[#b0c9ce] hover:bg-[#b0c9ce] text-xs font-medium"
+            >
+              + Add Oil
+            </button>
+          </div>
+        </div>
+
+        {/* Results */}
+        <div className="p-6 bg-bg/50">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-base font-semibold text-text">Results</h2>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-text-muted">Display in:</span>
+              <select
+                value={displayUnit}
+                onChange={(e) => setDisplayUnit(e.target.value as "oz" | "lb" | "g" | "kg")}
+                className="px-2 py-1 bg-surface-widget border border-default rounded-lg text-text text-xs"
+              >
+                {availableDisplayUnits.map((unit) => (
+                  <option key={unit} value={unit}>
+                    {unit === "oz" ? "Ounces (oz)" : unit === "lb" ? "Pounds (lb)" : unit === "g" ? "Grams (g)" : "Kilograms (kg)"}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
-          <div className="bg-bg border border-default rounded-lg p-4">
-            <span className="block text-text-muted text-xs font-medium uppercase">Required Fragrance Oil</span>
-            {!foBlendEnabled ? (
-              <>
-                <div className="text-2xl font-bold text-text mt-1">
-                  {totalOilWithBuffer.toFixed(1)} <span className="text-sm font-normal text-text-muted">{unitLabel}</span>
-                </div>
-                {unitSystem === "imperial" && (
-                  <div className="text-xs text-text-muted mt-0.5">
-                    ≈ {totalOilDisplayUnits.toFixed(2)} lbs
-                  </div>
-                )}
-              </>
-            ) : (
-              <div className="mt-2 space-y-1">
-                {foBlends.map((blend, index) => {
-                  const amount = (totalOilWithBuffer * blend.percentage) / 100;
-                  return (
-                    <div key={index} className="flex justify-between text-sm">
-                      <span className="text-text-secondary">{blend.name || `Oil ${index + 1}`}</span>
-                      <span className="font-medium text-text">
-                        {amount.toFixed(2)} {unitLabel}
-                        {unitSystem === "imperial" && (
-                          <span className="text-text-muted text-xs ml-1">
-                            ({(amount / 16).toFixed(2)} lb)
-                          </span>
-                        )}
-                      </span>
-                    </div>
-                  );
-                })}
-                <div className="border-t border-default mt-2 pt-2 text-sm">
-                  <span className="text-text-muted">Total: </span>
-                  <span className="font-semibold text-text">
-                    {totalOilWithBuffer.toFixed(1)} {unitLabel}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
+            <div className="bg-surface-widget border border-default rounded-lg p-4">
+              <span className="block text-text-muted text-xs font-medium uppercase">Wax Needed</span>
+              <div className="text-2xl font-bold text-text mt-1">
+                {convertDisplay(totalWaxWithBuffer, displayUnit)}
+                <span className="text-sm font-normal text-text-muted ml-1">{displayUnitLabel}</span>
+              </div>
+            </div>
+            <div className="bg-surface-widget border border-default rounded-lg p-4">
+              <span className="block text-text-muted text-xs font-medium uppercase">Oil Needed</span>
+              <div className="text-2xl font-bold text-text mt-1">
+                {convertDisplay(totalOilWithBuffer, displayUnit)}
+                <span className="text-sm font-normal text-text-muted ml-1">{displayUnitLabel}</span>
+              </div>
+            </div>
+            <div className="bg-surface-widget border border-default rounded-lg p-4">
+              <span className="block text-text-muted text-xs font-medium uppercase">Total Batch</span>
+              <div className="text-2xl font-bold text-text mt-1">
+                {convertDisplay(totalBatchWeight, displayUnit)}
+                <span className="text-sm font-normal text-text-muted ml-1">{displayUnitLabel}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Oil Breakdown */}
+          <div className="mt-4 pt-4 border-t border-default space-y-2">
+            <h3 className="text-sm font-medium text-text">Oil Breakdown</h3>
+            {foBlends.map((blend, index) => {
+              const amount = (totalOilWithBuffer * blend.percentage) / 100;
+              return (
+                <div key={index} className="flex justify-between text-sm bg-surface-widget border border-default rounded-lg px-3 py-2">
+                  <span className="text-text-secondary">
+                    {blend.name || `Oil ${index + 1}`} ({blend.percentage}%)
+                  </span>
+                  <span className="font-medium text-text">
+                    {convertDisplay(amount, displayUnit)} {displayUnitLabel}
                   </span>
                 </div>
+              );
+            })}
+          </div>
+
+          {/* Save to Recipe */}
+          <div className="mt-6 pt-4 border-t border-default">
+            {!showSaveSection ? (
+              <button
+                onClick={() => setShowSaveSection(true)}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#4f8792] text-white hover:bg-[#426f79] transition-colors text-sm font-medium"
+              >
+                <Save className="w-4 h-4" />
+                Save to Recipe
+              </button>
+            ) : (
+              <div className="space-y-3">
+                <h3 className="text-sm font-medium text-text">Save This Calculation to a Recipe</h3>
+                <select
+                  value={selectedProductId}
+                  onChange={(e) => setSelectedProductId(e.target.value)}
+                  className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text text-sm"
+                >
+                  <option value="">Select product...</option>
+                  {finishedGoods.map((fg) => (
+                    <option key={fg.id} value={fg.id}>
+                      {fg.name} ({fg.batchCode})
+                    </option>
+                  ))}
+                </select>
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleSaveToRecipe}
+                    disabled={isSaving || !selectedProductId}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#4f8792] text-white hover:bg-[#426f79] transition-colors text-sm font-medium disabled:opacity-50"
+                  >
+                    {isSaving ? "Saving..." : "Save"}
+                  </button>
+                  <button
+                    onClick={() => setShowSaveSection(false)}
+                    className="px-4 py-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors text-sm font-medium"
+                  >
+                    Cancel
+                  </button>
+                </div>
               </div>
             )}
           </div>
 
-          <div className="bg-bg border border-default rounded-lg p-4">
-            <span className="block text-text-muted text-xs font-medium uppercase">Total Melt Weight</span>
-            <div className="text-xl font-semibold text-text mt-1">
-              {totalBatchWeight.toFixed(1)} <span className="text-sm font-normal text-text-muted">{unitLabel}</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="pt-4 border-t border-default">
-          <p className="text-xs text-text-muted text-center">
-            Yields {containerCount} container{containerCount !== 1 ? "s" : ""} @ {fillWeight} {unitLabel} fill with {fragranceLoad}% FL (+{safetyBuffer}% buffer).
+          {/* Summary Line */}
+          <p className="text-xs text-text-muted text-center mt-4 pt-4 border-t border-default">
+            {containerCount} vessels × {fillWeight} {unitLabel} @ {fragranceLoad}% FL (+{safetyBuffer}% buffer)
+            {blendError && " | ⚠️ Blend % must equal 100%"}
           </p>
         </div>
       </div>
 
-      {/* Fragrance Load Quick Calculator */}
-      <div className="bg-surface-widget border border-default rounded-xl p-6 space-y-4 shadow-sm">
-        <h2 className="text-lg font-semibold text-text border-b border-default pb-3">Fragrance Load Quick Calculator</h2>
-        <p className="text-sm text-text-muted">
-          Quickly determine the amount of fragrance oil needed for a given wax weight and fragrance load percentage.
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-text-muted text-xs font-medium uppercase mb-1">
-              Wax Weight ({unitLabel})
-            </label>
-            <input
-              type="number"
-              step="any"
-              min="0"
-              value={quickWaxWeight}
-              onChange={(e) => setQuickWaxWeight(Math.max(0, Number(e.target.value)))}
-              className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text text-sm focus:outline-none focus:ring-2 focus:ring-brand"
-            />
-          </div>
-          <div>
-            <label className="block text-text-muted text-xs font-medium uppercase mb-1">
-              Fragrance Load (%)
-            </label>
-            <input
-              type="number"
-              step="0.5"
-              min="0"
-              max="20"
-              value={quickFragranceLoad}
-              onChange={(e) => setQuickFragranceLoad(Math.max(0, Number(e.target.value)))}
-              className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text text-sm focus:outline-none focus:ring-2 focus:ring-brand"
-            />
-          </div>
-        </div>
-        <div className="mt-4 p-4 rounded-lg bg-bg border border-default">
-          <div className="flex items-center justify-between">
-            <span className="text-text-muted text-sm">Required Fragrance Oil:</span>
-            <span className="text-lg font-bold text-[#4f8792] dark:text-teal-400">
-              {quickRequiredOil.toFixed(2)} {unitLabel}
-            </span>
-          </div>
-          {unitSystem === "imperial" && (
-            <div className="text-xs text-text-muted mt-1">
-              ≈ {(quickRequiredOil / 16).toFixed(2)} lbs
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Quick Unit Converter */}
-      <div className="bg-surface-widget border border-default rounded-xl p-6 space-y-4 shadow-sm">
-        <h2 className="text-lg font-semibold text-text border-b border-default pb-3">Quick Unit Converter</h2>
+      {/* Unit Converter */}
+      <CollapsibleSection
+        title="Unit Converter"
+        subtitle="Modular conversion tools"
+        defaultOpen={false}
+      >
         <UnitConverter />
-      </div>
+      </CollapsibleSection>
 
       {/* Reference Tables */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Weight Equivalents Table */}
-        <div className="bg-surface-widget border border-default rounded-xl overflow-hidden shadow-sm">
-          <div className="p-4 border-b border-default">
-            <h3 className="text-base font-semibold text-text">Standard Weight Equivalents</h3>
-            <p className="text-xs text-text-muted">Quick reference conversions for wax & fragrance measurement.</p>
+      <CollapsibleSection
+        title="Reference Tables"
+        subtitle="Weight equivalents and fragrance load cheat sheet"
+        defaultOpen={false}
+      >
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="bg-bg border border-default rounded-lg overflow-hidden">
+            <div className="p-3 border-b border-default">
+              <h3 className="text-sm font-semibold text-text">Weight Equivalents</h3>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm text-left">
+                <thead className="bg-bg text-text-muted text-xs uppercase font-medium border-b border-default">
+                  <tr>
+                    <th className="px-3 py-2">Ounces</th>
+                    <th className="px-3 py-2">Grams</th>
+                    <th className="px-3 py-2">Pounds</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-default text-xs">
+                  <tr><td className="px-3 py-2 font-medium">1 oz</td><td className="px-3 py-2">28.35 g</td><td className="px-3 py-2">0.063 lb</td></tr>
+                  <tr><td className="px-3 py-2 font-medium">4 oz</td><td className="px-3 py-2">113.40 g</td><td className="px-3 py-2">0.250 lb</td></tr>
+                  <tr><td className="px-3 py-2 font-medium">8 oz</td><td className="px-3 py-2">226.80 g</td><td className="px-3 py-2">0.500 lb</td></tr>
+                  <tr><td className="px-3 py-2 font-medium">16 oz (1 lb)</td><td className="px-3 py-2">453.59 g</td><td className="px-3 py-2">1.000 lb</td></tr>
+                </tbody>
+              </table>
+            </div>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left">
-              <thead className="bg-bg text-text-muted text-xs uppercase font-medium border-b border-default">
-                <tr>
-                  <th className="px-4 py-3">Ounces (oz)</th>
-                  <th className="px-4 py-3">Grams (g)</th>
-                  <th className="px-4 py-3">Pounds (lb)</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-default">
-                <tr className="hover:bg-bg/50"><td className="px-4 py-2.5 font-medium text-text">1 oz</td><td className="px-4 py-2.5 text-text-secondary">28.35 g</td><td className="px-4 py-2.5 text-text-secondary">0.063 lb</td></tr>
-                <tr className="hover:bg-bg/50"><td className="px-4 py-2.5 font-medium text-text">4 oz</td><td className="px-4 py-2.5 text-text-secondary">113.40 g</td><td className="px-4 py-2.5 text-text-secondary">0.250 lb</td></tr>
-                <tr className="hover:bg-bg/50"><td className="px-4 py-2.5 font-medium text-text">8 oz</td><td className="px-4 py-2.5 text-text-secondary">226.80 g</td><td className="px-4 py-2.5 text-text-secondary">0.500 lb</td></tr>
-                <tr className="hover:bg-bg/50"><td className="px-4 py-2.5 font-medium text-text">12 oz</td><td className="px-4 py-2.5 text-text-secondary">340.19 g</td><td className="px-4 py-2.5 text-text-secondary">0.750 lb</td></tr>
-                <tr className="hover:bg-bg/50"><td className="px-4 py-2.5 font-medium text-text">16 oz (1 lb)</td><td className="px-4 py-2.5 text-text-secondary">453.59 g</td><td className="px-4 py-2.5 text-text-secondary">1.000 lb</td></tr>
-                <tr className="hover:bg-bg/50"><td className="px-4 py-2.5 font-medium text-text">35.27 oz</td><td className="px-4 py-2.5 text-text-secondary">1,000.00 g (1 kg)</td><td className="px-4 py-2.5 text-text-secondary">2.205 lb</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
 
-        {/* Fragrance Load Ratio Table */}
-        <div className="bg-surface-widget border border-default rounded-xl overflow-hidden shadow-sm">
-          <div className="p-4 border-b border-default">
-            <h3 className="text-base font-semibold text-text">Fragrance Load Reference Cheat Sheet</h3>
-            <p className="text-xs text-text-muted">Fragrance required per 1 lb (16 oz) of wax base.</p>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left">
-              <thead className="bg-bg text-text-muted text-xs uppercase font-medium border-b border-default">
-                <tr>
-                  <th className="px-4 py-3">Load (%)</th>
-                  <th className="px-4 py-3">FO per 16 oz Wax (oz)</th>
-                  <th className="px-4 py-3">FO per 1 lb Wax (g)</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-default">
-                <tr className="hover:bg-bg/50"><td className="px-4 py-2.5 font-medium text-text">6%</td><td className="px-4 py-2.5 text-text-secondary">0.96 oz</td><td className="px-4 py-2.5 text-text-secondary">27.2 g</td></tr>
-                <tr className="hover:bg-bg/50"><td className="px-4 py-2.5 font-medium text-text">7%</td><td className="px-4 py-2.5 text-text-secondary">1.12 oz</td><td className="px-4 py-2.5 text-text-secondary">31.8 g</td></tr>
-                <tr className="hover:bg-bg/50"><td className="px-4 py-2.5 font-medium text-text">8% (Standard)</td><td className="px-4 py-2.5 text-text-secondary">1.28 oz</td><td className="px-4 py-2.5 text-text-secondary">36.3 g</td></tr>
-                <tr className="hover:bg-bg/50"><td className="px-4 py-2.5 font-medium text-text">9%</td><td className="px-4 py-2.5 text-text-secondary">1.44 oz</td><td className="px-4 py-2.5 text-text-secondary">40.8 g</td></tr>
-                <tr className="hover:bg-bg/50"><td className="px-4 py-2.5 font-medium text-text">10% (Max Heavy)</td><td className="px-4 py-2.5 text-text-secondary">1.60 oz</td><td className="px-4 py-2.5 text-text-secondary">45.4 g</td></tr>
-                <tr className="hover:bg-bg/50"><td className="px-4 py-2.5 font-medium text-text">12% (Melt Limit)</td><td className="px-4 py-2.5 text-text-secondary">1.92 oz</td><td className="px-4 py-2.5 text-text-secondary">54.4 g</td></tr>
-              </tbody>
-            </table>
+          <div className="bg-bg border border-default rounded-lg overflow-hidden">
+            <div className="p-3 border-b border-default">
+              <h3 className="text-sm font-semibold text-text">FO per 1 lb Wax</h3>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm text-left">
+                <thead className="bg-bg text-text-muted text-xs uppercase font-medium border-b border-default">
+                  <tr>
+                    <th className="px-3 py-2">Load %</th>
+                    <th className="px-3 py-2">FO (oz)</th>
+                    <th className="px-3 py-2">FO (g)</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-default text-xs">
+                  <tr><td className="px-3 py-2 font-medium">6%</td><td className="px-3 py-2">0.96 oz</td><td className="px-3 py-2">27.2 g</td></tr>
+                  <tr><td className="px-3 py-2 font-medium">8% (Std)</td><td className="px-3 py-2">1.28 oz</td><td className="px-3 py-2">36.3 g</td></tr>
+                  <tr><td className="px-3 py-2 font-medium">10% (Max)</td><td className="px-3 py-2">1.60 oz</td><td className="px-3 py-2">45.4 g</td></tr>
+                  <tr><td className="px-3 py-2 font-medium">12% (Melt)</td><td className="px-3 py-2">1.92 oz</td><td className="px-3 py-2">54.4 g</td></tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
-      </div>
+      </CollapsibleSection>
     </div>
   );
 }

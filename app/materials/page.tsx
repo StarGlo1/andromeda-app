@@ -164,7 +164,7 @@ export default async function MaterialsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight text-text">Raw Materials</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-text mt-3">Raw Materials</h1>
       </div>
 
       {/* Top Metric Cards */}

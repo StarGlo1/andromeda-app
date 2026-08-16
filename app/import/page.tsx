@@ -73,6 +73,7 @@ export default function ImportPage() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-8">
+      <h1 className="text-2xl font-bold tracking-tight text-text mt-3">Import / Export</h1>
       <div className="bg-surface-widget border border-default rounded-xl p-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <h2 className="text-sm font-semibold uppercase tracking-wider text-text-muted">

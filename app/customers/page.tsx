@@ -6,7 +6,14 @@ import Link from "next/link";
 export default async function CustomersPage() {
   const customers = await prisma.customer.findMany({
     include: {
-      sales: { select: { totalAmount: true } },
+      sales: {
+        select: {
+          id: true,
+          totalAmount: true,
+          saleDate: true,
+          status: true,
+        },
+      },
     },
     orderBy: { name: "asc" },
   });
@@ -14,10 +21,10 @@ export default async function CustomersPage() {
   return (
     <div className="max-w-6xl mx-auto space-y-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-text">Customers</h1>
+        <h1 className="text-2xl font-bold text-text mt-3">Customers</h1>
         <Link
           href="/customers/new"
-          className="bg-brand hover:bg-brand-hover text-white font-medium px-4 py-2 rounded-lg transition-colors text-sm flex items-center gap-2"
+          className="bg-[#4f8792] hover:bg-[#426f79] text-white font-medium px-4 py-2 rounded-full transition-colors text-sm flex items-center gap-2 shadow-md"
         >
           <span className="text-lg">+</span> New Customer
         </Link>
@@ -59,23 +66,12 @@ export default async function CustomersPage() {
                         ${totalSpent.toFixed(2)}
                       </td>
                       <td className="p-4 text-center">
-                        <div className="flex items-center justify-center gap-2">
-                          <Link
-                            href={`/customers/${customer.id}`}
-                            className="text-text-brand hover:underline text-xs font-medium"
-                          >
-                            View
-                          </Link>
-                          <form action={`/api/customers/${customer.id}`} method="POST" className="inline">
-                            <input type="hidden" name="_method" value="DELETE" />
-                            <button
-                              type="submit"
-                              className="text-error hover:underline text-xs font-medium"
-                            >
-                              Delete
-                            </button>
-                          </form>
-                        </div>
+                        <Link
+                          href={`/customers/${customer.id}`}
+                          className="text-text-brand hover:underline text-xs font-medium"
+                        >
+                          View
+                        </Link>
                       </td>
                     </tr>
                   );

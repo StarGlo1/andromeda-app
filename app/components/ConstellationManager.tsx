@@ -72,6 +72,19 @@ interface Props {
 
 const inputClass = "w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-[#faf8f5] dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent";
 
+const OTHER_TYPE_SUGGESTIONS = [
+  "Pop-up Shop",
+  "Craft Fair Booth",
+  "Gift Shop",
+  "Spa",
+  "Salon",
+  "Boutique Hotel",
+  "Coffee Shop",
+  "Bookstore",
+  "Art Gallery",
+  "Museum Gift Shop",
+];
+
 export function ConstellationManager({
   locations,
   batches,
@@ -87,15 +100,26 @@ export function ConstellationManager({
   const [batchItems, setBatchItems] = useState<
     Array<{ finishedGoodId: string; quantity: number; unitPrice: number }>
   >([]);
+  const [selectedType, setSelectedType] = useState("storefront");
+  const [customType, setCustomType] = useState("");
 
   const activeBatches = batches.filter((batch) => batch.status === "active");
 
   const handleAddLocation = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+    
+    // If type is "other", combine with custom type
+    if (selectedType === "other" && customType.trim()) {
+      formData.set("type", customType.trim());
+    }
+    
     await addLocationAction(formData);
     setShowAddLocation(false);
-    (e.target as HTMLFormElement).reset();
+    setSelectedType("storefront");
+    setCustomType("");
+    form.reset();
   };
 
   const handleDeleteLocation = async (id: string) => {
@@ -107,12 +131,13 @@ export function ConstellationManager({
 
   const handleCreateBatch = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
+    const form = e.currentTarget;
+    const formData = new FormData(form);
     formData.append("items", JSON.stringify(batchItems));
     await createBatchAction(formData);
     setShowNewBatch(false);
     setBatchItems([]);
-    (e.target as HTMLFormElement).reset();
+    form.reset();
   };
 
   const handleMarkReturned = async (batchId: string) => {
@@ -159,7 +184,7 @@ export function ConstellationManager({
           onClick={() => setActiveTab("locations")}
           className={`px-5 py-2.5 rounded-full text-sm font-medium transition-colors ${
             activeTab === "locations"
-              ? "bg-teal-600 text-white shadow-sm"
+              ? "bg-[#4f8792] text-white shadow-sm"
               : "bg-[#ede6dc] text-gray-700 dark:bg-gray-800 dark:text-gray-300 hover:bg-[#e5dcd0] dark:hover:bg-gray-700"
           }`}
         >
@@ -169,7 +194,7 @@ export function ConstellationManager({
           onClick={() => setActiveTab("batches")}
           className={`px-5 py-2.5 rounded-full text-sm font-medium transition-colors ${
             activeTab === "batches"
-              ? "bg-teal-600 text-white shadow-sm"
+              ? "bg-[#4f8792] text-white shadow-sm"
               : "bg-[#ede6dc] text-gray-700 dark:bg-gray-800 dark:text-gray-300 hover:bg-[#e5dcd0] dark:hover:bg-gray-700"
           }`}
         >
@@ -182,7 +207,7 @@ export function ConstellationManager({
         <div className="space-y-4">
           <button
             onClick={() => setShowAddLocation(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-[#4f8792] text-white rounded-lg hover:bg-[#426f79] transition-colors"
           >
             <Plus className="w-4 h-4" />
             Add Outpost
@@ -212,6 +237,8 @@ export function ConstellationManager({
                   </label>
                   <select
                     name="type"
+                    value={selectedType}
+                    onChange={(e) => setSelectedType(e.target.value)}
                     className={inputClass}
                   >
                     <option value="storefront">Storefront</option>
@@ -221,6 +248,46 @@ export function ConstellationManager({
                     <option value="other">Other</option>
                   </select>
                 </div>
+
+                {/* Custom Type Input - Shows when "Other" is selected */}
+                {selectedType === "other" && (
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Describe Your Outpost Type *
+                    </label>
+                    <input
+                      type="text"
+                      value={customType}
+                      onChange={(e) => setCustomType(e.target.value)}
+                      required
+                      placeholder="e.g. Pop-up Shop, Craft Fair Booth, Gift Shop..."
+                      className={inputClass}
+                    />
+                    
+                    {/* Suggestions */}
+                    <div className="mt-2">
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                        Suggestions:
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {OTHER_TYPE_SUGGESTIONS.map((suggestion) => (
+                          <button
+                            key={suggestion}
+                            type="button"
+                            onClick={() => setCustomType(suggestion)}
+                            className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                              customType === suggestion
+                                ? "bg-[#4f8792] text-white"
+                                : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-[#c5d9dd] dark:hover:bg-gray-700"
+                            }`}
+                          >
+                            {suggestion}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -281,13 +348,17 @@ export function ConstellationManager({
               <div className="flex gap-3">
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
+                  className="px-4 py-2 bg-[#4f8792] text-white rounded-lg hover:bg-[#426f79] transition-colors"
                 >
                   Save Outpost
                 </button>
                 <button
                   type="button"
-                  onClick={() => setShowAddLocation(false)}
+                  onClick={() => {
+                    setShowAddLocation(false);
+                    setSelectedType("storefront");
+                    setCustomType("");
+                  }}
                   className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
                 >
                   Cancel
@@ -313,7 +384,7 @@ export function ConstellationManager({
                         {location.name}
                       </h3>
                       <span className="text-xs text-gray-500 dark:text-gray-400 capitalize">
-                        {location.type.replace("_", " ")}
+                        {location.type.replace(/_/g, " ")}
                       </span>
                     </div>
                   </div>
@@ -371,7 +442,7 @@ export function ConstellationManager({
         <div className="space-y-4">
           <button
             onClick={() => setShowNewBatch(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-[#4f8792] text-white rounded-lg hover:bg-[#426f79] transition-colors"
           >
             <Plus className="w-4 h-4" />
             New Batch
@@ -520,7 +591,7 @@ export function ConstellationManager({
                 <button
                   type="submit"
                   disabled={batchItems.length === 0}
-                  className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 bg-[#4f8792] text-white rounded-lg hover:bg-[#426f79] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Create Batch
                 </button>

@@ -7,6 +7,8 @@ import { useToast } from "@/app/context/ToastContext";
 import { seedDemoData } from "@/app/actions/seedDemo";
 import { useDemoMode } from "@/app/context/DemoModeContext";
 import { LogoUpload } from "@/app/components/LogoUpload";
+import { enterDemoModeAction, exitDemoModeAction } from "@/app/actions/demoMode";
+import { useRouter } from "next/navigation";
 
 const currencies = ["$", "€", "£", "¥", "₹", "A$", "C$", "R$", "₿"];
 const dateFormats = [
@@ -20,7 +22,8 @@ const discountDefaults = [0, 5, 10, 15, 20, 25, 50];
 export default function SettingsPage() {
   const { showToast } = useToast();
   const { isDemoMode, enterDemoMode, exitDemoMode } = useDemoMode();
-  const [seeding, setSeeding] = useState(false);
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
 
   const [unitSystem, setUnitSystem] = useState<"metric" | "imperial">("imperial");
   const [currency, setCurrency] = useState("$");
@@ -116,19 +119,38 @@ export default function SettingsPage() {
     }
   };
 
-  const handleSeedDemo = async () => {
-    setSeeding(true);
-    const result = await seedDemoData();
-    if (result.success) {
-      showToast(result.message, "success");
-    } else {
-      showToast(result.message, "error");
+  const handleToggleDemoMode = async () => {
+    setLoading(true);
+    try {
+      if (isDemoMode) {
+        // EXIT demo mode
+        exitDemoMode();
+        await exitDemoModeAction();
+        showToast("Demo mode exited. Your real data is safe.", "success");
+      } else {
+        // ENTER demo mode - load sample data AND enable demo mode
+        enterDemoMode();
+        await enterDemoModeAction();
+        
+        // Load sample data
+        const result = await seedDemoData();
+        if (result.success) {
+          showToast("Demo mode enabled with sample data loaded!", "success");
+        } else {
+          showToast("Demo mode enabled. Sample data already exists or failed to load.", "success");
+        }
+      }
+      router.refresh();
+    } catch {
+      showToast("Something went wrong. Please try again.", "error");
+    } finally {
+      setLoading(false);
     }
-    setSeeding(false);
   };
 
   return (
     <div className="space-y-8">
+      <h1 className="text-2xl font-bold tracking-tight text-text mt-3">Settings</h1>
       {/* Company Logo */}
       <section className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-slate-700 rounded-xl p-6">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Company Logo</h2>
@@ -347,24 +369,6 @@ export default function SettingsPage() {
         </div>
       </section>
 
-      {/* Demo Mode Section */}
-      <section className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-slate-700 rounded-xl p-6">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Demo Mode</h2>
-        <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">
-          Explore Andromeda with sample data. Nothing you enter in demo mode will be saved, and any previously saved data remains untouched.
-        </p>
-        <button
-          onClick={isDemoMode ? exitDemoMode : enterDemoMode}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-            isDemoMode
-              ? "bg-red-600 hover:bg-red-700 text-white"
-              : "bg-[#4f8792] hover:bg-[#426f79] text-white"
-          }`}
-        >
-          {isDemoMode ? "Exit Demo Mode" : "Enter Demo Mode"}
-        </button>
-      </section>
-
       {/* Data Management */}
       <section className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-slate-700 rounded-xl p-6">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Data Management</h2>
@@ -391,17 +395,32 @@ export default function SettingsPage() {
           >
             💾 Backup (Coming Soon)
           </button>
-          <button
-            onClick={handleSeedDemo}
-            disabled={seeding}
-            className="inline-flex items-center bg-indigo-500 hover:bg-indigo-600 text-white font-medium px-4 py-2 rounded-lg border border-indigo-500 transition-colors text-sm disabled:opacity-50"
-          >
-            {seeding ? "Seeding..." : "🌱 Load Demo Data"}
-          </button>
         </div>
-        <p className="text-gray-500 dark:text-gray-400 text-xs mt-3">
-          Demo data includes sample materials, a sub‑assembly, and a finished product recipe. It won't overwrite existing data with the same names.
-        </p>
+
+        {/* Demo Mode Toggle */}
+        <div className="mt-6 pt-6 border-t border-gray-200 dark:border-slate-700">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-medium text-gray-900 dark:text-white">Demo Mode</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                {isDemoMode
+                  ? "Demo mode is ON. Changes won't be saved to your database."
+                  : "One click loads sample data and lets you explore safely."}
+              </p>
+            </div>
+            <button
+              onClick={handleToggleDemoMode}
+              disabled={loading}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 ${
+                isDemoMode
+                  ? "bg-red-600 hover:bg-red-700 text-white"
+                  : "bg-[#4f8792] hover:bg-[#426f79] text-white"
+              }`}
+            >
+              {loading ? "Loading..." : isDemoMode ? "Exit Demo Mode" : "Enter Demo Mode"}
+            </button>
+          </div>
+        </div>
       </section>
 
       {/* Danger Zone */}

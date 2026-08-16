@@ -62,7 +62,7 @@ export function AddProductForm({ addAction }: AddProductFormProps) {
         <button
           type="submit"
           disabled={isPending}
-          className="w-fit px-6 mx-auto bg-teal-600 hover:bg-teal-700 text-white font-medium py-2 rounded-full shadow-md transition-colors text-sm h-[40px] disabled:opacity-50"
+          className="w-fit px-6 mx-auto bg-[#4f8792] hover:bg-[#426f79] text-white font-medium py-2 rounded-full shadow-md transition-colors text-sm h-[40px] disabled:opacity-50"
         >
           {isPending ? "Adding..." : "+ Add Product"}
         </button>

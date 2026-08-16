@@ -182,7 +182,7 @@ export default function CommandDeckPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6" suppressHydrationWarning>
+    <div className="space-y-5 max-w-full mx-auto px-2 sm:px-3 lg:px-4 py-4" suppressHydrationWarning>
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">Command Deck</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
@@ -251,12 +251,12 @@ export default function CommandDeckPage() {
       <DashboardWidgets data={dashboardData} />
 
       {/* Quick Navigation */}
-      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-6 shadow-sm space-y-4">
-        <div className="flex items-center justify-between">
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm space-y-3 p-4 sm:p-5">
+        <div className="flex items-center justify-between gap-2">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Quick Navigation</h2>
           <button
             onClick={() => setEditingQuickLinks(!editingQuickLinks)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors shrink-0"
           >
             {editingQuickLinks ? <Check className="w-4 h-4" /> : <Pencil className="w-4 h-4" />}
             {editingQuickLinks ? 'Done' : 'Edit'}
@@ -264,7 +264,7 @@ export default function CommandDeckPage() {
         </div>
 
         {editingQuickLinks ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3">
             {ALL_QUICK_LINKS.map((link) => {
               const isSelected = quickLinks.some((ql) => ql.name === link.name);
               return (
@@ -277,7 +277,7 @@ export default function CommandDeckPage() {
                       saveQuickLinks([...quickLinks, { ...link, color: 'bg-[#c5d9dd] text-[#3d5a60]' }]);
                     }
                   }}
-                  className={`p-3 rounded-xl border text-sm font-medium transition-colors ${
+                  className={`p-2.5 sm:p-3 rounded-xl border text-sm font-medium transition-colors ${
                     isSelected
                       ? 'bg-[#4f8792] text-white border-[#4f8792]'
                       : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
@@ -289,18 +289,18 @@ export default function CommandDeckPage() {
             })}
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
             {quickLinks.map((link) => {
               const IconComponent = QUICK_LINK_ICONS[link.icon] || Package;
               return (
                 <Link
                   key={link.name}
                   href={link.href}
-                  className="flex items-center justify-between p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-[#4f8792] dark:hover:border-[#4f8792] transition-colors group bg-gray-50 dark:bg-gray-800"
+                  className="flex items-center justify-between p-3 sm:p-3.5 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-[#4f8792] dark:hover:border-[#4f8792] transition-colors group bg-gray-50 dark:bg-gray-800"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${link.color}`}>
-                      <IconComponent className="w-5 h-5" />
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center ${link.color}`}>
+                      <IconComponent className="w-4 h-4 sm:w-5 sm:h-5" />
                     </div>
                     <div>
                       <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 group-hover:text-[#4f8792] dark:group-hover:text-[#4f8792] transition-colors">

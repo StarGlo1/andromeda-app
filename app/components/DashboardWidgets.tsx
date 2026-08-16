@@ -140,6 +140,12 @@ const GRID_SIZES = {
   "3x3": { col: "col-span-12", row: "row-span-3", label: "3×3" },
 };
 
+const MOBILE_CARD_SIZES = {
+  "small": { height: "120px", label: "Small" },
+  "medium": { height: "160px", label: "Medium" },
+  "large": { height: "200px", label: "Large" },
+};
+
 export default function DashboardWidgets({ data }: { data: any }) {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
@@ -148,7 +154,14 @@ export default function DashboardWidgets({ data }: { data: any }) {
   const [editMode, setEditMode] = useState(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
+  const [carousel1Size, setCarousel1Size] = useState<string>("medium");
+  const [carousel2Size, setCarousel2Size] = useState<string>("medium");
+  const [customizingCarousel, setCustomizingCarousel] = useState<number | null>(null);
+  const [dragItemIndex, setDragItemIndex] = useState<number | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const carousel1Ref = useRef<HTMLDivElement>(null);
+  const carousel2Ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -157,6 +170,10 @@ export default function DashboardWidgets({ data }: { data: any }) {
       if (savedOrder) setOrder(JSON.parse(savedOrder));
       const savedSizes = localStorage.getItem("widgetSizes");
       if (savedSizes) setWidgetSizes(JSON.parse(savedSizes));
+      const savedCarousel1Size = localStorage.getItem("carousel1Size");
+      if (savedCarousel1Size) setCarousel1Size(savedCarousel1Size);
+      const savedCarousel2Size = localStorage.getItem("carousel2Size");
+      if (savedCarousel2Size) setCarousel2Size(savedCarousel2Size);
     } catch {}
   }, []);
 
@@ -172,6 +189,16 @@ export default function DashboardWidgets({ data }: { data: any }) {
     try {
       localStorage.setItem("widgetSizes", JSON.stringify(sizes));
     } catch {}
+  };
+
+  const saveCarouselSize = (carousel: number, size: string) => {
+    if (carousel === 1) {
+      setCarousel1Size(size);
+      try { localStorage.setItem("carousel1Size", size); } catch {}
+    } else {
+      setCarousel2Size(size);
+      try { localStorage.setItem("carousel2Size", size); } catch {}
+    }
   };
 
   const handleDragStart = (index: number) => setDragIndex(index);
@@ -215,7 +242,51 @@ export default function DashboardWidgets({ data }: { data: any }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const renderWidget = (key: string, index: number) => {
+  const getMenuPosition = (key: string) => {
+    const btn = buttonRefs.current[key];
+    if (!btn) return { top: 0, left: 0 };
+    
+    const rect = btn.getBoundingClientRect();
+    const menuWidth = 144;
+    const menuHeight = 240;
+    
+    let top = rect.bottom + 4;
+    let left = rect.right - menuWidth;
+    
+    if (left < 8) left = 8;
+    if (left + menuWidth > window.innerWidth - 8) {
+      left = window.innerWidth - menuWidth - 8;
+    }
+    
+    if (top + menuHeight > window.innerHeight - 8) {
+      top = rect.top - menuHeight - 4;
+    }
+    
+    return { top, left };
+  };
+
+  const handleMobileDragStart = (e: React.DragEvent, index: number) => {
+    setDragItemIndex(index);
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleMobileDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (dragItemIndex === null || dragItemIndex === index) return;
+    
+    const newOrder = [...order];
+    const [removed] = newOrder.splice(dragItemIndex, 1);
+    newOrder.splice(index, 0, removed);
+    setOrder(newOrder);
+    setDragItemIndex(index);
+  };
+
+  const handleMobileDragEnd = () => {
+    if (dragItemIndex !== null) saveOrder(order);
+    setDragItemIndex(null);
+  };
+
+  const renderWidgetContent = (key: string, index: number, isMobile: boolean = false) => {
     const widget = WIDGETS[key];
     if (!widget) return null;
     const value = widget.renderValue(data);
@@ -224,6 +295,7 @@ export default function DashboardWidgets({ data }: { data: any }) {
     const sizeKey = widgetSizes[key] || "1x1";
     const size = GRID_SIZES[sizeKey] || GRID_SIZES["1x1"];
     const isLarge = sizeKey === "2x2" || sizeKey === "3x2" || sizeKey === "3x3";
+    const menuPos = menuOpen === key ? getMenuPosition(key) : null;
 
     const renderList = (items: any[], renderItem: (item: any) => React.ReactNode, limit: number) => {
       if (!items || items.length === 0) return null;
@@ -239,13 +311,13 @@ export default function DashboardWidgets({ data }: { data: any }) {
     const widgetBody = (
       <>
         <div className="flex items-start gap-2 mb-1">
-          <span className="text-lg shrink-0 leading-none mt-0.5">{widget.icon}</span>
-          <p className="text-gray-500 dark:text-gray-400 text-xs font-semibold uppercase tracking-wider break-words leading-tight">
+          <span className={`${isMobile ? "text-xl" : "text-lg"} shrink-0 leading-none mt-0.5`}>{widget.icon}</span>
+          <p className={`text-gray-500 dark:text-gray-400 ${isMobile ? "text-sm" : "text-xs"} font-semibold uppercase tracking-wider break-words leading-tight`}>
             {widget.label}
           </p>
         </div>
 
-        {editMode && (
+        {editMode && !isMobile && (
           <div className="flex items-center justify-between mb-1">
             <div className="flex gap-1">
               <button
@@ -272,6 +344,9 @@ export default function DashboardWidgets({ data }: { data: any }) {
 
             <div className="relative">
               <button
+                ref={(el) => {
+                  buttonRefs.current[key] = el;
+                }}
                 onClick={(e) => {
                   e.stopPropagation();
                   setMenuOpen(menuOpen === key ? null : key);
@@ -281,64 +356,54 @@ export default function DashboardWidgets({ data }: { data: any }) {
               >
                 •••
               </button>
-              {menuOpen === key && (
-                <div
-                  ref={menuRef}
-                  className="absolute right-0 mt-1 w-36 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50 py-1"
-                >
-                  {Object.entries(GRID_SIZES).map(([sizeKey, size]) => (
-                    <button
-                      key={sizeKey}
-                      onClick={() => setWidgetSize(key, sizeKey)}
-                      className={`block w-full text-left px-3 py-2 text-sm ${
-                        widgetSizes[key] === sizeKey
-                          ? "bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300"
-                          : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
-                      }`}
-                    >
-                      {size.label}
-                    </button>
-                  ))}
-                </div>
-              )}
             </div>
           </div>
         )}
 
         <div className="flex-1 flex flex-col justify-center">
-          <p className={`${isLarge ? "text-2xl" : "text-xl"} font-bold ${textColor}`}>{value}</p>
+          <p className={`${isMobile ? "text-2xl" : isLarge ? "text-2xl" : "text-xl"} font-bold ${textColor} break-words`}>{value}</p>
 
-          {key === "topSelling" && isLarge && renderList(data.topSelling, (item) => (
+          {key === "topSelling" && isLarge && !isMobile && renderList(data.topSelling, (item) => (
             <div className="flex justify-between text-xs text-gray-600 dark:text-gray-300">
               <span className="truncate">{item.name}</span>
               <span>{item.quantity} sold</span>
             </div>
           ), 5)}
 
-          {key === "reorderSuggestions" && renderList(data.reorderSuggestions, (item) => (
+          {key === "reorderSuggestions" && !isMobile && renderList(data.reorderSuggestions, (item) => (
             <div className="flex justify-between text-xs text-gray-600 dark:text-gray-300">
               <span className="truncate">{item.name}</span>
               <span>Order {item.suggestedOrder} {item.unit}</span>
             </div>
           ), isLarge ? 5 : 2)}
 
-          {key === "expiringStock" && isLarge && renderList(data.expiringStock, (item) => (
+          {key === "expiringStock" && isLarge && !isMobile && renderList(data.expiringStock, (item) => (
             <div className="flex justify-between text-xs text-gray-600 dark:text-gray-300">
               <span className="truncate">{item.name}</span>
               <span>{item.totalQuantity} {item.unit}</span>
             </div>
           ), 5)}
 
-          {key === "pendingSales" && isLarge && (
+          {key === "pendingSales" && isLarge && !isMobile && (
             <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-2">Awaiting payment or fulfillment</p>
           )}
 
-          {key === "profitMargin" && isLarge && (
+          {key === "profitMargin" && isLarge && !isMobile && (
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">Based on total revenue and COGS</p>
           )}
         </div>
       </>
     );
+
+    return { widgetBody, menuPos };
+  };
+
+  const renderDesktopWidget = (key: string, index: number) => {
+    const widget = WIDGETS[key];
+    if (!widget) return null;
+    const sizeKey = widgetSizes[key] || "1x1";
+    const size = GRID_SIZES[sizeKey] || GRID_SIZES["1x1"];
+    const { widgetBody, menuPos } = renderWidgetContent(key, index, false);
 
     return (
       <div
@@ -351,7 +416,7 @@ export default function DashboardWidgets({ data }: { data: any }) {
           if (editMode) return;
           if (key === "alerts") router.push("/alerts");
         }}
-        className={`relative bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-4 transition-colors overflow-hidden ${
+        className={`relative bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-4 transition-colors ${
           editMode
             ? "cursor-grab active:cursor-grabbing ring-2 ring-teal-500"
             : key === "alerts"
@@ -360,9 +425,63 @@ export default function DashboardWidgets({ data }: { data: any }) {
         } ${dragIndex === index ? "opacity-50" : ""} ${size.col} ${size.row}`}
       >
         {widgetBody}
+        
+        {menuOpen === key && menuPos && (
+          <div
+            ref={menuRef}
+            className="fixed z-[100] w-36 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg py-1"
+            style={{
+              top: `${menuPos.top}px`,
+              left: `${menuPos.left}px`,
+            }}
+          >
+            {Object.entries(GRID_SIZES).map(([sizeKey, size]) => (
+              <button
+                key={sizeKey}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setWidgetSize(key, sizeKey);
+                }}
+                className={`block w-full text-left px-3 py-2 text-sm ${
+                  widgetSizes[key] === sizeKey
+                    ? "bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300"
+                    : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                }`}
+              >
+                {size.label}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     );
   };
+
+  const renderMobileWidget = (key: string, index: number, carouselSize: string) => {
+    const { widgetBody } = renderWidgetContent(key, index, true);
+    const sizeConfig = MOBILE_CARD_SIZES[carouselSize] || MOBILE_CARD_SIZES["medium"];
+
+    return (
+      <div
+        key={key}
+        data-mobile-card
+        onClick={() => {
+          if (key === "alerts") router.push("/alerts");
+        }}
+        className={`relative shrink-0 w-[calc(50%-6px)] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-4 ${
+          key === "alerts"
+            ? "border-red-500 dark:border-red-400 cursor-pointer"
+            : ""
+        }`}
+        style={{ height: sizeConfig.height }}
+      >
+        {widgetBody}
+      </div>
+    );
+  };
+
+  const firstCarouselWidgets = order.slice(0, 8);
+  const secondCarouselWidgets = order.slice(8);
 
   const chartData = (data.recentActivity || [])
     .filter((item: any) => item.type === "product")
@@ -373,23 +492,166 @@ export default function DashboardWidgets({ data }: { data: any }) {
 
   return (
     <div className="space-y-8">
-      <div className={`grid grid-cols-12 gap-4 ${editMode ? "auto-rows-[160px]" : "auto-rows-[135px]"}`}>
-        {order.map((key, idx) => renderWidget(key, idx))}
+      {/* Desktop Grid */}
+      <div className={`hidden sm:grid grid-cols-12 gap-4 ${editMode ? "auto-rows-[160px]" : "auto-rows-[135px]"}`}>
+        {order.map((key, idx) => renderDesktopWidget(key, idx))}
+      </div>
+
+      {/* Mobile Carousels */}
+      <div className="sm:hidden space-y-6">
+        {/* Carousel 1 */}
+        <div>
+          <div className="mb-3">
+            <span className="text-xs text-gray-500 dark:text-gray-400">Swipe to browse</span>
+          </div>
+          
+          <div 
+            ref={carousel1Ref}
+            className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide"
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          >
+            {firstCarouselWidgets.map((key, idx) => renderMobileWidget(key, idx, carousel1Size))}
+          </div>
+        </div>
+
+        {/* Carousel 2 */}
+        <div>
+          <div className="mb-3">
+            <span className="text-xs text-gray-500 dark:text-gray-400">Swipe to browse</span>
+          </div>
+          
+          <div 
+            ref={carousel2Ref}
+            className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide"
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          >
+            {secondCarouselWidgets.map((key, idx) => renderMobileWidget(key, idx, carousel2Size))}
+          </div>
+        </div>
       </div>
 
       <div className="flex justify-end">
         <button
           type="button"
-          onClick={() => setEditMode(!editMode)}
+          onClick={() => {
+            if (editMode) {
+              setEditMode(false);
+              setCustomizingCarousel(null);
+            } else {
+              setEditMode(true);
+            }
+          }}
           className={`text-sm font-medium px-4 py-2 rounded-lg transition-colors ${
             editMode
-              ? "bg-teal-600 text-white"
+              ? "bg-[#4f8792] text-white"
               : "bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
           }`}
         >
           {editMode ? "Done" : "Customize"}
         </button>
       </div>
+
+      {/* Customize Modal - Mobile Only */}
+      {editMode && (
+        <div className="sm:hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={() => {
+          setEditMode(false);
+          setCustomizingCarousel(null);
+        }}>
+          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-6 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+            {customizingCarousel === null ? (
+              <>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Select Carousel to Customize</h3>
+                <div className="space-y-3">
+                  <button
+                    onClick={() => setCustomizingCarousel(1)}
+                    className="w-full p-4 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-left hover:border-teal-500 dark:hover:border-teal-500 transition-colors"
+                  >
+                    <h4 className="font-medium text-gray-900 dark:text-gray-100">Carousel 1</h4>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">8 widgets</p>
+                  </button>
+                  <button
+                    onClick={() => setCustomizingCarousel(2)}
+                    className="w-full p-4 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-left hover:border-teal-500 dark:hover:border-teal-500 transition-colors"
+                  >
+                    <h4 className="font-medium text-gray-900 dark:text-gray-100">Carousel 2</h4>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">7 widgets</p>
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                    Carousel {customizingCarousel} Settings
+                  </h3>
+                  <button
+                    onClick={() => setCustomizingCarousel(null)}
+                    className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+                  >
+                    ← Back
+                  </button>
+                </div>
+                
+                {/* Size Selection */}
+                <div className="mb-6">
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Card Size</h4>
+                  <div className="grid grid-cols-3 gap-2">
+                    {Object.entries(MOBILE_CARD_SIZES).map(([sizeKey, size]) => (
+                      <button
+                        key={sizeKey}
+                        onClick={() => saveCarouselSize(customizingCarousel, sizeKey)}
+                        className={`p-3 rounded-lg border text-sm font-medium transition-colors ${
+                          (customizingCarousel === 1 ? carousel1Size : carousel2Size) === sizeKey
+                            ? "bg-[#4f8792] text-white border-teal-600"
+                            : "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-teal-500 dark:hover:border-teal-500"
+                        }`}
+                      >
+                        {size.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Reorder List */}
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Reorder Widgets</h4>
+                  <div className="space-y-2 max-h-64 overflow-y-auto">
+                    {(customizingCarousel === 1 ? firstCarouselWidgets : secondCarouselWidgets).map((key, idx) => {
+                      const widget = WIDGETS[key];
+                      const globalIndex = customizingCarousel === 1 ? idx : idx + 8;
+                      return (
+                        <div
+                          key={key}
+                          draggable
+                          onDragStart={(e) => handleMobileDragStart(e, globalIndex)}
+                          onDragOver={(e) => handleMobileDragOver(e, globalIndex)}
+                          onDragEnd={handleMobileDragEnd}
+                          className={`flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg cursor-move ${
+                            dragItemIndex === globalIndex ? "opacity-50" : ""
+                          }`}
+                        >
+                          <span className="text-lg">{widget.icon}</span>
+                          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{widget.label}</span>
+                          <span className="ml-auto text-gray-400 dark:text-gray-500">⋮⋮</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Desktop Customize - Inline */}
+      {editMode && (
+        <div className="hidden sm:block bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
+          <p className="text-sm text-gray-600 dark:text-gray-300">
+            Drag widgets to reorder. Use the ••• menu on each widget to resize.
+          </p>
+        </div>
+      )}
 
       {/* Profit per Product Chart */}
       <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-5">

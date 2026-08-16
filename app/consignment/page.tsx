@@ -4,6 +4,8 @@ import React from "react";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { ConstellationManager } from "@/app/components/ConstellationManager";
+import { OutpostHelpTip } from "@/app/components/OutpostHelpTip";
+import { Store } from "lucide-react";
 
 // ─── Server Actions ───
 
@@ -74,7 +76,6 @@ async function createBatchAction(formData: FormData) {
     throw new Error("At least one product is required.");
   }
 
-  // Create batch with items
   await prisma.consignmentBatch.create({
     data: {
       locationId,
@@ -92,7 +93,6 @@ async function createBatchAction(formData: FormData) {
     },
   });
 
-  // Update inventory
   for (const item of items) {
     await prisma.finishedGood.update({
       where: { id: item.finishedGoodId },
@@ -126,7 +126,6 @@ async function markBatchReturnedAction(formData: FormData) {
     throw new Error("Batch not found.");
   }
 
-  // Return items to inventory
   for (const item of batch.items) {
     await prisma.finishedGood.update({
       where: { id: item.finishedGoodId },
@@ -183,7 +182,6 @@ export default async function ConsignmentPage() {
     }),
   ]);
 
-  // Calculate summary stats
   const activeLocations = locations.filter((loc) =>
     loc.batches.some((batch) => batch.status === "active")
   ).length;
@@ -213,21 +211,24 @@ export default async function ConsignmentPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
+        <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100 mt-3">
           Constellation Stock
         </h1>
-        <p className="mt-2 text-sm text-gray-600 dark:text-gray-400 max-w-3xl">
-          Your products, scattered like stars across boutiques and markets. Add your 
-          consignment outposts, send batches of products into your constellation, and track 
-          what's out in the world. Mark batches as returned when they come home, and 
-          keep an eye on overdue shipments to ensure nothing gets lost in orbit.
+        <p className="mt-2 text-sm max-w-3xl text-gray-900 dark:text-gray-100">
+          Track products you've placed in shops, boutiques, or markets to sell on your behalf. 
+          Add the places where your products are selling, send them inventory, and keep track 
+          of what's out there and what's come back.
         </p>
       </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 p-6 rounded-xl shadow-sm">
-          <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">ACTIVE OUTPOSTS</h3>
+          <div className="flex items-center gap-2">
+            <Store className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">ACTIVE OUTPOSTS</h3>
+            <OutpostHelpTip />
+          </div>
           <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-gray-100">{activeLocations}</p>
         </div>
         <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 p-6 rounded-xl shadow-sm">

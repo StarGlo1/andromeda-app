@@ -244,7 +244,7 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
             </label>
             <button
               type="submit"
-              className="ml-auto bg-teal-600 hover:bg-teal-700 text-white text-xs font-medium px-4 py-2 rounded-full"
+              className="ml-auto bg-[#4f8792] hover:bg-[#426f79] text-white text-xs font-medium px-4 py-2 rounded-full"
             >
               Save
             </button>

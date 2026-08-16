@@ -3,7 +3,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Plus, Minus, Trash2, Zap, Calendar, MapPin, ShoppingCart, X } from "lucide-react";
+import { Plus } from "lucide-react";
 
 interface Event {
   id: string;
@@ -31,6 +31,24 @@ const inputClass = "w-full px-3 py-2 border border-gray-300 dark:border-gray-600
 
 const cardClass = "bg-[#e0d6c9] dark:bg-black border border-gray-300 dark:border-slate-700 rounded-xl p-6";
 
+const SALE_METHODS = [
+  { value: "", label: "Walk-in", example: "In-person purchase at studio or market" },
+  { value: "online", label: "🛒 Online", example: "Website, Etsy, Shopify order" },
+  { value: "mobile", label: "📱 Mobile", example: "Phone call or text order" },
+  { value: "gift", label: "🎁 Gift", example: "Complimentary or promo item" },
+  { value: "wholesale", label: "🏪 Wholesale", example: "Sold to a retailer or store" },
+];
+
+const EVENT_CATEGORIES = [
+  { value: "popup", label: "Popup Shop" },
+  { value: "farmers_market", label: "Farmers Market" },
+  { value: "craft_fair", label: "Craft Fair" },
+  { value: "market", label: "Market Stall" },
+  { value: "festival", label: "Festival" },
+  { value: "home_show", label: "Home Show" },
+  { value: "other", label: "Other" },
+];
+
 export function QuickLogManager({
   events,
   finishedGoods,
@@ -38,11 +56,13 @@ export function QuickLogManager({
   checkoutAction,
 }: Props) {
   const [selectedEventId, setSelectedEventId] = useState("");
+  const [saleMethod, setSaleMethod] = useState("");
   const [showNewEvent, setShowNewEvent] = useState(false);
   const [cart, setCart] = useState<
     Array<{ finishedGoodId: string; quantity: number; unitPrice: number }>
   >([]);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
 
   const runningTotal = cart.reduce(
     (sum, item) => sum + item.quantity * item.unitPrice,
@@ -88,10 +108,11 @@ export function QuickLogManager({
 
   const handleCreateEvent = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
+    const form = e.currentTarget;
+    const formData = new FormData(form);
     await createEventAction(formData);
     setShowNewEvent(false);
-    (e.target as HTMLFormElement).reset();
+    form.reset();
   };
 
   const handleCheckout = async () => {
@@ -102,11 +123,14 @@ export function QuickLogManager({
 
     setIsCheckingOut(true);
     const formData = new FormData();
-    formData.append("eventId", selectedEventId);
+    formData.append("eventId", selectedEventId || "");
+    formData.append("saleMethod", saleMethod);
     formData.append("items", JSON.stringify(cart));
 
     await checkoutAction(formData);
     setCart([]);
+    setSaleMethod("");
+    setSelectedEventId("");
     setIsCheckingOut(false);
   };
 
@@ -123,7 +147,7 @@ export function QuickLogManager({
               <button
                 key={product.id}
                 onClick={() => handleAddToCart(product)}
-                className="p-4 bg-[#ede6dc] dark:bg-gray-900 border border-gray-300 dark:border-slate-700 rounded-xl text-center hover:bg-[#8a7a65] dark:hover:bg-slate-700 hover:text-white dark:hover:text-gray-100 transition-colors group"
+                className="p-4 bg-[#ede6dc] dark:bg-gray-900 border border-gray-300 dark:border-slate-700 rounded-xl text-center hover:bg-[#4f8792] dark:hover:bg-slate-700 hover:text-white dark:hover:text-gray-100 transition-colors group"
               >
                 <p className="text-sm font-medium text-gray-900 dark:text-gray-100 group-hover:text-white dark:group-hover:text-gray-100">
                   {product.name}
@@ -142,68 +166,163 @@ export function QuickLogManager({
 
       {/* Right: Cart */}
       <div className="space-y-4">
+        {/* Sale Details Card */}
         <div className={cardClass}>
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-            Event
-          </h2>
-          <select
-            value={selectedEventId}
-            onChange={(e) => setSelectedEventId(e.target.value)}
-            className={inputClass}
-          >
-            <option value="">No event (walk-in sale)</option>
-            {events.map((event) => (
-              <option key={event.id} value={event.id}>
-                {event.name} - {new Date(event.date).toLocaleDateString()}
-              </option>
-            ))}
-          </select>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+              Sale Details
+            </h2>
+            <button
+              type="button"
+              onClick={() => setShowHelp(!showHelp)}
+              className="text-lg leading-none hover:scale-110 transition-transform"
+              title="What's the difference?"
+              aria-label="What's the difference?"
+            >
+              ☄️
+            </button>
+          </div>
+
+          {/* Help Legend */}
+          {showHelp && (
+            <div className="mb-4 p-4 bg-[#ede6dc] dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg space-y-3">
+              <div>
+                <p className="text-xs font-semibold text-gray-900 dark:text-gray-100 mb-1">
+                  Sale Method = How did they buy?
+                </p>
+                <p className="text-xs text-gray-600 dark:text-gray-400">
+                  Walk-in, Online, Mobile, Gift, or Wholesale
+                </p>
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-gray-900 dark:text-gray-100 mb-1">
+                  Event = Where were you?
+                </p>
+                <p className="text-xs text-gray-600 dark:text-gray-400">
+                  A specific named event like "Fall Craft Fair 2025"
+                </p>
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-gray-900 dark:text-gray-100 mb-1">
+                  Event Category = What kind of event?
+                </p>
+                <p className="text-xs text-gray-600 dark:text-gray-400">
+                  Craft Fair, Farmers Market, Festival, etc.
+                </p>
+              </div>
+              <div className="pt-2 border-t border-gray-300 dark:border-gray-700">
+                <p className="text-xs text-gray-600 dark:text-gray-400 italic">
+                  Example: "Walk-in" at "Fall Craft Fair" (Category: Craft Fair)
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Sale Method */}
+          <div>
+            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 uppercase mb-1">
+              Sale Method (How did they buy?)
+            </label>
+            <select
+              value={saleMethod}
+              onChange={(e) => setSaleMethod(e.target.value)}
+              className={inputClass}
+            >
+              {SALE_METHODS.map((method) => (
+                <option key={method.value} value={method.value}>
+                  {method.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Event */}
+          <div className="mt-3">
+            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 uppercase mb-1">
+              Event (Where were you?)
+            </label>
+            <select
+              value={selectedEventId}
+              onChange={(e) => setSelectedEventId(e.target.value)}
+              className={inputClass}
+            >
+              <option value="">No event</option>
+              {events.map((event) => (
+                <option key={event.id} value={event.id}>
+                  {event.name} - {new Date(event.date).toLocaleDateString()}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <button
             onClick={() => setShowNewEvent(true)}
-            className="mt-3 inline-flex items-center gap-2 px-3 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm"
+            className="mt-3 inline-flex items-center gap-2 px-3 py-2 bg-[#4f8792] text-white rounded-full hover:bg-[#426f79] transition-colors text-sm"
           >
             <Plus className="w-4 h-4" />
             New Event
           </button>
 
+          {/* New Event Form */}
           {showNewEvent && (
             <form onSubmit={handleCreateEvent} className="mt-4 space-y-3">
-              <input
-                type="text"
-                name="name"
-                placeholder="Event name"
-                required
-                className={inputClass}
-              />
-              <input
-                type="date"
-                name="date"
-                defaultValue={new Date().toISOString().split("T")[0]}
-                className={inputClass}
-              />
-              <input
-                type="text"
-                name="location"
-                placeholder="Location"
-                className={inputClass}
-              />
-              <select name="type" className={inputClass}>
-                <option value="popup">Popup</option>
-                <option value="farmers_market">Farmers Market</option>
-                <option value="craft_fair">Craft Fair</option>
-                <option value="other">Other</option>
-              </select>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 uppercase mb-1">
+                  Event Name
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  placeholder="e.g. Fall Craft Fair 2025"
+                  required
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 uppercase mb-1">
+                  Date
+                </label>
+                <input
+                  type="date"
+                  name="date"
+                  defaultValue={new Date().toISOString().split("T")[0]}
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 uppercase mb-1">
+                  Location
+                </label>
+                <input
+                  type="text"
+                  name="location"
+                  placeholder="e.g. City Park Pavilion"
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 uppercase mb-1">
+                  Event Category (What kind of event?)
+                </label>
+                <select name="type" className={inputClass}>
+                  {EVENT_CATEGORIES.map((type) => (
+                    <option key={type.value} value={type.value}>
+                      {type.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <div className="flex gap-2">
                 <button
                   type="submit"
-                  className="px-3 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm"
+                  className="px-3 py-2 bg-[#4f8792] text-white rounded-full hover:bg-[#426f79] transition-colors text-sm"
                 >
                   Save Event
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowNewEvent(false)}
-                  className="px-3 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors text-sm"
+                  className="px-3 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors text-sm"
                 >
                   Cancel
                 </button>
@@ -212,6 +331,7 @@ export function QuickLogManager({
           )}
         </div>
 
+        {/* Cart Card */}
         <div className={cardClass}>
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
             Cart ({cart.length} items)
@@ -243,24 +363,27 @@ export function QuickLogManager({
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => updateQuantity(item.finishedGoodId, -1)}
-                        className="w-7 h-7 flex items-center justify-center bg-gray-200 dark:bg-gray-700 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
+                        className="w-7 h-7 flex items-center justify-center bg-gray-200 dark:bg-gray-700 rounded-lg text-black dark:text-white text-lg font-bold hover:bg-gray-300 dark:hover:bg-gray-600"
+                        style={{ color: '#000000' }}
                       >
-                        <Minus className="w-3 h-3" />
+                        −
                       </button>
                       <span className="w-6 text-center text-sm font-medium text-gray-900 dark:text-gray-100">
                         {item.quantity}
                       </span>
                       <button
                         onClick={() => updateQuantity(item.finishedGoodId, 1)}
-                        className="w-7 h-7 flex items-center justify-center bg-gray-200 dark:bg-gray-700 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
+                        className="w-7 h-7 flex items-center justify-center bg-gray-200 dark:bg-gray-700 rounded-lg text-black dark:text-white text-lg font-bold hover:bg-gray-300 dark:hover:bg-gray-600"
+                        style={{ color: '#000000' }}
                       >
-                        <Plus className="w-3 h-3" />
+                        +
                       </button>
                       <button
                         onClick={() => removeFromCart(item.finishedGoodId)}
-                        className="ml-1 p-1 text-gray-400 hover:text-red-500"
+                        className="ml-1 p-1 text-black dark:text-white hover:text-red-500"
+                        style={{ color: '#000000' }}
                       >
-                        <X className="w-4 h-4" />
+                        ✕
                       </button>
                     </div>
                   </div>
@@ -281,7 +404,7 @@ export function QuickLogManager({
               <button
                 onClick={handleCheckout}
                 disabled={isCheckingOut || cart.length === 0}
-                className="w-full py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-3 bg-[#4f8792] text-white rounded-full hover:bg-[#426f79] transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isCheckingOut ? "Processing..." : "Checkout"}
               </button>

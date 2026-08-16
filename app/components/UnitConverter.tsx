@@ -65,7 +65,7 @@ export default function UnitConverter() {
           <button
             type="button"
             onClick={handleSwap}
-            className="bg-teal-600 hover:bg-teal-700 text-white rounded-full p-2 shadow-md transition-colors"
+            className="bg-[#4f8792] hover:bg-[#426f79] text-white rounded-full p-2 shadow-md transition-colors"
             title="Swap units"
           >
             <svg

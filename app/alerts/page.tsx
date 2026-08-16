@@ -69,7 +69,7 @@ export default function AlertsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-text">Alerts & Warnings</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-text mt-3">Alerts & Warnings</h1>
           <p className="text-sm text-text-muted mt-1">
             Monitor low stock, pending orders, and sales issues.
           </p>

@@ -51,7 +51,7 @@ export default async function RootLayout({
               <DemoModeBanner />
               <Navbar />
               <main className="pt-32 sm:pt-36 lg:pt-40">
-                <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 pb-6">
+                <div className="w-full px-0 sm:px-1 lg:px-2 pb-3">
                   <div className="workspace-container">
                     {children}
                   </div>

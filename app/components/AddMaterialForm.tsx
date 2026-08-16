@@ -223,7 +223,7 @@ export function AddMaterialForm({
                   <button
                     type="button"
                     onClick={handleSaveNewCategory}
-                    className="px-4 py-1.5 rounded-full bg-teal-600 hover:bg-teal-700 text-white text-xs font-medium transition-colors"
+                    className="px-4 py-1.5 rounded-full bg-[#4f8792] hover:bg-[#426f79] text-white text-xs font-medium transition-colors"
                   >
                     Save
                   </button>
@@ -279,7 +279,7 @@ export function AddMaterialForm({
                   <button
                     type="button"
                     onClick={handleSaveNewSupplier}
-                    className="px-4 py-1.5 rounded-full bg-teal-600 hover:bg-teal-700 text-white text-xs font-medium transition-colors"
+                    className="px-4 py-1.5 rounded-full bg-[#4f8792] hover:bg-[#426f79] text-white text-xs font-medium transition-colors"
                   >
                     Save
                   </button>
@@ -410,7 +410,7 @@ export function AddMaterialForm({
           <button
             type="submit"
             disabled={isPending}
-            className="bg-teal-600 hover:bg-teal-700 text-white font-medium px-6 py-2 rounded-full shadow-md transition-colors text-sm disabled:opacity-50"
+            className="bg-[#4f8792] hover:bg-[#426f79] text-white font-medium px-6 py-2 rounded-full shadow-md transition-colors text-sm disabled:opacity-50"
           >
             {isPending ? "Adding..." : "+ Add Material"}
           </button>

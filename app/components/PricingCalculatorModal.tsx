@@ -132,7 +132,7 @@ export function PricingCalculatorModal({
             onClick={() => setMode("margin")}
             className={`flex-1 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
               mode === "margin"
-                ? "bg-teal-600 text-white"
+                ? "bg-[#4f8792] text-white"
                 : "text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
             }`}
           >
@@ -142,7 +142,7 @@ export function PricingCalculatorModal({
             onClick={() => setMode("multiplier")}
             className={`flex-1 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
               mode === "multiplier"
-                ? "bg-teal-600 text-white"
+                ? "bg-[#4f8792] text-white"
                 : "text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
             }`}
           >
@@ -199,7 +199,7 @@ export function PricingCalculatorModal({
             <button
               onClick={() => applyPrice(suggestedRetailByMargin)}
               disabled={isPending || suggestedRetailByMargin <= 0}
-              className="w-full bg-teal-600 hover:bg-teal-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+              className="w-full bg-[#4f8792] hover:bg-[#426f79] text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
             >
               {isPending ? "Updating..." : `Apply Retail: $${suggestedRetailByMargin.toFixed(2)}`}
             </button>
@@ -219,7 +219,7 @@ export function PricingCalculatorModal({
                     disabled={cogs === 0}
                     className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                       selectedWholesaleMultiplier === m
-                        ? "bg-teal-600 text-white"
+                        ? "bg-[#4f8792] text-white"
                         : "bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-slate-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                     } disabled:opacity-50`}
                   >
@@ -241,7 +241,7 @@ export function PricingCalculatorModal({
                     disabled={cogs === 0}
                     className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                       selectedRetailMultiplier === m
-                        ? "bg-teal-600 text-white"
+                        ? "bg-[#4f8792] text-white"
                         : "bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-slate-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                     } disabled:opacity-50`}
                   >
@@ -282,7 +282,7 @@ export function PricingCalculatorModal({
             <button
               onClick={() => applyPrice(suggestedRetailByMultiplier)}
               disabled={isPending || suggestedRetailByMultiplier <= 0}
-              className="w-full bg-teal-600 hover:bg-teal-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+              className="w-full bg-[#4f8792] hover:bg-[#426f79] text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
             >
               {isPending ? "Updating..." : `Apply Retail: $${suggestedRetailByMultiplier.toFixed(2)}`}
             </button>

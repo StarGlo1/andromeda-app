@@ -26,6 +26,7 @@ export default async function RecipesPage() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-8">
+      <h1 className="text-2xl font-bold tracking-tight text-text mt-3">Recipes</h1>
       <div className="bg-surface-widget border border-default rounded-xl overflow-hidden">
         <div className="p-5 border-b border-default flex items-center justify-between">
           <h2 className="text-lg font-semibold text-text">Recipes</h2>

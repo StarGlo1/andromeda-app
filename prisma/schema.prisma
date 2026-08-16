@@ -71,6 +71,7 @@ model FinishedGood {
   overheadFlat         Float?       @default(0)
   overheadPercent      Float?       @default(0)
   isCoreElement        Boolean      @default(false)
+  batchNotes           String?
   createdAt            DateTime     @default(now())
   updatedAt            DateTime     @updatedAt
 

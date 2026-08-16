@@ -39,6 +39,7 @@ export default async function CategoriesPage() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-8">
+      <h1 className="text-2xl font-bold tracking-tight text-text mt-3">Categories</h1>
       <CategoryManager
         categories={categories}
         addAction={addCategory}

@@ -99,7 +99,7 @@ export default async function QuickLogPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
+        <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100 mt-3">
           Quick Log
         </h1>
         <p className="mt-2 text-sm text-gray-600 dark:text-gray-400 max-w-3xl">

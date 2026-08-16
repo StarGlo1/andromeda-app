@@ -35,7 +35,7 @@ export default async function SuppliersPage() {
   return (
     <div className="max-w-6xl mx-auto space-y-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-text">Suppliers</h1>
+        <h1 className="text-2xl font-bold text-text mt-3">Suppliers</h1>
       </div>
 
       <div className="bg-surface-widget border border-default rounded-xl p-6">
@@ -60,7 +60,7 @@ export default async function SuppliersPage() {
           <div className="md:col-span-2">
             <button
               type="submit"
-              className="w-full bg-brand hover:bg-brand-hover text-white font-medium px-4 py-2 rounded-lg transition-colors text-sm h-[40px]"
+              className="w-fit bg-[#4f8792] hover:bg-[#426f79] text-white font-medium px-4 py-2 rounded-full transition-colors text-sm shadow-md"
             >
               + Add Supplier
             </button>

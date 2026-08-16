@@ -39,13 +39,11 @@ export async function createRecipeFromBatch(
   primaryFragranceMaterialId?: string,
   fragranceMaterialIds?: (string | undefined)[]
 ) {
-  // 1. Wax material
   const waxMaterial = await prisma.rawMaterial.findFirst({
     where: { category: { name: "Wax" } },
     orderBy: { createdAt: "desc" },
   });
 
-  // 2. Fallback primary fragrance material (only used if not blending)
   let primaryMaterial = null;
   if (primaryFragranceMaterialId) {
     primaryMaterial = await prisma.rawMaterial.findUnique({
@@ -70,7 +68,6 @@ export async function createRecipeFromBatch(
     },
   });
 
-  // Wax
   if (waxMaterial) {
     await prisma.recipeItem.create({
       data: {
@@ -82,24 +79,22 @@ export async function createRecipeFromBatch(
     });
   }
 
-  // Fragrance blending
   if (totalFragranceOz > 0 && primaryMaterial) {
     const blendCount = fragranceBlends.length;
 
     if (blendCount > 1 && fragranceMaterialIds && fragranceMaterialIds.length > 0) {
-      // Multiple blends – each must have a valid material ID
       for (let i = 0; i < fragranceBlends.length; i++) {
         const blend = fragranceBlends[i];
         if (blend.oz <= 0) continue;
 
         const materialId = fragranceMaterialIds[i];
         if (!materialId) {
-          throw new Error(`Blend "${blend.name}" has no material selected. Please pick an oil from the dropdown.`);
+          throw new Error(`Blend "${blend.name}" has no material selected.`);
         }
 
         const material = await prisma.rawMaterial.findUnique({ where: { id: materialId } });
         if (!material) {
-          throw new Error(`Blend "${blend.name}" uses an invalid material. Please re‑select it.`);
+          throw new Error(`Blend "${blend.name}" uses an invalid material.`);
         }
 
         await prisma.recipeItem.create({
@@ -112,7 +107,6 @@ export async function createRecipeFromBatch(
         });
       }
     } else {
-      // Single fragrance (no mixing) – use primary or selected material
       let material = primaryMaterial;
       if (fragranceMaterialIds && fragranceMaterialIds.length > 0 && fragranceMaterialIds[0]) {
         const found = await prisma.rawMaterial.findUnique({
@@ -136,7 +130,6 @@ export async function createRecipeFromBatch(
   redirect(`/finished-goods/${product.id}/recipe`);
 }
 
-// New function for fragrance oil autocomplete
 export async function getFragranceOils() {
   const oils = await prisma.rawMaterial.findMany({
     where: {
@@ -161,4 +154,27 @@ export async function getFragranceOils() {
     name: oil.name,
     unit: oil.unit ?? "oz",
   }));
+}
+
+export async function saveBatchNoteToProduct(productId: string, batchNote: string) {
+  if (!productId || !batchNote) {
+    throw new Error("Product and note are required.");
+  }
+
+  await prisma.finishedGood.update({
+    where: { id: productId },
+    data: { batchNotes: batchNote },
+  });
+
+  revalidatePath(`/finished-goods/${productId}/recipe`);
+  return { success: true };
+}
+
+export async function getFinishedGoodsForBatchSave() {
+  const products = await prisma.finishedGood.findMany({
+    select: { id: true, name: true, batchCode: true },
+    orderBy: { name: "asc" },
+  });
+
+  return products;
 }

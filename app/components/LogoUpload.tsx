@@ -101,7 +101,7 @@ export function LogoUpload() {
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-[#4f8792] text-white rounded-lg hover:bg-[#426f79] transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
             >
               {isUploading ? (
                 <>

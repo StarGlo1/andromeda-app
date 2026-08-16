@@ -102,7 +102,7 @@ export function AddRecipeForm({
               onClick={() => handleIngredientTypeChange("raw")}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 ingredientType === "raw"
-                  ? "bg-teal-600 text-white"
+                  ? "bg-[#4f8792] text-white"
                   : "bg-surface border border-default text-text-muted hover:bg-brand-muted"
               }`}
             >
@@ -113,7 +113,7 @@ export function AddRecipeForm({
               onClick={() => handleIngredientTypeChange("core")}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 ingredientType === "core"
-                  ? "bg-teal-600 text-white"
+                  ? "bg-[#4f8792] text-white"
                   : "bg-surface border border-default text-text-muted hover:bg-brand-muted"
               }`}
             >
@@ -197,7 +197,7 @@ export function AddRecipeForm({
         <button
           type="submit"
           disabled={isPending}
-          className="w-full bg-teal-600 hover:bg-teal-700 text-white font-medium px-4 py-2 rounded-lg transition-colors text-sm disabled:opacity-50"
+          className="w-full bg-[#4f8792] hover:bg-[#426f79] text-white font-medium px-4 py-2 rounded-lg transition-colors text-sm disabled:opacity-50"
         >
           {isPending ? "Adding..." : "Add to Recipe"}
         </button>

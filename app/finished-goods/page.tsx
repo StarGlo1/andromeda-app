@@ -175,6 +175,9 @@ export default async function FinishedGoodsPage() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-8">
+      <h1 className="text-2xl font-bold tracking-tight text-text mt-3">Finished Goods</h1>      <h1 className="text-2xl font-bold tracking-tight text-text mt-3">Finished Goods</h1>
+      <h1 className="text-2xl font-bold tracking-tight text-text mt-3">Finished Goods</h1>
+      <h1 className="text-2xl font-bold tracking-tight text-text mt-3">Finished Goods</h1>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-surface-widget border border-default rounded-xl p-5">
           <p className="text-text-muted text-xs font-semibold uppercase tracking-wider">Total Products</p>
@@ -233,7 +236,7 @@ export default async function FinishedGoodsPage() {
           <div>
             <button
               type="submit"
-              className="w-fit px-6 mx-auto bg-teal-600 hover:bg-teal-700 text-white font-medium py-2 rounded-full shadow-md transition-colors text-sm h-[40px]"
+              className="w-fit px-6 mx-auto bg-[#4f8792] hover:bg-[#426f79] text-white font-medium py-2 rounded-full shadow-md transition-colors text-sm h-[40px]"
             >
               + Add Product
             </button>

@@ -52,6 +52,7 @@ export default async function SalesPage() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-8">
+      <h1 className="text-2xl font-bold tracking-tight text-text mt-3">Sales</h1>
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-surface-widget border border-default rounded-xl p-5">
@@ -70,11 +71,11 @@ export default async function SalesPage() {
         </div>
       </div>
 
-      {/* New Sale Button */}
+      {/* New Sale Button - TEAL BUBBLE */}
       <div className="flex justify-end">
         <Link
           href="/sales/new"
-          className="bg-brand hover:bg-brand-hover text-white font-medium px-4 py-2 rounded-lg transition-colors text-sm flex items-center gap-2"
+          className="bg-[#4f8792] hover:bg-[#426f79] text-white font-medium px-6 py-2.5 rounded-full transition-colors text-sm flex items-center gap-2 shadow-md"
         >
           <span className="text-lg">+</span> New Sale
         </Link>
@@ -144,16 +145,11 @@ export default async function SalesPage() {
                         >
                           View
                         </Link>
-                        <form action={deleteSale}>
+                        <form action={deleteSale} className="inline">
                           <input type="hidden" name="id" value={sale.id} />
                           <button
                             type="submit"
                             className="text-error hover:underline text-xs font-medium"
-                            onClick={(e) => {
-                              if (!confirm("Delete this sale? This will restore inventory.")) {
-                                e.preventDefault();
-                              }
-                            }}
                           >
                             Delete
                           </button>
