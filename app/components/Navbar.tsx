@@ -7,7 +7,6 @@ import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
-import { useLogo } from "@/app/context/LogoContext";
 import {
   Boxes,
   Package,
@@ -169,7 +168,6 @@ export default function Navbar() {
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
   const [isDark, setIsDark] = useState(false);
   const pathname = usePathname();
-  const { logoUrl } = useLogo();
 
   useEffect(() => {
     setIsDark(document.documentElement.classList.contains("dark"));
@@ -297,19 +295,16 @@ export default function Navbar() {
                     <AnimatedMenuIcon open={drawerOpen} />
                   </button>
 
-                  <div className="w-11 h-11 sm:w-14 sm:h-14 flex items-center justify-center shrink-0">
-                    {logoUrl ? (
-                      <Image
-                        src={logoUrl}
-                        alt="Andromeda Studios Logo"
-                        width={56}
-                        height={56}
-                        className="object-contain w-full h-full"
-                        unoptimized
-                      />
-                    ) : (
-                      <Boxes className="w-7 h-7 sm:w-9 sm:h-9 text-teal-600 dark:text-teal-400" />
-                    )}
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center shrink-0">
+                    <Image
+                      src="/images/andromeda-logo.png"
+                      alt="Andromeda Studios Logo"
+                      width={64}
+                      height={64}
+                      className="object-contain w-full h-full"
+                      priority
+                      unoptimized
+                    />
                   </div>
                 </div>
               </div>

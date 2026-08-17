@@ -263,7 +263,7 @@ html:not(.dark) .bg-slate-100,
 html:not(.dark) .bg-slate-200,
 html:not(.dark) .bg-surface-widget,
 html:not(.dark) .bg-surface {
-  background-color: #e0d6c9 !important;
+  background-color: #d6cbbe !important;
 }
 
 /* Background should be LIGHTER */
@@ -274,11 +274,11 @@ html:not(.dark) .bg-bg {
 }
 
 html:not(.dark) .bg-gray-100 {
-  background-color: #dbd2c5 !important;
+  background-color: #d1c6b9 !important;
 }
 
 html:not(.dark) .bg-gray-200 {
-  background-color: #d0c6b8 !important;
+  background-color: #c6baab !important;
 }
 
 html:not(.dark) .bg-gray-800 {

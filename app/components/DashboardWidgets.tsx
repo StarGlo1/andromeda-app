@@ -76,7 +76,7 @@ const WIDGETS: Record<string, any> = {
     label: "Inventory Value",
     icon: "💰",
     color: "text-gray-900 dark:text-gray-100",
-    renderValue: (d: any) => `$${d.totalInventoryValue.toFixed(2)}`,
+    renderValue: (d: any) => `$${d.totalInventoryValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
   },
   activeRecipesCount: {
     label: "Active Recipes",
@@ -118,7 +118,7 @@ const WIDGETS: Record<string, any> = {
     renderValue: (d: any) => d.pendingSalesCount ?? 0,
   },
   reorderSuggestions: {
-    label: "Reorder Suggestions",
+    label: "Reorder Sugg",
     icon: "🛒",
     color: "text-blue-600 dark:text-blue-400",
     renderValue: (d: any) => d.reorderSuggestions?.length ?? 0,
@@ -141,9 +141,9 @@ const GRID_SIZES = {
 };
 
 const MOBILE_CARD_SIZES = {
-  "small": { height: "120px", label: "Small" },
-  "medium": { height: "160px", label: "Medium" },
-  "large": { height: "200px", label: "Large" },
+  "small": { height: "140px", label: "Small" },
+  "medium": { height: "180px", label: "Medium" },
+  "large": { height: "220px", label: "Large" },
 };
 
 export default function DashboardWidgets({ data }: { data: any }) {
@@ -310,9 +310,9 @@ export default function DashboardWidgets({ data }: { data: any }) {
 
     const widgetBody = (
       <>
-        <div className="flex items-start gap-2 mb-1">
-          <span className={`${isMobile ? "text-xl" : "text-lg"} shrink-0 leading-none mt-0.5`}>{widget.icon}</span>
-          <p className={`text-gray-500 dark:text-gray-400 ${isMobile ? "text-sm" : "text-xs"} font-semibold uppercase tracking-wider break-words leading-tight`}>
+        <div className="flex items-center gap-2 mb-1">
+          <span className={`${isMobile ? "text-xl" : "text-lg"} shrink-0 leading-none`}>{widget.icon}</span>
+          <p className={`text-gray-500 dark:text-gray-400 ${isMobile ? "text-sm" : "text-xs"} font-semibold uppercase tracking-wider break-words leading-none`}>
             {widget.label}
           </p>
         </div>
@@ -361,7 +361,7 @@ export default function DashboardWidgets({ data }: { data: any }) {
         )}
 
         <div className="flex-1 flex flex-col justify-center">
-          <p className={`${isMobile ? "text-2xl" : isLarge ? "text-2xl" : "text-xl"} font-bold ${textColor} break-words`}>{value}</p>
+          <p className={`${isMobile ? (key === "expiringStock" ? "text-lg" : "text-2xl") : isLarge ? "text-2xl" : "text-xl"} font-bold ${textColor} break-words`}>{value}</p>
 
           {key === "topSelling" && isLarge && !isMobile && renderList(data.topSelling, (item) => (
             <div className="flex justify-between text-xs text-gray-600 dark:text-gray-300">
@@ -507,8 +507,12 @@ export default function DashboardWidgets({ data }: { data: any }) {
           
           <div 
             ref={carousel1Ref}
-            className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide"
-            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            className="flex gap-3 overflow-x-auto overflow-y-hidden pb-2 snap-x snap-mandatory scrollbar-hide"
+            style={{ 
+              scrollbarWidth: 'none', 
+              msOverflowStyle: 'none',
+              WebkitOverflowScrolling: 'touch'
+            }}
           >
             {firstCarouselWidgets.map((key, idx) => renderMobileWidget(key, idx, carousel1Size))}
           </div>
