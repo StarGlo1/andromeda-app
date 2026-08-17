@@ -239,21 +239,6 @@ export default function Navbar() {
             </button>
 
             <Link className="flex items-center gap-3 sm:gap-5 group" href="/">
-              <div className="w-14 h-14 sm:w-20 sm:h-20 flex items-center justify-center shrink-0">
-                {logoUrl ? (
-                  <Image
-                    src={logoUrl}
-                    alt="Andromeda Studios Logo"
-                    width={56}
-                    height={56}
-                    className="object-contain w-full h-full"
-                    priority
-                    unoptimized
-                  />
-                ) : (
-                  <Boxes className="w-8 h-8 sm:w-10 sm:h-10 text-teal-600 dark:text-teal-400" />
-                )}
-              </div>
               <div className="flex flex-col items-center">
                 <span className="text-2xl sm:text-4xl lg:text-5xl font-bold tracking-[0.15em] sm:tracking-[0.25em] text-gray-900 dark:text-gray-100 leading-none">
                   ANDROMEDA
@@ -263,6 +248,18 @@ export default function Navbar() {
                 </span>
               </div>
             </Link>
+
+            <button
+              onClick={toggleTheme}
+              className="absolute right-0 p-3 sm:p-3.5 rounded-xl bg-gray-100 dark:bg-gray-700 border-2 border-black dark:border-gray-500 text-gray-600 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-500 transition-all duration-300"
+              aria-label="Toggle Theme"
+            >
+              {isDark ? (
+                <Sun className="w-6 h-6 sm:w-7 sm:h-7 text-amber-400" />
+              ) : (
+                <Moon className="w-6 h-6 sm:w-7 sm:h-7 text-indigo-600" />
+              )}
+            </button>
           </div>
         </div>
       </header>
@@ -299,17 +296,21 @@ export default function Navbar() {
                   >
                     <AnimatedMenuIcon open={drawerOpen} />
                   </button>
-                  <button
-                    onClick={toggleTheme}
-                    className="p-2.5 sm:p-3 rounded-xl bg-gray-100 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors duration-300"
-                    aria-label="Toggle Theme"
-                  >
-                    {isDark ? (
-                      <Sun className="w-6 h-6 sm:w-7 sm:h-7 text-amber-400" />
+
+                  <div className="w-11 h-11 sm:w-14 sm:h-14 flex items-center justify-center shrink-0">
+                    {logoUrl ? (
+                      <Image
+                        src={logoUrl}
+                        alt="Andromeda Studios Logo"
+                        width={56}
+                        height={56}
+                        className="object-contain w-full h-full"
+                        unoptimized
+                      />
                     ) : (
-                      <Moon className="w-6 h-6 sm:w-7 sm:h-7 text-indigo-600" />
+                      <Boxes className="w-7 h-7 sm:w-9 sm:h-9 text-teal-600 dark:text-teal-400" />
                     )}
-                  </button>
+                  </div>
                 </div>
               </div>
 
