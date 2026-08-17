@@ -238,10 +238,10 @@ export default function Navbar() {
 
             <Link className="flex items-center gap-3 sm:gap-5 group" href="/">
               <div className="flex flex-col items-center">
-                <span className="text-2xl sm:text-4xl lg:text-5xl font-bold tracking-[0.15em] sm:tracking-[0.25em] text-gray-900 dark:text-gray-100 leading-none">
+                <span className="text-3xl sm:text-5xl lg:text-6xl font-bold tracking-[0.15em] sm:tracking-[0.25em] text-gray-900 dark:text-gray-100 leading-none">
                   ANDROMEDA
                 </span>
-                <span className="text-sm sm:text-lg lg:text-xl font-medium tracking-[0.2em] sm:tracking-[0.3em] text-gray-600 dark:text-gray-300 mt-0.5 sm:mt-1 uppercase">
+                <span className="text-base sm:text-xl lg:text-2xl font-medium tracking-[0.2em] sm:tracking-[0.3em] text-gray-600 dark:text-gray-300 mt-0.5 sm:mt-1 uppercase">
                   Studios
                 </span>
               </div>
@@ -312,7 +312,7 @@ export default function Navbar() {
               <div className="border-b border-gray-300 dark:border-gray-700"></div>
 
               <div className="w-full px-4 sm:px-8 lg:px-10 py-2 sm:py-3">
-                <span className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-gray-100">
+                <span className="text-4xl sm:text-5xl font-bold text-gray-900 dark:text-gray-100">
                   MENU
                 </span>
               </div>
@@ -323,7 +323,7 @@ export default function Navbar() {
                 <Link
                   href="/"
                   onClick={closeDrawer}
-                  className="flex items-center gap-3 px-4 sm:px-5 py-3 sm:py-3.5 rounded-lg text-base sm:text-lg font-medium mb-1 text-gray-600 dark:text-gray-300 hover:bg-[#8a7a65] dark:hover:bg-slate-700 hover:text-white dark:hover:text-gray-100 transition-all duration-300"
+                  className="flex items-center gap-3 px-4 sm:px-5 py-3 sm:py-3.5 rounded-lg text-[1.5rem] sm:text-[1.75rem] font-medium mb-1 text-gray-600 dark:text-gray-300 hover:bg-[#8a7a65] dark:hover:bg-slate-700 hover:text-white dark:hover:text-gray-100 transition-all duration-300"
                 >
                   <LayoutDashboard className="w-5 h-5 sm:w-6 sm:h-6 shrink-0" />
                   Command Deck
@@ -338,7 +338,7 @@ export default function Navbar() {
                         onClick={() =>
                           setExpandedGroup(isExpanded ? null : group.label)
                         }
-                        className="w-full flex items-center px-4 sm:px-5 py-3 sm:py-3.5 rounded-lg text-base sm:text-lg font-medium text-gray-600 dark:text-gray-300 hover:bg-[#8a7a65] dark:hover:bg-slate-700 hover:text-white dark:hover:text-gray-100 transition-all duration-300"
+                        className="w-full flex items-center px-4 sm:px-5 py-3 sm:py-3.5 rounded-lg text-[1.5rem] sm:text-[1.75rem] font-medium text-gray-600 dark:text-gray-300 hover:bg-[#8a7a65] dark:hover:bg-slate-700 hover:text-white dark:hover:text-gray-100 transition-all duration-300"
                       >
                         <Icon className="w-5 h-5 sm:w-6 sm:h-6 shrink-0 mr-3" />
                         <span>{group.label}</span>
@@ -358,7 +358,7 @@ export default function Navbar() {
                                 href={item.href}
                                 key={item.name}
                                 onClick={closeDrawer}
-                                className="flex items-center gap-3 px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg text-base sm:text-lg font-medium text-gray-600 dark:text-gray-300 hover:bg-[#8a7a65] dark:hover:bg-slate-700 hover:text-white dark:hover:text-gray-100 transition-all duration-300"
+                                className="flex items-center gap-3 px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg text-[1.5rem] sm:text-[1.75rem] font-medium text-gray-600 dark:text-gray-300 hover:bg-[#8a7a65] dark:hover:bg-slate-700 hover:text-white dark:hover:text-gray-100 transition-all duration-300"
                               >
                                 <SubIcon className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
                                 {item.name}
