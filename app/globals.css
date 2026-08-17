@@ -480,3 +480,42 @@ body, .bg-bg, .bg-surface, .bg-surface-nav, .bg-surface-widget, input, textarea,
     max-height: 500px;
   }
 }
+
+/* ===== CREATE CUSTOMER MODAL BUTTONS - ALWAYS VISIBLE ===== */
+/* Teal button - identical in light and dark mode */
+button[class*="bg-[#4f8792]"] {
+  background-color: #4f8792 !important;
+  color: #ffffff !important;
+  border: 2px solid #3d6d77 !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+}
+button[class*="bg-[#4f8792]"]:hover {
+  background-color: #426f79 !important;
+}
+html.dark button[class*="bg-[#4f8792]"] {
+  background-color: #4f8792 !important;
+  color: #ffffff !important;
+  border-color: #3d6d77 !important;
+}
+html.dark button[class*="bg-[#4f8792]"]:hover {
+  background-color: #426f79 !important;
+}
+
+/* Gray/cancel button - visible frame in both modes */
+button[class*="bg-gray-200"] {
+  background-color: #e5e7eb !important;
+  color: #374151 !important;
+  border: 2px solid #d1d5db !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+}
+button[class*="bg-gray-200"]:hover {
+  background-color: #d1d5db !important;
+}
+html.dark button[class*="bg-gray-200"] {
+  background-color: #374151 !important;
+  color: #d1d5db !important;
+  border-color: #4b5563 !important;
+}
+html.dark button[class*="bg-gray-200"]:hover {
+  background-color: #4b5563 !important;
+}

@@ -168,11 +168,16 @@ export default function ReportsClient({ data, cogsScheduleC, startDate, endDate 
 
       {/* Schedule C COGS */}
       <div className="bg-surface-widget border border-default rounded-xl p-6">
-        <div className="flex items-center justify-between mb-2">
+        {/* Desktop: original layout - title + button in flex row */}
+        <div className="hidden sm:flex items-center justify-between mb-2">
           <h2 className="text-lg font-semibold text-text">📋 IRS Schedule C COGS</h2>
           <a href="/reports/cogs" className="bg-[#4f8792] hover:bg-[#426f79] text-white text-sm font-medium px-4 py-2 rounded-full transition-colors shadow-md whitespace-nowrap">
             📋 Detailed COGS Calculator
           </a>
+        </div>
+        {/* Mobile: title only at top */}
+        <div className="sm:hidden mb-2">
+          <h2 className="text-lg font-semibold text-text">📋 IRS Schedule C COGS</h2>
         </div>
         <p className="text-text-muted text-sm mb-4">
           Formula: Beginning Inventory + Purchases – Ending Inventory
@@ -194,6 +199,12 @@ export default function ReportsClient({ data, cogsScheduleC, startDate, endDate 
             <p className="text-text-muted text-xs uppercase tracking-wider">Total COGS (Schedule C)</p>
             <p className="text-3xl font-bold text-warning">${cogsScheduleC.toFixed(2)}</p>
           </div>
+        </div>
+        {/* Mobile only: button at bottom */}
+        <div className="sm:hidden mt-4">
+          <a href="/reports/cogs" className="block text-center bg-[#4f8792] hover:bg-[#426f79] text-white text-sm font-medium px-4 py-2 rounded-full transition-colors shadow-md whitespace-nowrap">
+            📋 Detailed COGS Calculator
+          </a>
         </div>
       </div>
 

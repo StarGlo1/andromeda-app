@@ -6,7 +6,6 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/app/context/ToastContext";
 import { seedDemoData } from "@/app/actions/seedDemo";
 import { useDemoMode } from "@/app/context/DemoModeContext";
-import { LogoUpload } from "@/app/components/LogoUpload";
 import { enterDemoModeAction, exitDemoModeAction } from "@/app/actions/demoMode";
 import { useRouter } from "next/navigation";
 
@@ -151,15 +150,6 @@ export default function SettingsPage() {
   return (
     <div className="space-y-8">
       <h1 className="text-2xl font-bold tracking-tight text-text mt-3">Settings</h1>
-      {/* Company Logo */}
-      <section className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-slate-700 rounded-xl p-6">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Company Logo</h2>
-        <p className="text-gray-500 dark:text-gray-400 text-sm mb-6">
-          Upload your company logo. This will appear in the navigation bar.
-        </p>
-        <LogoUpload />
-      </section>
-
       {/* Company Profile */}
       <section className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-slate-700 rounded-xl p-6">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Company Profile</h2>

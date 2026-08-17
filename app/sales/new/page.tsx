@@ -324,9 +324,10 @@ export default function NewSalePage() {
           {/* Products */}
           <div className="bg-surface-widget border border-default rounded-xl p-6">
             <h2 className="text-lg font-semibold text-text mb-4">Add Products</h2>
-            <div className="flex gap-2 mb-4">
+            <div className="mb-4">
               <select
-                className="flex-1 px-3 py-2 bg-bg border border-default rounded-lg text-text text-sm focus:outline-none focus:ring-2 focus:ring-brand"
+                className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text text-sm focus:outline-none focus:ring-2 focus:ring-brand"
+                style={{ width: '100%', maxWidth: '100%' }}
                 onChange={(e) => {
                   if (e.target.value) {
                     addProduct(e.target.value);
@@ -568,14 +569,14 @@ export default function NewSalePage() {
                   type="button"
                   onClick={handleCreateCustomer}
                   disabled={creatingCustomer || !newCustomerName.trim()}
-                  className="flex-1 px-4 py-2 rounded-full bg-[#4f8792] hover:bg-[#426f79] text-white text-sm font-medium transition-colors disabled:opacity-50"
+                  className="flex-1 px-4 py-2 rounded-full bg-[#4f8792] hover:bg-[#426f79] text-white text-sm font-medium border border-[#3d6d77] shadow-sm transition-colors disabled:opacity-50"
                 >
                   {creatingCustomer ? "Creating..." : "Create Customer"}
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowNewCustomer(false)}
-                  className="px-4 py-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors text-sm font-medium"
+                  className="px-4 py-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-500 shadow-sm transition-colors text-sm font-medium"
                 >
                   Cancel
                 </button>
