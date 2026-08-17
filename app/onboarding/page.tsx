@@ -133,7 +133,7 @@ export default function OnboardingPage() {
                 <button
                   key={bt.key}
                   onClick={() => setSelectedBusiness(bt.key)}
-                  className={`flex items-start gap-4 p-4 rounded-xl border-2 transition-all text-left ${
+                  className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all text-center ${
                     selectedBusiness === bt.key
                       ? "border-brand bg-brand-muted dark:bg-brand-muted-dark"
                       : "border-default hover:border-brand hover:bg-brand-muted/50 dark:hover:bg-brand-muted-dark/50 hover:shadow-lg hover:scale-[1.02]"
@@ -182,6 +182,23 @@ export default function OnboardingPage() {
               </p>
             </div>
 
+            <div className="flex justify-center mb-2">
+              <button
+                onClick={() => {
+                  if (selectedCategories.size === selectedTemplate.categories.length) {
+                    setSelectedCategories(new Set());
+                  } else {
+                    setSelectedCategories(new Set(selectedTemplate.categories));
+                  }
+                }}
+                className="text-xs font-medium text-text-brand hover:text-text-brand-dark underline underline-offset-2 transition-colors"
+              >
+                {selectedCategories.size === selectedTemplate.categories.length
+                  ? "Deselect All"
+                  : "Select All"}
+              </button>
+            </div>
+
             <div className="bg-surface border border-default rounded-lg p-4 max-h-56 overflow-y-auto">
               {selectedTemplate.categories.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
@@ -216,14 +233,14 @@ export default function OnboardingPage() {
             <div className="flex gap-3">
               <button
                 onClick={() => setStep(2)}
-                className="flex-1 bg-surface border border-default text-text font-medium px-4 py-2 rounded-full hover:bg-brand-muted transition-colors"
+                className="w-1/3 mx-auto bg-surface border border-default text-text font-medium px-4 py-2 rounded-full hover:bg-brand-muted transition-colors"
               >
                 Back
               </button>
               <button
                 onClick={handleFinish}
                 disabled={isSkipping}
-                className="w-1/3 mx-auto bg-[#4f8792] hover:bg-[#426f79] text-white font-medium px-4 py-2 rounded-full transition-colors shadow-md disabled:opacity-50 mt-auto"
+                className="w-1/3 mx-auto bg-[#4f8792] hover:bg-[#426f79] text-white font-medium px-4 py-2 rounded-full transition-colors shadow-md disabled:opacity-50"
               >
                 {isSkipping ? "Setting up..." : "Get Started"}
               </button>

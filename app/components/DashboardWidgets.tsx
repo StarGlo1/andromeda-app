@@ -330,7 +330,7 @@ export default function DashboardWidgets({ data }: { data: any }) {
       <>
         <div className="flex items-center gap-2 mb-1">
           <span className={`${isMobile ? "text-xl" : "text-lg"} shrink-0 leading-none`}>{widget.icon}</span>
-          <p className={`text-gray-500 dark:text-gray-400 ${isMobile ? "text-sm" : "text-xs"} font-semibold uppercase tracking-wider break-words leading-none`}>
+          <p className={`text-gray-500 dark:text-gray-400 ${isMobile ? "text-xl" : "text-lg"} font-semibold uppercase tracking-wider break-words leading-none`}>
             {widget.label}
           </p>
         </div>
@@ -379,7 +379,7 @@ export default function DashboardWidgets({ data }: { data: any }) {
         )}
 
         <div className="flex-1 flex flex-col justify-center">
-          <p className={`${isMobile ? "text-lg" : isLarge ? "text-lg" : "text-base"} font-bold ${textColor} break-words whitespace-normal`}>{value}</p>
+          <p className={`${isMobile ? "text-[1.75rem]" : isLarge ? "text-[2rem]" : "text-[1.75rem]"} font-bold ${textColor} break-words whitespace-normal`}>{value}</p>
 
           {key === "topSelling" && isLarge && !isMobile && renderList(data.topSelling, (item) => (
             <div className="flex justify-between text-xs text-gray-600 dark:text-gray-300">
@@ -388,12 +388,7 @@ export default function DashboardWidgets({ data }: { data: any }) {
             </div>
           ), 5)}
 
-          {key === "reorderSuggestions" && !isMobile && renderList(data.reorderSuggestions, (item) => (
-            <div className="flex items-center justify-between gap-2 text-[10px] leading-tight text-gray-600 dark:text-gray-300 overflow-hidden">
-              <span className="truncate max-w-[60%]">{item.name}</span>
-              <span className="shrink-0 whitespace-nowrap">{item.suggestedOrder}{item.unit}</span>
-            </div>
-          ), isLarge ? 5 : 2)}
+
 
           {key === "expiringStock" && isLarge && !isMobile && renderList(data.expiringStock, (item) => (
             <div className="flex justify-between text-xs text-gray-600 dark:text-gray-300">
