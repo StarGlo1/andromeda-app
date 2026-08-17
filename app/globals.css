@@ -150,7 +150,8 @@ body {
 
 /* ===== WARM CREAM GRADIENT — LIGHT MODE ONLY ===== */
 html:not(.dark) body {
-  background: linear-gradient(
+  background-color: #000000;
+  background-image: linear-gradient(
     to bottom,
     #e5dcd0 0%,
     #d0c6b8 15%,
@@ -161,13 +162,16 @@ html:not(.dark) body {
     #000000 80%,
     #000000 100%
   );
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  background-attachment: scroll;
   min-height: 100vh;
-  background-attachment: fixed;
 }
 
 /* ===== DARK MODE GRADIENT - MIRRORS HEADER COLOR ===== */
 html.dark body {
-  background: linear-gradient(
+  background-color: #000000;
+  background-image: linear-gradient(
     to bottom,
     #4b5563 0%,
     #374151 15%,
@@ -177,13 +181,15 @@ html.dark body {
     #000000 80%,
     #000000 100%
   );
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  background-attachment: scroll;
   min-height: 100vh;
-  background-attachment: fixed;
   color: var(--color-text-dark);
 }
 
 html {
-  background-color: #ede6dc;
+  background-color: #000000;
 }
 html.dark {
   background-color: #000000;
