@@ -27,6 +27,8 @@ export function FinishedGoodRow({
   const marginPercent =
     item.retailPrice > 0 ? ((profit / item.retailPrice) * 100).toFixed(1) : null;
 
+  const isOutOfStock = (item.quantityOnHand ?? 0) <= 0;
+
   const showNoPriceTip = profit < 0 && item.retailPrice === 0;
 
   const handleProduce = async (formData: FormData) => {
@@ -61,12 +63,21 @@ export function FinishedGoodRow({
       <>
         <tr
           className={`${
-            rowIndex % 2 === 0
+            isOutOfStock
+              ? "bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 border-l-4 border-l-red-500"
+              : rowIndex % 2 === 0
               ? "bg-[#ede6dc] hover:bg-[#c5d9dd]"
               : "bg-[#e0d6c9] hover:bg-[#c5d9dd]"
           } transition-colors`}
         >
-          <td className="p-4 font-medium text-text" style={{ width: "var(--col-name)" }}>{item.name}</td>
+          <td className="p-4 font-medium text-text" style={{ width: "var(--col-name)" }}>
+            {item.name}
+            {isOutOfStock && (
+              <span className="ml-2 inline-block bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400 text-xs px-2 py-0.5 rounded-full border border-red-400 dark:border-red-600">
+                Out of Stock
+              </span>
+            )}
+          </td>
           <td className="p-4 text-text-secondary text-center" style={{ width: "var(--col-sku)" }}>{item.sku ?? "—"}</td>
           <td className="p-4 text-text-secondary text-center" style={{ width: "var(--col-batchCode)" }}>{item.batchCode}</td>
           <td className="p-4 text-text-secondary text-center" style={{ width: "var(--col-retailPrice)" }}>

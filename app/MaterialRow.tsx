@@ -29,6 +29,8 @@ export function MaterialRow({
     item.reorderThreshold !== null &&
     (item.totalQuantity ?? 0) <= item.reorderThreshold;
 
+  const isOutOfStock = (item.totalQuantity ?? 0) <= 0;
+
   const availableStock =
     (item.totalQuantity ?? 0) -
     (item.committedQuantity ?? 0) +
@@ -62,7 +64,11 @@ export function MaterialRow({
     return (
       <tr
         className={`${
-          rowIndex % 2 === 0
+          isOutOfStock
+            ? "bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 border-l-4 border-l-red-500"
+            : isLowStock
+            ? "bg-yellow-50 dark:bg-yellow-900/20 hover:bg-yellow-100 dark:hover:bg-yellow-900/40 border-l-4 border-l-yellow-500"
+            : rowIndex % 2 === 0
             ? "bg-[#ede6dc] hover:bg-[#c5d9dd]"
             : "bg-[#e0d6c9] hover:bg-[#c5d9dd]"
         } transition-colors`}
@@ -72,6 +78,15 @@ export function MaterialRow({
           <a href={`/materials/${item.id}`} className="hover:underline">
             {item.name}
           </a>
+          {isOutOfStock ? (
+            <span className="ml-2 inline-block bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400 text-xs px-2 py-0.5 rounded-full border border-red-400 dark:border-red-600">
+              Out of Stock
+            </span>
+          ) : isLowStock ? (
+            <span className="ml-2 inline-block bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-400 text-xs px-2 py-0.5 rounded-full border border-yellow-400 dark:border-yellow-600">
+              Low Stock
+            </span>
+          ) : null}
         </td>
 
         {/* Category */}

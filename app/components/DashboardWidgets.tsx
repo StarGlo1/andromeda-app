@@ -146,6 +146,24 @@ const MOBILE_CARD_SIZES = {
   "large": { height: "220px", label: "Large" },
 };
 
+const WIDGET_ROUTES: Record<string, string> = {
+  alerts: "/alerts",
+  totalSales: "/sales",
+  totalRevenue: "/sales",
+  rawMaterialsCount: "/materials",
+  lowStock: "/materials",
+  totalProducts: "/finished-goods",
+  totalInventoryValue: "/reports",
+  activeRecipesCount: "/recipes",
+  avgCogs: "/reports/cogs",
+  potentialProfit: "/reports",
+  profitMargin: "/reports",
+  topSelling: "/sales",
+  pendingSales: "/sales",
+  reorderSuggestions: "/materials",
+  expiringStock: "/materials",
+};
+
 export default function DashboardWidgets({ data }: { data: any }) {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
@@ -361,7 +379,7 @@ export default function DashboardWidgets({ data }: { data: any }) {
         )}
 
         <div className="flex-1 flex flex-col justify-center">
-          <p className={`${isMobile ? (key === "expiringStock" ? "text-lg" : "text-2xl") : isLarge ? "text-2xl" : "text-xl"} font-bold ${textColor} break-words`}>{value}</p>
+          <p className={`${isMobile ? "text-lg" : isLarge ? "text-lg" : "text-base"} font-bold ${textColor} break-words whitespace-normal`}>{value}</p>
 
           {key === "topSelling" && isLarge && !isMobile && renderList(data.topSelling, (item) => (
             <div className="flex justify-between text-xs text-gray-600 dark:text-gray-300">
@@ -371,9 +389,9 @@ export default function DashboardWidgets({ data }: { data: any }) {
           ), 5)}
 
           {key === "reorderSuggestions" && !isMobile && renderList(data.reorderSuggestions, (item) => (
-            <div className="flex justify-between text-xs text-gray-600 dark:text-gray-300">
-              <span className="truncate">{item.name}</span>
-              <span>Order {item.suggestedOrder} {item.unit}</span>
+            <div className="flex items-center justify-between gap-2 text-[10px] leading-tight text-gray-600 dark:text-gray-300 overflow-hidden">
+              <span className="truncate max-w-[60%]">{item.name}</span>
+              <span className="shrink-0 whitespace-nowrap">{item.suggestedOrder}{item.unit}</span>
             </div>
           ), isLarge ? 5 : 2)}
 
@@ -414,14 +432,13 @@ export default function DashboardWidgets({ data }: { data: any }) {
         onDragEnd={handleDragEnd}
         onClick={() => {
           if (editMode) return;
-          if (key === "alerts") router.push("/alerts");
+          const route = WIDGET_ROUTES[key];
+          if (route) router.push(route);
         }}
         className={`relative bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-4 transition-colors ${
           editMode
             ? "cursor-grab active:cursor-grabbing ring-2 ring-teal-500"
-            : key === "alerts"
-            ? "hover:border-red-500 dark:hover:border-red-400 cursor-pointer"
-            : "hover:border-teal-600 dark:hover:border-teal-400"
+            : "hover:border-teal-600 dark:hover:border-teal-400 cursor-pointer"
         } ${dragIndex === index ? "opacity-50" : ""} ${size.col} ${size.row}`}
       >
         {widgetBody}
@@ -466,7 +483,8 @@ export default function DashboardWidgets({ data }: { data: any }) {
         key={key}
         data-mobile-card
         onClick={() => {
-          if (key === "alerts") router.push("/alerts");
+          const route = WIDGET_ROUTES[key];
+          if (route) router.push(route);
         }}
         className={`relative shrink-0 w-[calc(50%-6px)] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-4 ${
           key === "alerts"
@@ -711,7 +729,7 @@ export default function DashboardWidgets({ data }: { data: any }) {
       {data.lowStockMaterials?.length > 0 && (
         <div className="bg-white dark:bg-gray-900 border border-yellow-500 dark:border-yellow-400 rounded-xl overflow-hidden">
           <div className="p-5 border-b border-yellow-500 dark:border-yellow-400 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-yellow-600 dark:text-yellow-400">⚠️ Low Stock Alerts</h2>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">⚠️ Low Stock | Out of Stock Alerts</h2>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
@@ -721,17 +739,28 @@ export default function DashboardWidgets({ data }: { data: any }) {
                   <th className="p-4">Category</th>
                   <th className="p-4">Stock</th>
                   <th className="p-4">Reorder At</th>
+                  <th className="p-4 text-center">OOS</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-yellow-200 dark:divide-yellow-800 text-sm">
-                {data.lowStockMaterials.slice(0, 5).map((m: any) => (
-                  <tr key={m.id} className="hover:bg-yellow-50 dark:hover:bg-yellow-900/20 transition-colors">
-                    <td className="p-4 font-medium text-gray-900 dark:text-gray-100">{m.name}</td>
-                    <td className="p-4 text-gray-600 dark:text-gray-300">{m.category.name}</td>
-                    <td className="p-4 text-yellow-600 dark:text-yellow-400 font-medium">{m.totalQuantity ?? 0} {m.unit ?? ""}</td>
-                    <td className="p-4 text-gray-500 dark:text-gray-400">{m.reorderThreshold} {m.unit ?? ""}</td>
-                  </tr>
-                ))}
+                {data.lowStockMaterials.slice(0, 5).map((m: any) => {
+                  const isOOS = (m.totalQuantity ?? 0) <= 0;
+                  return (
+                    <tr key={m.id} className={`${isOOS ? "bg-red-50 dark:bg-red-900/20" : "hover:bg-yellow-50 dark:hover:bg-yellow-900/20"} transition-colors`}>
+                      <td className="p-4 font-medium text-gray-900 dark:text-gray-100">{m.name}</td>
+                      <td className="p-4 text-gray-600 dark:text-gray-300">{m.category.name}</td>
+                      <td className={`p-4 font-medium ${isOOS ? "text-red-600 dark:text-red-400" : "text-yellow-600 dark:text-yellow-400"}`}>{m.totalQuantity ?? 0} {m.unit ?? ""}</td>
+                      <td className="p-4 text-gray-500 dark:text-gray-400">{m.reorderThreshold} {m.unit ?? ""}</td>
+                      <td className="p-4 text-center">
+                        {isOOS ? (
+                          <span className="inline-block bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400 font-bold text-lg leading-none px-2 py-1 rounded border border-red-400 dark:border-red-600">✕</span>
+                        ) : (
+                          <span className="text-green-500">—</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

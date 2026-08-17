@@ -198,15 +198,17 @@ body {
   background-color: inherit;
 }
 
-/* ----- GLOBAL TEXT SIZE ----- */
-.text-xs { font-size: 0.9754rem !important; line-height: 1.35 !important; }
-.text-sm { font-size: 1.138rem !important; line-height: 1.45 !important; }
-.text-base { font-size: 1.3005rem !important; line-height: 1.55 !important; }
-.text-lg { font-size: 1.4631rem !important; line-height: 1.55 !important; }
-.text-xl { font-size: 1.6257rem !important; line-height: 1.5 !important; }
-.text-2xl { font-size: 1.9508rem !important; line-height: 1.4 !important; }
-.text-3xl { font-size: 2.4385rem !important; line-height: 1.3 !important; }
-.text-4xl { font-size: 2.9262rem !important; line-height: 1.2 !important; }
+/* ----- GLOBAL TEXT SIZE - MODERATE INCREASE ----- */
+.text-xs { font-size: 0.8125rem !important; line-height: 1.35 !important; }
+.text-sm { font-size: 0.9375rem !important; line-height: 1.45 !important; }
+.text-base { font-size: 1.0625rem !important; line-height: 1.55 !important; }
+.text-lg { font-size: 1.1875rem !important; line-height: 1.55 !important; }
+.text-xl { font-size: 1.3125rem !important; line-height: 1.5 !important; }
+.text-2xl { font-size: 1.5rem !important; line-height: 1.4 !important; }
+.text-3xl { font-size: 1.75rem !important; line-height: 1.3 !important; }
+.text-4xl { font-size: 2rem !important; line-height: 1.2 !important; }
+
+
 
 /* ----- Utility classes ----- */
 .bg-bg { background-color: var(--color-bg); }
@@ -263,7 +265,7 @@ html:not(.dark) .bg-slate-100,
 html:not(.dark) .bg-slate-200,
 html:not(.dark) .bg-surface-widget,
 html:not(.dark) .bg-surface {
-  background-color: #d6cbbe !important;
+  background-color: #c9bfb2 !important;
 }
 
 /* Background should be LIGHTER */
@@ -274,11 +276,11 @@ html:not(.dark) .bg-bg {
 }
 
 html:not(.dark) .bg-gray-100 {
-  background-color: #d1c6b9 !important;
+  background-color: #c4baad !important;
 }
 
 html:not(.dark) .bg-gray-200 {
-  background-color: #c6baab !important;
+  background-color: #b9aea0 !important;
 }
 
 html:not(.dark) .bg-gray-800 {
@@ -481,41 +483,46 @@ body, .bg-bg, .bg-surface, .bg-surface-nav, .bg-surface-widget, input, textarea,
   }
 }
 
-/* ===== CREATE CUSTOMER MODAL BUTTONS - ALWAYS VISIBLE ===== */
-/* Teal button - identical in light and dark mode */
-button[class*="bg-[#4f8792]"] {
-  background-color: #4f8792 !important;
-  color: #ffffff !important;
-  border: 2px solid #3d6d77 !important;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
-}
-button[class*="bg-[#4f8792]"]:hover {
-  background-color: #426f79 !important;
-}
-html.dark button[class*="bg-[#4f8792]"] {
+
+
+/* ===== BUTTON EXEMPTIONS - LIGHT MODE ===== */
+/* Ensure teal buttons stay teal in light mode */
+html:not(.dark) button.bg-\[\#4f8792\] {
   background-color: #4f8792 !important;
   color: #ffffff !important;
   border-color: #3d6d77 !important;
 }
-html.dark button[class*="bg-[#4f8792]"]:hover {
+html:not(.dark) button.bg-\[\#4f8792\]:hover {
   background-color: #426f79 !important;
 }
 
-/* Gray/cancel button - visible frame in both modes */
-button[class*="bg-gray-200"] {
+/* Ensure gray buttons stay gray in light mode */
+html:not(.dark) button.bg-gray-200 {
   background-color: #e5e7eb !important;
   color: #374151 !important;
-  border: 2px solid #d1d5db !important;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+  border-color: #d1d5db !important;
 }
-button[class*="bg-gray-200"]:hover {
+html:not(.dark) button.bg-gray-200:hover {
   background-color: #d1d5db !important;
 }
-html.dark button[class*="bg-gray-200"] {
-  background-color: #374151 !important;
-  color: #d1d5db !important;
-  border-color: #4b5563 !important;
-}
-html.dark button[class*="bg-gray-200"]:hover {
-  background-color: #4b5563 !important;
+
+
+/* ===== MOBILE CARD TILES - SLIGHTLY DARKER ===== */
+@media (max-width: 640px) {
+  html:not(.dark) .bg-white,
+  html:not(.dark) .bg-gray-900,
+  html:not(.dark) .bg-slate-100,
+  html:not(.dark) .bg-slate-200,
+  html:not(.dark) .bg-surface-widget,
+  html:not(.dark) .bg-surface {
+    background-color: #c9bfb2 !important;
+  }
+
+  html:not(.dark) .bg-gray-100 {
+    background-color: #c4baad !important;
+  }
+
+  html:not(.dark) .bg-gray-200 {
+    background-color: #b9aea0 !important;
+  }
 }
