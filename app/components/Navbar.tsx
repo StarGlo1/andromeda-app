@@ -60,7 +60,6 @@ const NAV_GROUPS = [
     icon: ShoppingCart,
     items: [
       { name: "Sales", href: "/sales", icon: ShoppingCart },
-      { name: "Quick Log", href: "/quick-log", icon: Zap },
       { name: "Customers", href: "/customers", icon: Users },
     ],
   },
@@ -326,7 +325,7 @@ export default function Navbar() {
                 <Link
                   href="/dashboard"
                   onClick={closeDrawer}
-                  className="flex items-center gap-3 px-4 sm:px-5 py-3 sm:py-3.5 rounded-lg text-[1.5rem] sm:text-[1.75rem] font-medium mb-1 text-gray-600 dark:text-gray-300 hover:bg-[#8a7a65] dark:hover:bg-slate-700 hover:text-white dark:hover:text-gray-100 transition-all duration-300"
+                  className="flex items-center gap-3 px-4 sm:px-5 py-3 sm:py-3.5 rounded-lg text-[1.5rem] sm:text-[1.4rem] font-medium mb-1 text-gray-600 dark:text-gray-300 hover:bg-[#8a7a65] dark:hover:bg-slate-700 hover:text-white dark:hover:text-gray-100 transition-all duration-300"
                 >
                   <LayoutDashboard className="w-5 h-5 sm:w-6 sm:h-6 shrink-0" />
                   Command Deck
@@ -341,7 +340,7 @@ export default function Navbar() {
                         onClick={() =>
                           setExpandedGroup(isExpanded ? null : group.label)
                         }
-                        className="w-full flex items-center px-4 sm:px-5 py-3 sm:py-3.5 rounded-lg text-[1.5rem] sm:text-[1.75rem] font-medium text-gray-600 dark:text-gray-300 hover:bg-[#8a7a65] dark:hover:bg-slate-700 hover:text-white dark:hover:text-gray-100 transition-all duration-300"
+                        className="w-full flex items-center px-4 sm:px-5 py-3 sm:py-3.5 rounded-lg text-[1.5rem] sm:text-[1.4rem] font-medium text-gray-600 dark:text-gray-300 hover:bg-[#8a7a65] dark:hover:bg-slate-700 hover:text-white dark:hover:text-gray-100 transition-all duration-300"
                       >
                         <Icon className="w-5 h-5 sm:w-6 sm:h-6 shrink-0 mr-3" />
                         <span>{group.label}</span>
@@ -361,7 +360,7 @@ export default function Navbar() {
                                 href={item.href}
                                 key={item.name}
                                 onClick={closeDrawer}
-                                className="flex items-center gap-3 px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg text-[1.5rem] sm:text-[1.75rem] font-medium text-gray-600 dark:text-gray-300 hover:bg-[#8a7a65] dark:hover:bg-slate-700 hover:text-white dark:hover:text-gray-100 transition-all duration-300"
+                                className="flex items-center gap-3 px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg text-[1.5rem] sm:text-[1.4rem] font-medium text-gray-600 dark:text-gray-300 hover:bg-[#8a7a65] dark:hover:bg-slate-700 hover:text-white dark:hover:text-gray-100 transition-all duration-300"
                               >
                                 <SubIcon className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
                                 {item.name}
