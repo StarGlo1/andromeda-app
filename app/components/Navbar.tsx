@@ -321,7 +321,7 @@ export default function Navbar() {
 
               <div className="flex-1 overflow-y-auto p-4 sm:p-6 pt-3 sm:pt-4">
                 <Link
-                  href="/"
+                  href="/dashboard"
                   onClick={closeDrawer}
                   className="flex items-center gap-3 px-4 sm:px-5 py-3 sm:py-3.5 rounded-lg text-[1.5rem] sm:text-[1.75rem] font-medium mb-1 text-gray-600 dark:text-gray-300 hover:bg-[#8a7a65] dark:hover:bg-slate-700 hover:text-white dark:hover:text-gray-100 transition-all duration-300"
                 >

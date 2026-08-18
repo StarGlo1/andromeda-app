@@ -44,7 +44,7 @@ export default async function RootLayout({
           }}
         />
       </head>
-      <body className={`${inter.className} bg-gray-50 dark:bg-black min-h-screen text-gray-900 dark:text-gray-100 antialiased`}>
+      <body className={`${inter.className} bg-gray-50 dark:bg-transparent min-h-screen text-gray-900 dark:text-gray-100 antialiased`}>
         <DemoModeProvider>
           <LogoProvider initialLogoUrl={logoUrl}>
             <ToastProvider>

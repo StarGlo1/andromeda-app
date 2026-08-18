@@ -74,7 +74,7 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="text-center py-8 text-sm text-[#ede6dc]">
+      <footer className="text-center py-8 text-xl sm:text-2xl text-[#ede6dc]">
         <p>Inventory, production, and sales management built for small-batch makers. Track materials, recipes, and sales with confidence.</p>
       </footer>
     </main>

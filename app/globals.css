@@ -536,3 +536,9 @@ html:not(.dark) button.bg-gray-200:hover {
     margin-top: 0.5rem !important;
   }
 }
+
+
+/* ===== LANDING PAGE - NO BLACK LAYER IN DARK MODE ===== */
+html.dark .workspace-container main section {
+  background-color: transparent !important;
+}
