@@ -17,7 +17,7 @@ const ToastContext = createContext<ToastContextType | undefined>(undefined);
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const showToast = (message: string, type: "success" | "error" | "info" = "info") => {
+  const showToast = (message: string, type: "success" | "error" | "info" | "warning" = "info") => {
     const id = Math.random().toString(36).substring(2, 9);
     setToasts((prev) => [...prev, { id, message, type }]);
 
@@ -33,12 +33,14 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         {toasts.map((toast) => (
           <div
             key={toast.id}
-            className={`px-4 py-2 rounded-md shadow-md text-sm text-white ${
+            className={`px-4 py-2 rounded-md shadow-md text-sm ${
               toast.type === "error"
-                ? "bg-red-600"
+                ? "bg-red-600 text-white"
                 : toast.type === "success"
-                ? "bg-green-600"
-                : "bg-gray-800"
+                ? "bg-green-600 text-white"
+                : toast.type === "warning"
+                ? "bg-yellow-500 text-black"
+                : "bg-gray-800 text-white"
             }`}
           >
             {toast.message}

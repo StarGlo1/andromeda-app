@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useToast } from "@/app/context/ToastContext";
 import { PricingCalculatorModal } from "@/app/components/PricingCalculatorModal";
+import { addToQueue } from "@/app/lib/offlineQueue";
 
 export function FinishedGoodRow({
   item,
@@ -41,6 +42,19 @@ export function FinishedGoodRow({
     const newStock = item.quantityOnHand + batchSize;
     setOptimisticStock(newStock);
     setIsProducing(true);
+    
+    // Check if online
+    if (!navigator.onLine) {
+      // Queue the action for later sync
+      addToQueue("produce", {
+        finishedGoodId: item.id,
+        batchSize,
+      });
+      showToast("You're offline. Action saved and will sync when back online.", "warning");
+      setShowProduce(false);
+      setIsProducing(false);
+      return;
+    }
     
     // Fire and forget the server call
     produceAction(formData)
@@ -142,7 +156,7 @@ export function FinishedGoodRow({
               </button>
               <button onClick={() => {
                 setShowProduce(!showProduce);
-                if (!showProduce) {
+                if (!showProduce && navigator.onLine) {
                   fetch('/api/lots/raw-material-lots')
                     .then(r => {
                       if (!r.ok) throw new Error('Failed to fetch lots');
@@ -150,6 +164,8 @@ export function FinishedGoodRow({
                     })
                     .then(data => setRawMaterialLots(data.lots || []))
                     .catch(() => setRawMaterialLots([]));
+                } else {
+                  setRawMaterialLots([]);
                 }
               }} className="text-text-brand hover:underline text-xs font-medium text-center">Produce</button>
               <form action={handleDelete} className="flex justify-center">
