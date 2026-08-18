@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { PricingManager } from "./PricingManager";
+import WhatIfTool from "@/app/components/WhatIfTool";
 
 async function updatePriceAction(formData: FormData) {
   "use server";
@@ -58,6 +59,16 @@ export default async function PricingPage() {
       retailPrice: true,
       calculatedCogs: true,
       quantityOnHand: true,
+      recipeItems: {
+        select: {
+          id: true,
+          requiredQuantity: true,
+          unit: true,
+          rawMaterial: {
+            select: { id: true, name: true, costPerUnit: true, unit: true },
+          },
+        },
+      },
     },
   });
 
@@ -125,6 +136,8 @@ export default async function PricingPage() {
         updatePriceAction={updatePriceAction}
         bulkUpdatePricesAction={bulkUpdatePricesAction}
       />
+
+      <WhatIfTool products={products} />
     </div>
   );
 }
