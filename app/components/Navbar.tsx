@@ -50,6 +50,7 @@ const NAV_GROUPS = [
       { name: "Recipes", href: "/recipes", icon: FileText },
       { name: "Calculator", href: "/calculator", icon: Calculator },
       { name: "Pricing", href: "/pricing", icon: DollarSign },
+      { name: "Production History", href: "/production", icon: BarChart3 },
     ],
   },
   {
