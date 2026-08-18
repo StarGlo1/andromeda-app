@@ -227,7 +227,7 @@ export default function Navbar() {
     <>
       <header className="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-600 border-b border-gray-200 dark:border-gray-500 rounded-b-2xl shadow-sm transition-transform duration-700">
         <div className="w-full px-4 sm:px-8 lg:px-10">
-          <div className="relative flex items-center justify-center py-5 sm:py-7">
+          <div className="relative flex items-center justify-center py-2 sm:py-3">
             <button
               onClick={() => (drawerOpen ? closeDrawer() : setDrawerOpen(true))}
               className="absolute left-0 p-3 sm:p-3.5 rounded-xl bg-gray-100 dark:bg-gray-700 border-2 border-black dark:border-gray-500 text-gray-600 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-500 transition-all duration-300"
@@ -238,10 +238,10 @@ export default function Navbar() {
 
             <Link className="flex items-center gap-3 sm:gap-5 group" href="/">
               <div className="flex flex-col items-center">
-                <span className="text-3xl sm:text-5xl lg:text-6xl font-bold tracking-[0.15em] sm:tracking-[0.25em] text-gray-900 dark:text-gray-100 leading-none">
+                <span className="text-4xl sm:text-6xl lg:text-7xl font-bold tracking-[0.15em] sm:tracking-[0.25em] text-gray-900 dark:text-gray-100 leading-none">
                   ANDROMEDA
                 </span>
-                <span className="text-base sm:text-xl lg:text-2xl font-medium tracking-[0.2em] sm:tracking-[0.3em] text-gray-600 dark:text-gray-300 mt-0.5 sm:mt-1 uppercase">
+                <span className="text-lg sm:text-2xl lg:text-3xl font-medium tracking-[0.2em] sm:tracking-[0.3em] text-gray-600 dark:text-gray-300 mt-0.5 sm:mt-1 uppercase">
                   Studios
                 </span>
               </div>
