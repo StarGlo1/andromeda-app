@@ -340,7 +340,7 @@ html:not(.dark) tbody tr:hover {
 
 /* Dark mode */
 html.dark thead tr {
-  background-color: #1e3a42 !important;
+  background-color: #4f8792 !important;
 }
 
 html.dark tbody tr:nth-child(odd) {
@@ -376,7 +376,7 @@ html.dark .workspace-container .bg-surface-widget,
 html.dark .workspace-container .bg-surface,
 html.dark .workspace-container .dark\:bg-gray-900,
 html.dark .workspace-container [class*="bg-gray-900"] {
-  background-color: #000000 !important;
+  background-color: transparent !important;
   border-color: #334155 !important;
 }
 
@@ -541,4 +541,25 @@ html:not(.dark) button.bg-gray-200:hover {
 /* ===== LANDING PAGE - NO BLACK LAYER IN DARK MODE ===== */
 html.dark .workspace-container main section {
   background-color: transparent !important;
+}
+
+/* ===== PRINT STYLES - POUR SHEET ===== */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .print-area,
+  .print-area * {
+    visibility: visible;
+  }
+  .print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    padding: 2rem;
+  }
+  .no-print {
+    display: none !important;
+  }
 }

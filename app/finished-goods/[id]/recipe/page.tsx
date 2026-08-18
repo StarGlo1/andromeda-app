@@ -6,6 +6,7 @@ import { AddRecipeForm } from "./AddRecipeForm";
 import { RecipeTableClient } from "./RecipeTableClient";
 import { convertToPricingUnit } from "@/app/lib/units";
 import { HelpTip } from "@/app/components/HelpTip";
+import PourSheetButton from "./PourSheetButton";
 
 // ─── Helper: recalculate COGS (recursive) ───
 async function recalcCogs(finishedGoodId: string): Promise<number> {
@@ -197,7 +198,7 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
   });
 
   return (
-    <main className="min-h-screen bg-bg text-text p-8">
+    <main className="min-h-screen bg-transparent text-text p-8">
       <div className="max-w-6xl mx-auto space-y-8">
         <a
           href="/finished-goods"
@@ -225,6 +226,19 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
               </span>
             </p>
           </div>
+          <PourSheetButton
+            productName={finishedGood.name}
+            batchCode={finishedGood.batchCode}
+            recipeItems={finishedGood.recipeItems.map((item) => ({
+              id: item.id,
+              name: item.rawMaterial?.name ?? item.subAssembly?.name ?? "Unknown",
+              requiredQuantity: item.requiredQuantity,
+              unit: item.unit,
+              isSubAssembly: !!item.subAssemblyId,
+            }))}
+            batchNotes={finishedGood.batchNotes}
+            calculatedCogs={finishedGood.calculatedCogs}
+          />
         </div>
 
         {/* Core Element Toggle */}
