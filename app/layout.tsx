@@ -8,6 +8,7 @@ import { DemoModeProvider } from '@/app/context/DemoModeContext';
 import { LogoProvider } from '@/app/context/LogoContext';
 import { getLogo } from '@/app/actions/getLogo';
 import DemoModeBanner from '@/app/components/DemoModeBanner';
+import OfflineIndicator from '@/app/components/OfflineIndicator';
 import '@/app/globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -49,6 +50,7 @@ export default async function RootLayout({
           <LogoProvider initialLogoUrl={logoUrl}>
             <ToastProvider>
               <DemoModeBanner />
+              <OfflineIndicator />
               <Navbar />
               <main className="pt-32 sm:pt-36 lg:pt-40">
                 <div className="w-full px-0 sm:px-1 lg:px-2 pb-3">

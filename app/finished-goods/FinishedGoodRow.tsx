@@ -22,6 +22,7 @@ export function FinishedGoodRow({
   const [showProduce, setShowProduce] = useState(false);
   const [showPricing, setShowPricing] = useState(false);
   const [isProducing, setIsProducing] = useState(false);
+  const [optimisticStock, setOptimisticStock] = useState<number | null>(null);
   const [rawMaterialLots, setRawMaterialLots] = useState<any[]>([]);
   const [selectedLots, setSelectedLots] = useState<Record<string, number>>({});
 
@@ -34,20 +35,31 @@ export function FinishedGoodRow({
   const showNoPriceTip = profit < 0 && item.retailPrice === 0;
 
   const handleProduce = async (formData: FormData) => {
+    const batchSize = parseInt(formData.get("batchSize") as string) || 0;
+    
+    // OPTIMISTIC UPDATE - must happen synchronously before await
+    const newStock = item.quantityOnHand + batchSize;
+    setOptimisticStock(newStock);
     setIsProducing(true);
-    try {
-      const result = await produceAction(formData);
-      if (result.success) {
-        showToast("Batch produced successfully! Stock updated.", "success");
-        setShowProduce(false);
-      } else {
-        showToast(result.error || "Production failed.", "error");
-      }
-    } catch (error: any) {
-      showToast(error.message || "Production failed.", "error");
-    } finally {
-      setIsProducing(false);
-    }
+    
+    // Fire and forget the server call
+    produceAction(formData)
+      .then((result) => {
+        if (result.success) {
+          showToast("Batch produced successfully! Stock updated.", "success");
+          setShowProduce(false);
+        } else {
+          setOptimisticStock(null);
+          showToast(result.error || "Production failed.", "error");
+        }
+      })
+      .catch((error: any) => {
+        setOptimisticStock(null);
+        showToast(error.message || "Production failed.", "error");
+      })
+      .finally(() => {
+        setIsProducing(false);
+      });
   };
 
   const handleDelete = async (formData: FormData) => {
@@ -85,7 +97,9 @@ export function FinishedGoodRow({
           <td className="p-4 text-text-secondary text-center" style={{ width: "var(--col-retailPrice)" }}>
             ${item.retailPrice.toFixed(2)}
           </td>
-          <td className="p-4 text-text-secondary text-center" style={{ width: "var(--col-quantityOnHand)" }}>{item.quantityOnHand}</td>
+          <td className="p-4 text-text-secondary text-center" style={{ width: "var(--col-quantityOnHand)" }}>
+            {optimisticStock !== null ? optimisticStock : item.quantityOnHand}
+          </td>
           <td className="p-4 text-text-secondary text-center" style={{ width: "var(--col-calculatedCogs)" }}>
             {item.calculatedCogs != null ? `$${item.calculatedCogs.toFixed(2)}` : "—"}
           </td>
@@ -150,7 +164,11 @@ export function FinishedGoodRow({
         {showProduce && (
           <tr className="bg-brand-muted dark:bg-brand-muted-dark">
             <td colSpan={9} className="p-4">
-              <form action={handleProduce} className="flex flex-col gap-3">
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.currentTarget);
+                handleProduce(formData);
+              }} className="flex flex-col gap-3">
                 <input type="hidden" name="finishedGoodId" value={item.id} />
                 <div className="flex items-center gap-3">
                   <label className="text-text-muted text-xs font-medium uppercase">
