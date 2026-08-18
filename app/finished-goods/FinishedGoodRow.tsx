@@ -22,6 +22,8 @@ export function FinishedGoodRow({
   const [showProduce, setShowProduce] = useState(false);
   const [showPricing, setShowPricing] = useState(false);
   const [isProducing, setIsProducing] = useState(false);
+  const [rawMaterialLots, setRawMaterialLots] = useState<any[]>([]);
+  const [selectedLots, setSelectedLots] = useState<Record<string, number>>({});
 
   const profit = item.retailPrice - (item.calculatedCogs ?? 0);
   const marginPercent =
@@ -124,7 +126,18 @@ export function FinishedGoodRow({
               >
                 💰
               </button>
-              <button onClick={() => setShowProduce(!showProduce)} className="text-text-brand hover:underline text-xs font-medium text-center">Produce</button>
+              <button onClick={() => {
+                setShowProduce(!showProduce);
+                if (!showProduce) {
+                  fetch('/api/lots/raw-material-lots')
+                    .then(r => {
+                      if (!r.ok) throw new Error('Failed to fetch lots');
+                      return r.json();
+                    })
+                    .then(data => setRawMaterialLots(data.lots || []))
+                    .catch(() => setRawMaterialLots([]));
+                }
+              }} className="text-text-brand hover:underline text-xs font-medium text-center">Produce</button>
               <form action={handleDelete} className="flex justify-center">
                 <input type="hidden" name="id" value={item.id} />
                 <button type="submit" className="text-error hover:underline text-xs font-medium text-center">Delete</button>
@@ -137,20 +150,48 @@ export function FinishedGoodRow({
         {showProduce && (
           <tr className="bg-brand-muted dark:bg-brand-muted-dark">
             <td colSpan={9} className="p-4">
-              <form action={handleProduce} className="flex items-center gap-3">
+              <form action={handleProduce} className="flex flex-col gap-3">
                 <input type="hidden" name="finishedGoodId" value={item.id} />
-                <label className="text-text-muted text-xs font-medium uppercase">
-                  How many units?
-                </label>
-                <input type="number" name="batchSize" required min="1" placeholder="5" className="w-20 px-2 py-1 bg-bg border border-default rounded text-text text-sm" />
-                <button
-                  type="submit"
-                  disabled={isProducing}
-                  className="bg-[#4f8792] hover:bg-[#426f79] text-white text-xs px-3 py-1 rounded disabled:opacity-50"
-                >
-                  {isProducing ? "..." : "Produce"}
-                </button>
-                <button type="button" onClick={() => setShowProduce(false)} className="text-text-muted hover:text-text text-xs">Cancel</button>
+                <div className="flex items-center gap-3">
+                  <label className="text-text-muted text-xs font-medium uppercase">
+                    How many units?
+                  </label>
+                  <input type="number" name="batchSize" required min="1" placeholder="5" className="w-20 px-2 py-1 bg-bg border border-default rounded text-text text-sm" />
+                  <button
+                    type="submit"
+                    disabled={isProducing}
+                    className="bg-[#4f8792] hover:bg-[#426f79] text-white text-xs px-3 py-1 rounded disabled:opacity-50"
+                  >
+                    {isProducing ? "..." : "Produce"}
+                  </button>
+                  <button type="button" onClick={() => setShowProduce(false)} className="text-text-muted hover:text-text text-xs">Cancel</button>
+                </div>
+                {rawMaterialLots.length > 0 && (
+                  <div className="text-left">
+                    <p className="text-xs font-medium text-text-muted mb-1">Raw Material Lots Used (optional):</p>
+                    <div className="space-y-1 max-h-24 overflow-y-auto">
+                      {rawMaterialLots.map((lot: any) => (
+                        <label key={lot.id} className="flex items-center gap-2 text-xs text-text">
+                          <input
+                            type="checkbox"
+                            name={`lot_${lot.id}`}
+                            onChange={(e) => {
+                              const next = { ...selectedLots };
+                              if (e.target.checked) {
+                                next[lot.id] = 0;
+                              } else {
+                                delete next[lot.id];
+                              }
+                              setSelectedLots(next);
+                            }}
+                            className="rounded border-default accent-brand"
+                          />
+                          {lot.lotNumber} - Qty: {lot.quantity}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </form>
             </td>
           </tr>

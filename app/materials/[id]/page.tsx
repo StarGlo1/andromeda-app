@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { notFound } from "next/navigation";
 import Navbar from "@/app/components/Navbar";
 import { PhotoUploader } from "@/app/components/PhotoUploader";
+import RawMaterialLotForm from "@/app/components/RawMaterialLotForm";
 import fs from "fs";
 import path from "path";
 
@@ -123,6 +124,11 @@ export default async function MaterialDetailPage({ params }: { params: Promise<{
                 uploadAction={uploadPhoto}
                 removeAction={removePhoto}
               />
+            </div>
+
+            <div className="bg-surface-widget border border-default rounded-xl p-6">
+              <h2 className="text-lg font-semibold text-text mb-4">Raw Material Lots</h2>
+              <RawMaterialLotForm rawMaterialId={material.id} />
             </div>
 
             <div className="bg-surface-widget border border-default rounded-xl p-6">

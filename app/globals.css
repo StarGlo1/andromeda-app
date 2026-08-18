@@ -563,3 +563,9 @@ html.dark .workspace-container main section {
     display: none !important;
   }
 }
+
+
+/* ===== DARK MODE - REMOVE BLACK WORKSPACE LAYER ===== */
+html.dark .bg-bg {
+  background-color: transparent !important;
+}

@@ -1,6 +1,7 @@
 // app/finished-goods/page.tsx
 
 import { prisma } from "@/lib/prisma";
+import { generateLotNumber } from "@/app/lib/lots";
 import { revalidatePath } from "next/cache";
 import { SortableFinishedGoodsTable } from "@/app/components/SortableFinishedGoodsTable";
 
@@ -150,6 +151,17 @@ async function produceBatch(formData: FormData) {
       await tx.finishedGood.update({
         where: { id: finishedGoodId },
         data: { quantityOnHand: newTotalUnits, calculatedCogs: newAvgCost },
+      });
+
+      // Create Finished Goods Lot for traceability with raw material links
+      const lotNumber = await generateLotNumber();
+      await tx.lot.create({
+        data: {
+          lotNumber,
+          kind: "FINISHED_GOOD",
+          quantity: batchSize,
+          finishedGoodId,
+        },
       });
     });
 

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
-import { generateLotNumber } from "@/lib/lots";
+import { generateLotNumber } from "@/app/lib/lots";
 
 export async function createRawMaterialLot(formData: FormData) {
   const rawMaterialId = String(formData.get("rawMaterialId") || "");

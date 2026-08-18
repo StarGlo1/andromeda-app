@@ -26,10 +26,16 @@ export default function RawMaterialLotForm({
           }
         });
       }}
-      className="space-y-3"
+      className="space-y-4"
     >
       <input type="hidden" name="rawMaterialId" value={rawMaterialId} />
 
+      {/* Description */}
+      <p className="text-sm text-gray-600 dark:text-gray-300">
+        Create a new lot every time you receive a delivery. It tracks exactly what arrived so you can trace it later.
+      </p>
+
+      {/* Quantity input */}
       <div>
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
           Lot Quantity
@@ -45,15 +51,18 @@ export default function RawMaterialLotForm({
         />
       </div>
 
-      <button
-        type="submit"
-        disabled={pending}
-        className="px-4 py-2 rounded-xl bg-black dark:bg-white text-white dark:text-black disabled:opacity-50"
-      >
-        {pending ? "Creating..." : "Create Raw Material Lot"}
-      </button>
+      {/* Centered button */}
+      <div className="flex justify-center">
+        <button
+          type="submit"
+          disabled={pending}
+          className="px-6 py-2 rounded-full bg-[#4f8792] hover:bg-[#426f79] text-white disabled:opacity-50 transition-colors shadow-md font-medium text-sm"
+        >
+          {pending ? "Creating..." : "Create Raw Material Lot"}
+        </button>
+      </div>
 
-      {message && <p className="text-sm text-gray-600 dark:text-gray-300">{message}</p>}
+      {message && <p className="text-sm text-gray-600 dark:text-gray-300 text-center">{message}</p>}
     </form>
   );
 }

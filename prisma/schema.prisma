@@ -80,6 +80,7 @@ model FinishedGood {
   saleItems         SaleItem[]
   lots              Lot[]
   consignmentItems  ConsignmentBatchItem[]
+  recipeVersions    RecipeVersion[]
 
   @@map("finished_goods")
 }
@@ -308,4 +309,18 @@ model Setting {
   updatedAt DateTime @updatedAt
 
   @@map("settings")
+}
+
+model RecipeVersion {
+  id             String   @id @default(uuid())
+  finishedGoodId String
+  versionNumber  Int
+  recipeSnapshot String   // JSON string of recipe items
+  changeNote     String?
+  createdAt      DateTime @default(now())
+
+  finishedGood FinishedGood @relation(fields: [finishedGoodId], references: [id], onDelete: Cascade)
+
+  @@unique([finishedGoodId, versionNumber])
+  @@map("recipe_versions")
 }

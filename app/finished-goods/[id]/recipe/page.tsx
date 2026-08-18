@@ -7,6 +7,33 @@ import { RecipeTableClient } from "./RecipeTableClient";
 import { convertToPricingUnit } from "@/app/lib/units";
 import { HelpTip } from "@/app/components/HelpTip";
 import PourSheetButton from "./PourSheetButton";
+import VersionHistory from "./VersionHistory";
+
+// ─── Helper: snapshot current recipe before changes ───
+async function snapshotRecipeVersion(finishedGoodId: string) {
+  const recipeItems = await prisma.recipeItem.findMany({
+    where: { finishedGoodId },
+    include: {
+      rawMaterial: { select: { id: true, name: true } },
+      subAssembly: { select: { id: true, name: true } },
+    },
+  });
+
+  const latestVersion = await prisma.recipeVersion.findFirst({
+    where: { finishedGoodId },
+    orderBy: { versionNumber: "desc" },
+  });
+
+  const nextVersion = (latestVersion?.versionNumber ?? 0) + 1;
+
+  await prisma.recipeVersion.create({
+    data: {
+      finishedGoodId,
+      versionNumber: nextVersion,
+      recipeSnapshot: JSON.stringify(recipeItems),
+    },
+  });
+}
 
 // ─── Helper: recalculate COGS (recursive) ───
 async function recalcCogs(finishedGoodId: string): Promise<number> {
@@ -52,6 +79,8 @@ async function addRecipeItem(formData: FormData) {
   if (ingredientType === "raw" && !rawMaterialId) return;
   if (ingredientType === "core" && !subAssemblyId) return;
 
+  await snapshotRecipeVersion(finishedGoodId);
+
   if (rawMaterialId) {
     const existing = await prisma.recipeItem.findFirst({
       where: { finishedGoodId, rawMaterialId },
@@ -94,6 +123,8 @@ async function updateRecipeItem(formData: FormData) {
 
   if (!id || !unit) return;
 
+  await snapshotRecipeVersion(finishedGoodId);
+
   await prisma.recipeItem.update({
     where: { id },
     data: { requiredQuantity, unit },
@@ -115,6 +146,8 @@ async function deleteRecipeItem(formData: FormData) {
   const finishedGoodId = formData.get("finishedGoodId") as string;
 
   if (!id) return;
+
+  await snapshotRecipeVersion(finishedGoodId);
 
   await prisma.recipeItem.delete({ where: { id } });
 
@@ -197,6 +230,11 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
     orderBy: { name: "asc" },
   });
 
+  const recipeVersions = await prisma.recipeVersion.findMany({
+    where: { finishedGoodId: id },
+    orderBy: { versionNumber: "desc" },
+  });
+
   return (
     <main className="min-h-screen bg-transparent text-text p-8">
       <div className="max-w-6xl mx-auto space-y-8">
@@ -226,19 +264,29 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
               </span>
             </p>
           </div>
-          <PourSheetButton
-            productName={finishedGood.name}
-            batchCode={finishedGood.batchCode}
-            recipeItems={finishedGood.recipeItems.map((item) => ({
-              id: item.id,
-              name: item.rawMaterial?.name ?? item.subAssembly?.name ?? "Unknown",
-              requiredQuantity: item.requiredQuantity,
-              unit: item.unit,
-              isSubAssembly: !!item.subAssemblyId,
-            }))}
-            batchNotes={finishedGood.batchNotes}
-            calculatedCogs={finishedGood.calculatedCogs}
-          />
+          <div className="flex flex-col gap-2 items-end">
+            <PourSheetButton
+              productName={finishedGood.name}
+              batchCode={finishedGood.batchCode}
+              recipeItems={finishedGood.recipeItems.map((item) => ({
+                id: item.id,
+                name: item.rawMaterial?.name ?? item.subAssembly?.name ?? "Unknown",
+                requiredQuantity: item.requiredQuantity,
+                unit: item.unit,
+                isSubAssembly: !!item.subAssemblyId,
+              }))}
+              batchNotes={finishedGood.batchNotes}
+              calculatedCogs={finishedGood.calculatedCogs}
+            />
+            <VersionHistory
+              versions={recipeVersions.map((v) => ({
+                id: v.id,
+                versionNumber: v.versionNumber,
+                recipeSnapshot: v.recipeSnapshot,
+                createdAt: v.createdAt.toISOString(),
+              }))}
+            />
+          </div>
         </div>
 
         {/* Core Element Toggle */}
