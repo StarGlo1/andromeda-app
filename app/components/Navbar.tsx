@@ -232,7 +232,7 @@ export default function Navbar() {
           <div className="relative flex items-center justify-center py-2 sm:py-3">
             <button
               onClick={() => (drawerOpen ? closeDrawer() : setDrawerOpen(true))}
-              className="absolute left-0 p-3 sm:p-3.5 rounded-xl bg-gray-100 dark:bg-gray-700 border-2 border-black dark:border-gray-500 text-gray-600 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-500 transition-all duration-300"
+              className="absolute left-0 p-3 sm:p-3.5 rounded-xl bg-gray-100 dark:bg-gray-700 border-2 border-black dark:border-gray-500 text-indigo-600 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-500 transition-all duration-300"
               aria-label={drawerOpen ? "Close Menu" : "Open Menu"}
             >
               <AnimatedMenuIcon open={drawerOpen} />
@@ -288,10 +288,10 @@ export default function Navbar() {
               }}
             >
               <div className="w-full px-4 sm:px-8 lg:px-10">
-                <div className="flex items-center justify-between py-8 sm:py-11">
+                <div className="flex items-center justify-between py-[11px] sm:py-[15px]">
                   <button
                     onClick={closeDrawer}
-                    className="p-3 sm:p-3.5 rounded-xl bg-gray-100 dark:bg-gray-700 border-2 border-black dark:border-gray-500 text-gray-600 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-500 transition-all duration-300"
+                    className="p-3 sm:p-3.5 rounded-xl bg-gray-100 dark:bg-gray-700 border-2 border-black dark:border-gray-500 text-indigo-600 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-500 transition-all duration-300"
                     aria-label="Close Menu"
                   >
                     <AnimatedMenuIcon open={drawerOpen} />
