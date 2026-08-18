@@ -7,7 +7,10 @@ export default function OfflineIndicator() {
   const [isOnline, setIsOnline] = useState(true);
   const [pendingCount, setPendingCount] = useState(0);
 
+  const [mounted, setMounted] = useState(false);
+
   useEffect(() => {
+    setMounted(true);
     setIsOnline(navigator.onLine);
     setPendingCount(getQueue().length);
 
@@ -65,6 +68,7 @@ export default function OfflineIndicator() {
     };
   }, []);
 
+  if (!mounted) return null;
   if (isOnline && pendingCount === 0) return null;
 
   return (

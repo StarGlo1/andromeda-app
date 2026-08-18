@@ -34,6 +34,7 @@ model Supplier {
 model RawMaterial {
   id                 String              @id @default(uuid())
   name               String
+  barcode            String?
   categoryId         String
   category           Category            @relation(fields: [categoryId], references: [id])
   supplierId         String?

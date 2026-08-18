@@ -2,6 +2,7 @@ import React from "react";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { AddMaterialForm } from "@/app/components/AddMaterialForm";
+import ScanButton from "@/app/components/ScanButton";
 import { SortableRawMaterialsTable } from "@/app/components/SortableRawMaterialsTable";
 
 // ─── Real Server Actions ───
@@ -12,6 +13,7 @@ async function addRawMaterialAction(formData: FormData) {
   const categoryId = String(formData.get("categoryId") || "");
   const supplierId = String(formData.get("supplierId") || "") || null;
   const unit = String(formData.get("unit") || "").trim();
+  const barcode = String(formData.get("barcode") || "").trim() || null;
   const quantity = parseFloat(String(formData.get("quantity") || "0")) || 0;
   const sizePerUnit = parseFloat(String(formData.get("sizePerUnit") || "0")) || 0;
   const purchaseTotal = parseFloat(String(formData.get("purchaseTotal") || "0")) || 0;
@@ -29,6 +31,7 @@ async function addRawMaterialAction(formData: FormData) {
   await prisma.rawMaterial.create({
     data: {
       name,
+      barcode,
       categoryId,
       supplierId,
       totalQuantity,
@@ -165,6 +168,7 @@ export default async function MaterialsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold tracking-tight text-text mt-3">Raw Materials</h1>
+        <ScanButton />
       </div>
 
       {/* Top Metric Cards */}

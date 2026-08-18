@@ -25,7 +25,7 @@ export default function LandingPage() {
           Studios
         </p>
         
-        <div className="mt-24 sm:mt-28 flex flex-col sm:flex-row gap-8 justify-center items-center">
+        <div className="mt-16 sm:mt-20 flex flex-col sm:flex-row gap-8 justify-center items-center">
           <Link
             href="/onboarding"
             className="bg-[#4f8792] hover:bg-[#426f79] text-white font-medium px-6 py-2.5 rounded-full transition-colors shadow-md text-center"

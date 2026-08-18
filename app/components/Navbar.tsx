@@ -11,6 +11,7 @@ import {
   Boxes,
   Package,
   ShoppingCart,
+  Store,
   Users,
   Calculator,
   LayoutDashboard,
@@ -51,6 +52,7 @@ const NAV_GROUPS = [
       { name: "Calculator", href: "/calculator", icon: Calculator },
       { name: "Pricing", href: "/pricing", icon: DollarSign },
       { name: "Production History", href: "/production", icon: BarChart3 },
+      { name: "Market Prep", href: "/market-prep", icon: Store },
     ],
   },
   {

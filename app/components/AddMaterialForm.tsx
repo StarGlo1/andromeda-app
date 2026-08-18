@@ -343,6 +343,18 @@ export function AddMaterialForm({
           </div>
           <div>
             <label className="flex items-center text-text-muted text-xs font-medium uppercase mb-1">
+              Barcode
+              <HelpTip text="Scan or type the barcode from the product label. Useful for quick scanning later." />
+            </label>
+            <input
+              type="text"
+              name="barcode"
+              placeholder="e.g. 0123456789012"
+              className="w-full px-2 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm"
+            />
+          </div>
+          <div>
+            <label className="flex items-center text-text-muted text-xs font-medium uppercase mb-1">
               Cost ($)
               <HelpTip text="Total price you paid for this purchase." />
             </label>

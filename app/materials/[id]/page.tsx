@@ -15,6 +15,7 @@ async function updateMaterial(formData: FormData) {
   const quantity = parseFloat(formData.get("quantity") as string) || 0;
   const sizePerUnit = parseFloat(formData.get("sizePerUnit") as string) || 0;
   const unit = formData.get("unit") as string;
+  const barcode = String(formData.get("barcode") || "").trim() || null;
   const purchaseTotal = parseFloat(formData.get("purchaseTotal") as string) || 0;
   const reorderThreshold = parseFloat(formData.get("reorderThreshold") as string) || null;
   const committedQuantity = parseFloat(formData.get("committedQuantity") as string) || 0;
@@ -29,6 +30,7 @@ async function updateMaterial(formData: FormData) {
     where: { id },
     data: {
       name,
+      barcode,
       quantity,
       sizePerUnit,
       totalQuantity,
@@ -222,6 +224,24 @@ export default async function MaterialDetailPage({ params }: { params: Promise<{
                       required
                       className="w-full px-2 py-1.5 bg-bg border border-default rounded text-text text-sm"
                     />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-text-muted text-xs font-medium uppercase mb-1">
+                    Barcode
+                  </label>
+                  <input
+                    type="text"
+                    name="barcode"
+                    defaultValue={material.barcode ?? ""}
+                    placeholder="Scan or type barcode"
+                    className="w-full px-2 py-1.5 bg-bg border border-default rounded text-text text-sm"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
                   </div>
                 </div>
 
