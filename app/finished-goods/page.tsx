@@ -153,8 +153,9 @@ async function produceBatch(formData: FormData) {
         data: { quantityOnHand: newTotalUnits, calculatedCogs: newAvgCost },
       });
 
-      // Create Finished Goods Lot for traceability with raw material links
-      const lotNumber = await generateLotNumber();
+      // Create Finished Goods Lot for traceability
+      const lotCount = await tx.lot.count();
+      const lotNumber = `LOT-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${String(lotCount + 1).padStart(3, "0")}`;
       await tx.lot.create({
         data: {
           lotNumber,
