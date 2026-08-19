@@ -569,3 +569,22 @@ html.dark .workspace-container main section {
 html.dark .bg-bg {
   background-color: transparent !important;
 }
+
+
+/* ===== SIGN-IN PAGE - REMOVE WORKSPACE CONTAINER PADDING ===== */
+.signin-page .workspace-container {
+  padding: 0 !important;
+  border-radius: 0 !important;
+}
+
+
+/* ===== SIGN-IN PAGE - MOBILE ONLY BYPASS ===== */
+.signin-page {
+  margin-top: -95px !important;
+}
+
+@media (min-width: 640px) {
+  .signin-page {
+    margin-top: 0 !important;
+  }
+}

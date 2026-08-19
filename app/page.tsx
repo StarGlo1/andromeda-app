@@ -33,7 +33,7 @@ export default function LandingPage() {
             Create Your Studio
           </Link>
           <Link
-            href="/dashboard"
+            href="/signin"
             className="bg-surface border border-default text-text font-medium px-6 py-2.5 rounded-full hover:bg-brand-muted transition-colors text-center"
           >
             Access My Studio
