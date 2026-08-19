@@ -80,7 +80,7 @@ export default function MarketPrepPage() {
 
   return (
     <main className="min-h-screen bg-transparent text-text p-8">
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="max-w-6xl mx-auto space-y-6">
         <h1 className="text-2xl font-bold text-text mt-3">Market Prep Planner</h1>
         <p className="text-text-muted text-sm">
           Plan what to bring, see shortages before you pack, and reconcile after the market.

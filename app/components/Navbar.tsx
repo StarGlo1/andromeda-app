@@ -288,10 +288,10 @@ export default function Navbar() {
               }}
             >
               <div className="w-full px-4 sm:px-8 lg:px-10">
-                <div className="flex items-center justify-between py-[11px] sm:py-[15px]">
+                <div className="flex items-center justify-between pt-[20px] pb-[11px] sm:py-[15px]">
                   <button
                     onClick={closeDrawer}
-                    className="p-3 sm:p-3.5 rounded-xl bg-gray-100 dark:bg-gray-700 border-2 border-black dark:border-gray-500 text-indigo-600 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-500 transition-all duration-300"
+                    className="p-3 sm:p-3.5 rounded-xl bg-gray-100 dark:bg-gray-700 border-2 border-black dark:border-gray-500 text-indigo-600 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-500 transition-all duration-300 -mt-[3px] sm:mt-0"
                     aria-label="Close Menu"
                   >
                     <AnimatedMenuIcon open={drawerOpen} />

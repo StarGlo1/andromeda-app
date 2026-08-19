@@ -63,7 +63,7 @@ export default function OnboardingPage() {
 
   return (
     <main className="min-h-screen bg-transparent text-text flex items-start justify-center pt-24 sm:pt-28 px-2 sm:px-4">
-      <div className="max-w-4xl w-full min-h-[480px] sm:min-h-[550px] flex flex-col justify-center bg-[#c9bfb2]/60 dark:bg-gray-900/60 border border-default/20 rounded-xl p-8 sm:p-10 shadow-lg relative z-10">
+      <div className="max-w-6xl w-full min-h-[480px] sm:min-h-[550px] flex flex-col justify-center bg-[#c9bfb2]/60 dark:bg-gray-900/60 border border-default/20 rounded-xl p-8 sm:p-10 shadow-lg relative z-10">
         {/* Skip button - top right */}
         <button
           onClick={handleSkip}

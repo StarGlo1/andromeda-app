@@ -275,7 +275,7 @@ export default function CalculatorPage() {
     : ["g", "kg"];
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6 max-w-6xl">
       {/* Page Header */}
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-text mt-3">Batch Calculator</h1>

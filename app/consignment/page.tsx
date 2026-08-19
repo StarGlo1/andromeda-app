@@ -214,7 +214,7 @@ export default async function ConsignmentPage() {
         <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100 mt-3">
           Constellation Stock
         </h1>
-        <p className="mt-2 text-sm max-w-3xl text-gray-900 dark:text-gray-100">
+        <p className="mt-2 text-sm max-w-6xl text-gray-900 dark:text-gray-100">
           Track products you've placed in shops, boutiques, or markets to sell on your behalf. 
           Add the places where your products are selling, send them inventory, and keep track 
           of what's out there and what's come back.

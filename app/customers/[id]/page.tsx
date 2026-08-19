@@ -45,7 +45,7 @@ export default async function CustomerDetailPage({
   const avgOrderValue = totalOrders > 0 ? totalSpent / totalOrders : 0;
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
+    <div className="max-w-6xl mx-auto space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

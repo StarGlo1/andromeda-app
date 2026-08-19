@@ -99,7 +99,7 @@ export default async function PricingPage() {
         <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100 mt-3">
           Pricing Dashboard
         </h1>
-        <p className="mt-2 text-sm text-gray-900 dark:text-gray-100 max-w-3xl">
+        <p className="mt-2 text-sm text-gray-900 dark:text-gray-100 max-w-6xl">
           Review your product pricing, profit margins, and adjust prices to hit your target margins.
         </p>
       </div>

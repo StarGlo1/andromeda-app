@@ -46,7 +46,7 @@ export default async function SaleDetailPage({
   const taxAmount = sale.tax > 0 ? ((subtotal - discountAmount) * sale.tax) / 100 : 0;
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
+    <div className="max-w-6xl mx-auto space-y-8">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-text">
