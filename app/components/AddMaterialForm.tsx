@@ -27,7 +27,7 @@ function HelpTip({ text }: { text: string }) {
       {open && (
         <span
           role="tooltip"
-          className="absolute z-20 bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 px-3 py-2 rounded-lg shadow-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs text-gray-700 dark:text-gray-200 text-center"
+          className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 px-3 py-2 rounded-lg shadow-lg bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 text-xs text-gray-900 dark:text-gray-100 text-center font-medium"
         >
           {text}
           <span className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-white dark:border-t-gray-800" />
@@ -172,8 +172,8 @@ export function AddMaterialForm({
       <h2 className="text-lg font-semibold text-text mb-4">Add New Raw Material</h2>
 
       <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
-        {/* Row 1: Material Name, Category, Supplier */}
-        <div className="grid grid-cols-1 sm:grid-cols-6 gap-4 items-start">
+        {/* Row 1: Material Name, Category */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
           <div className="sm:col-span-2">
             <label className="block text-text-muted text-xs font-medium uppercase mb-1">
               Material Name
@@ -300,8 +300,8 @@ export function AddMaterialForm({
           </div>
         </div>
 
-        {/* Row 2: Qty, Size, Unit, Cost (4 fields) */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        {/* Row 2: Supplier, Barcode, Cost */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
             <label className="flex items-center text-text-muted text-xs font-medium uppercase mb-1">
               Qty
@@ -312,7 +312,7 @@ export function AddMaterialForm({
               step="any"
               name="quantity"
               placeholder="1"
-              className="w-full px-2 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm"
+              className="w-full px-2 py-1.5 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm"
             />
           </div>
           <div>
@@ -325,7 +325,7 @@ export function AddMaterialForm({
               step="any"
               name="sizePerUnit"
               placeholder="0"
-              className="w-full px-2 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm"
+              className="w-full px-2 py-1.5 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm"
             />
           </div>
           <div>
@@ -338,7 +338,7 @@ export function AddMaterialForm({
               name="unit"
               required
               placeholder="e.g. oz"
-              className="w-full px-2 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm"
+              className="w-full px-2 py-1.5 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm"
             />
           </div>
           <div>
@@ -350,7 +350,20 @@ export function AddMaterialForm({
               type="text"
               name="barcode"
               placeholder="e.g. 0123456789012"
-              className="w-full px-2 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm"
+              className="w-full px-2 py-1.5 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm"
+            />
+          </div>
+          <div>
+            <label className="flex items-center text-text-muted text-xs font-medium uppercase mb-1">
+              Photo
+              <HelpTip text="Take a photo or upload from your gallery. Helps you identify this material quickly." />
+            </label>
+            <input
+              type="file"
+              name="photo"
+              accept="image/*"
+              capture="environment"
+              className="w-full px-2 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm file:mr-3 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-medium file:bg-brand file:text-white hover:file:bg-brand-hover"
             />
           </div>
           <div>
@@ -363,13 +376,13 @@ export function AddMaterialForm({
               step="any"
               name="purchaseTotal"
               placeholder="0.00"
-              className="w-full px-2 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm"
+              className="w-full px-2 py-1.5 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm"
             />
           </div>
         </div>
 
-        {/* Row 3: Min, On Ord (2 fields) */}
-        <div className="grid grid-cols-2 sm:grid-cols-2 gap-4">
+        {/* Row 3: Min, On Order, Committed Qty (optional) */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
           <div>
             <label className="flex items-center text-text-muted text-xs font-medium uppercase mb-1">
               Min
@@ -380,7 +393,7 @@ export function AddMaterialForm({
               step="any"
               name="reorderThreshold"
               placeholder="0"
-              className="w-full px-2 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm"
+              className="w-full px-2 py-1.5 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm"
             />
           </div>
           <div>
@@ -393,13 +406,14 @@ export function AddMaterialForm({
               step="any"
               name="onOrderQuantity"
               placeholder="0"
-              className="w-full px-2 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm"
+              className="w-full px-2 py-1.5 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm"
             />
           </div>
         </div>
 
         {/* Optional section: Committed Quantity */}
-        <div className="pt-2">
+        <div className="pt-6">
+          <div className="h-8"></div>
           <p className="text-xs font-semibold uppercase tracking-wide text-text-muted mb-2">
             Optional
           </p>
@@ -413,7 +427,7 @@ export function AddMaterialForm({
               step="any"
               name="committedQuantity"
               placeholder="0"
-              className="w-full px-2 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm"
+              className="w-full px-2 py-1.5 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm"
             />
           </div>
         </div>

@@ -1,5 +1,7 @@
 import React from "react";
 import { prisma } from "@/lib/prisma";
+import fs from "fs";
+import path from "path";
 import { revalidatePath } from "next/cache";
 import { AddMaterialForm } from "@/app/components/AddMaterialForm";
 import ScanButton from "@/app/components/ScanButton";
@@ -28,10 +30,27 @@ async function addRawMaterialAction(formData: FormData) {
   const totalQuantity = quantity * sizePerUnit;
   const costPerUnit = totalQuantity > 0 ? purchaseTotal / totalQuantity : 0;
 
+  // Handle photo upload if present
+  let imagePath: string | null = null;
+  const photo = formData.get("photo") as File | null;
+  if (photo && photo.size > 0) {
+    const uploadDir = path.join(process.cwd(), "public", "uploads");
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    const ext = photo.name.split(".").pop() || "jpg";
+    const filename = `material-${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${ext}`;
+    const filePath = path.join(uploadDir, filename);
+    const buffer = Buffer.from(await photo.arrayBuffer());
+    fs.writeFileSync(filePath, buffer);
+    imagePath = `/uploads/${filename}`;
+  }
+
   await prisma.rawMaterial.create({
     data: {
       name,
       barcode,
+      imagePath,
       categoryId,
       supplierId,
       totalQuantity,

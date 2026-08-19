@@ -2,7 +2,14 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Camera, X } from "lucide-react";
-import { BrowserMultiFormatReader } from "@zxing/browser";
+import {
+  BrowserMultiFormatReader,
+  IScannerControls,
+} from "@zxing/browser";
+import {
+  DecodeHintType,
+  BarcodeFormat,
+} from "@zxing/library";
 
 interface QRScannerProps {
   onScan: (result: string) => void;
@@ -11,15 +18,15 @@ interface QRScannerProps {
 
 export default function QRScanner({ onScan, onClose }: QRScannerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const readerRef = useRef<BrowserMultiFormatReader | null>(null);
+  const controlsRef = useRef<IScannerControls | null>(null);
   const [error, setError] = useState("");
   const [scanning, setScanning] = useState(false);
   const [manualInput, setManualInput] = useState("");
 
   useEffect(() => {
     return () => {
-      if (readerRef.current) {
-        readerRef.current.stopDecodeFromVideoDevice();
+      if (controlsRef.current) {
+        controlsRef.current.stop();
       }
     };
   }, []);
@@ -27,32 +34,86 @@ export default function QRScanner({ onScan, onClose }: QRScannerProps) {
   const startCamera = async () => {
     setError("");
     try {
-      const reader = new BrowserMultiFormatReader();
-      readerRef.current = reader;
+      const hints = new Map();
+      hints.set(DecodeHintType.TRY_HARDER, true);
+      hints.set(DecodeHintType.POSSIBLE_FORMATS, [
+        BarcodeFormat.QR_CODE,
+        BarcodeFormat.EAN_13,
+        BarcodeFormat.EAN_8,
+        BarcodeFormat.UPC_A,
+        BarcodeFormat.UPC_E,
+        BarcodeFormat.CODE_128,
+        BarcodeFormat.CODE_39,
+        BarcodeFormat.CODE_93,
+        BarcodeFormat.CODABAR,
+        BarcodeFormat.ITF,
+        BarcodeFormat.DATA_MATRIX,
+        BarcodeFormat.PDF_417,
+      ]);
 
-      await reader.decodeFromVideoDevice(
-        undefined,
+      const reader = new BrowserMultiFormatReader(hints);
+
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const videoDevices = devices.filter((d) => d.kind === "videoinput");
+      const selectedDeviceId =
+        videoDevices.length > 0
+          ? (videoDevices.find((d) => d.label.toLowerCase().includes("back")) ||
+              videoDevices[videoDevices.length - 1]
+            ).deviceId
+          : undefined;
+
+      const constraints: MediaStreamConstraints = {
+        video: selectedDeviceId
+          ? {
+              deviceId: { exact: selectedDeviceId },
+              width: { ideal: 1920 },
+              height: { ideal: 1080 },
+              focusMode: "continuous" as any,
+            }
+          : {
+              facingMode: { ideal: "environment" },
+              width: { ideal: 1920 },
+              height: { ideal: 1080 },
+              focusMode: "continuous" as any,
+            },
+      };
+
+      const controls = await reader.decodeFromConstraints(
+        constraints,
         videoRef.current!,
         (result, error) => {
           if (result) {
-            reader.stopDecodeFromVideoDevice();
+            controlsRef.current?.stop();
             onScan(result.getText());
           }
-          if (error && !(error instanceof Error && error.message.includes("No MultiFormat Readers"))) {
-            // Ignore "no code found" errors - they're normal during scanning
+          if (error) {
+            if (
+              error instanceof Error &&
+              error.message.includes("No MultiFormat Readers")
+            ) {
+              return;
+            }
+            if (error.name !== "NotFoundException") {
+              console.error("Scanner error:", error);
+            }
           }
         }
       );
+
+      controlsRef.current = controls;
       setScanning(true);
     } catch (err: any) {
-      setError("Camera access denied. You can type the code manually instead.");
+      console.error("Camera error details:", err);
+      setError(
+        `Camera error: ${err.message || err}. You can type the code manually instead.`
+      );
     }
   };
 
   const stopCamera = () => {
-    if (readerRef.current) {
-      readerRef.current.stopDecodeFromVideoDevice();
-      readerRef.current = null;
+    if (controlsRef.current) {
+      controlsRef.current.stop();
+      controlsRef.current = null;
     }
     setScanning(false);
   };
@@ -72,7 +133,10 @@ export default function QRScanner({ onScan, onClose }: QRScannerProps) {
             <Camera className="w-5 h-5" />
             Scan QR / Barcode
           </h3>
-          <button onClick={onClose} className="p-1 bg-black hover:bg-gray-800 rounded-lg">
+          <button
+            onClick={onClose}
+            className="p-1 bg-black hover:bg-gray-800 rounded-lg"
+          >
             <X className="w-5 h-5 text-white" />
           </button>
         </div>
@@ -82,6 +146,7 @@ export default function QRScanner({ onScan, onClose }: QRScannerProps) {
             <video
               ref={videoRef}
               className="w-full h-full rounded-lg object-cover"
+              autoPlay
               playsInline
               muted
             />
@@ -92,7 +157,9 @@ export default function QRScanner({ onScan, onClose }: QRScannerProps) {
               >
                 <div className="text-center">
                   <Camera className="w-12 h-12 mx-auto mb-2 text-white" />
-                  <p className="text-sm text-white font-medium">Tap to Start Camera</p>
+                  <p className="text-sm text-white font-medium">
+                    Tap to Start Camera
+                  </p>
                 </div>
               </button>
             )}
