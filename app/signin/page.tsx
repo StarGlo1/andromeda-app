@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Mail, Wallet } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 export default function SignInPage() {
   const router = useRouter();
@@ -13,7 +14,7 @@ export default function SignInPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState("");
 
-  const handleEmailSubmit = (e: React.FormEvent) => {
+  const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
@@ -23,14 +24,39 @@ export default function SignInPage() {
     }
 
     setLoading("email");
-    setTimeout(() => {
-      setLoading("");
+    try {
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (signInError) throw signInError;
       router.push("/dashboard");
-    }, 1000);
+    } catch (err: any) {
+      setError(err.message || "Failed to sign in");
+    } finally {
+      setLoading("");
+    }
   };
 
-  const handleOAuth = (provider: string) => {
+  const handleOAuth = async (provider: string) => {
     setLoading(provider);
+    if (provider === "google") {
+      try {
+        const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
+          provider: "google",
+          options: {
+            redirectTo: `${window.location.origin}/auth/callback`,
+          },
+        });
+        if (oauthError) throw oauthError;
+        return;
+      } catch (err: any) {
+        setError(err.message || "Failed to sign in with Google");
+        setLoading("");
+        return;
+      }
+    }
+    // Apple and X remain placeholders
     setTimeout(() => {
       setLoading("");
       router.push("/dashboard");

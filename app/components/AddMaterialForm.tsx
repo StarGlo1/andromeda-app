@@ -413,7 +413,7 @@ export function AddMaterialForm({
 
         {/* Optional section: Committed Quantity */}
         <div className="pt-6">
-          <div className="h-8"></div>
+          <div className="h-4 sm:h-8"></div>
           <p className="text-xs font-semibold uppercase tracking-wide text-text-muted mb-2">
             Optional
           </p>

@@ -134,7 +134,7 @@ export default function NewCustomerPage() {
               <button
                 type="submit"
                 disabled={saving}
-                className="flex-1 bg-brand hover:bg-brand-hover text-white font-medium px-4 py-2 rounded-lg transition-colors text-sm disabled:opacity-50"
+                style={{ backgroundColor: "#4f8792", color: "white", border: "1px solid #3d6d77" }} className="flex-1 font-medium px-4 py-2 rounded-lg transition-colors text-sm disabled:opacity-50"
               >
                 {saving ? "Creating..." : "Create Customer"}
               </button>

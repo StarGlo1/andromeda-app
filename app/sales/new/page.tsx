@@ -569,7 +569,7 @@ export default function NewSalePage() {
                   type="button"
                   onClick={handleCreateCustomer}
                   disabled={creatingCustomer || !newCustomerName.trim()}
-                  className="flex-1 px-4 py-2 rounded-full bg-[#4f8792] hover:bg-[#426f79] text-white text-sm font-medium border border-[#3d6d77] shadow-sm transition-colors disabled:opacity-50"
+                  style={{ backgroundColor: "#4f8792", color: "white", border: "1px solid #3d6d77" }} className="flex-1 px-4 py-2 rounded-full text-sm font-medium shadow-sm transition-colors disabled:opacity-50"
                 >
                   {creatingCustomer ? "Creating..." : "Create Customer"}
                 </button>

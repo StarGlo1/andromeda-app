@@ -7,6 +7,7 @@ import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
+import { supabase } from "@/lib/supabase";
 import {
   Boxes,
   Package,
@@ -169,6 +170,21 @@ export default function Navbar() {
   const [isClosing, setIsClosing] = useState(false);
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
   const [isDark, setIsDark] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsAuthenticated(!!session);
+    };
+    checkAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
   const pathname = usePathname();
 
   useEffect(() => {
@@ -323,7 +339,7 @@ export default function Navbar() {
 
               <div className="flex-1 overflow-y-auto p-4 sm:p-6 pt-3 sm:pt-4">
                 <Link
-                  href="/dashboard"
+                  href={isAuthenticated ? "/dashboard" : "/signin"}
                   onClick={closeDrawer}
                   className="flex items-center gap-3 px-4 sm:px-5 py-3 sm:py-3.5 rounded-lg text-[1.5rem] sm:text-[1.4rem] font-medium mb-1 text-gray-600 dark:text-gray-300 hover:bg-[#8a7a65] dark:hover:bg-slate-700 hover:text-white dark:hover:text-gray-100 transition-all duration-300"
                 >
