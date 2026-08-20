@@ -379,7 +379,10 @@ export default function DashboardWidgets({ data }: { data: any }) {
         )}
 
         <div className="flex-1 flex flex-col justify-center">
-          <p className={`${isMobile ? "text-[1.75rem]" : isLarge ? "text-[2rem]" : "text-[1.75rem]"} font-bold ${textColor} break-words whitespace-normal`}>{value}</p>
+          <p className={`${isMobile ? "text-[1.75rem]" : typeof value === "string" && /[a-zA-Z]/.test(value) && !isLarge ? "text-[1.5rem]" : isLarge ? "text-[2rem]" : "text-[1.75rem]"} font-bold ${textColor} break-words whitespace-normal`}>{value}</p>
+          {typeof value === "string" && /[a-zA-Z]/.test(value) && !isMobile && (
+            <style>{`}`}</style>
+          )}
 
           {key === "topSelling" && isLarge && !isMobile && renderList(data.topSelling, (item) => (
             <div className="flex justify-between text-xs text-gray-600 dark:text-gray-300">
