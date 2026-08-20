@@ -5,8 +5,10 @@ import { createRawMaterialLot } from "@/app/actions/lotActions";
 
 export default function RawMaterialLotForm({
   rawMaterialId,
+  locations = [],
 }: {
   rawMaterialId: string;
+  locations?: { id: string; name: string }[];
 }) {
   const formRef = useRef<HTMLFormElement>(null);
   const [pending, startTransition] = useTransition();
@@ -49,6 +51,22 @@ export default function RawMaterialLotForm({
           className="w-full px-3 py-2 rounded-xl bg-white dark:bg-black border border-gray-300 dark:border-gray-800 text-gray-900 dark:text-white"
           placeholder="e.g. 10"
         />
+      </div>
+
+      {/* Location */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+          Location
+        </label>
+        <select
+          name="locationId"
+          className="w-full px-3 py-2 rounded-xl bg-white dark:bg-black border border-gray-300 dark:border-gray-800 text-gray-900 dark:text-white"
+        >
+          <option value="">None</option>
+          {locations.map((loc) => (
+            <option key={loc.id} value={loc.id}>{loc.name}</option>
+          ))}
+        </select>
       </div>
 
       {/* Centered button */}

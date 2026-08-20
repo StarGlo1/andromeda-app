@@ -28,6 +28,7 @@ async function addFinishedGood(formData: FormData) {
       laborCostPerUnit,
       overheadFlat,
       overheadPercent,
+      locationId,
       isCoreElement: false,
     },
   });
@@ -60,6 +61,7 @@ async function updateFinishedGood(formData: FormData) {
       laborCostPerUnit,
       overheadFlat,
       overheadPercent,
+      locationId,
     },
   });
   revalidatePath("/finished-goods");
@@ -176,6 +178,7 @@ async function produceBatch(formData: FormData) {
 }
 
 export default async function FinishedGoodsPage() {
+  const locations = await prisma.location.findMany({ orderBy: { name: "asc" } });
   const goods = await prisma.finishedGood.findMany({
     where: { isCoreElement: false },
     orderBy: { createdAt: "desc" },
@@ -243,6 +246,15 @@ export default async function FinishedGoodsPage() {
           <div>
             <label className="block text-text-muted text-xs font-medium uppercase mb-1">Overhead %</label>
             <input type="number" step="any" name="overheadPercent" placeholder="0" className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm" />
+          </div>
+          <div>
+            <label className="block text-text-muted text-xs font-medium uppercase mb-1">Location</label>
+            <select name="locationId" className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm">
+              <option value="">None</option>
+              {locations.map((loc) => (
+                <option key={loc.id} value={loc.id}>{loc.name}</option>
+              ))}
+            </select>
           </div>
           <div>
             <button

@@ -89,14 +89,17 @@ async function removePhoto(formData: FormData) {
 export default async function MaterialDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
-  const material = await prisma.rawMaterial.findUnique({
-    where: { id },
-    include: {
-      category: true,
-      supplier: true,
-      recipeItems: { include: { finishedGood: { select: { id: true, name: true } } } },
-    },
-  });
+  const [material, locations] = await Promise.all([
+    prisma.rawMaterial.findUnique({
+      where: { id },
+      include: {
+        category: true,
+        supplier: true,
+        recipeItems: { include: { finishedGood: { select: { id: true, name: true } } } },
+      },
+    }),
+    prisma.location.findMany({ orderBy: { name: "asc" } }),
+  ]);
 
   if (!material) notFound();
 
@@ -130,7 +133,7 @@ export default async function MaterialDetailPage({ params }: { params: Promise<{
 
             <div className="bg-surface-widget border border-default rounded-xl p-6">
               <h2 className="text-lg font-semibold text-text mb-4">Raw Material Lots</h2>
-              <RawMaterialLotForm rawMaterialId={material.id} />
+              <RawMaterialLotForm rawMaterialId={material.id} locations={locations} />
             </div>
 
             <div className="bg-surface-widget border border-default rounded-xl p-6">

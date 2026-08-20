@@ -7,6 +7,7 @@ import { generateLotNumber } from "@/app/lib/lots";
 export async function createRawMaterialLot(formData: FormData) {
   const rawMaterialId = String(formData.get("rawMaterialId") || "");
   const quantity = parseFloat(String(formData.get("quantity") || ""));
+  const locationId = String(formData.get("locationId") || "") || null;
 
   if (!rawMaterialId || isNaN(quantity) || quantity <= 0) {
     throw new Error("Raw material and a valid quantity are required.");
@@ -19,6 +20,7 @@ export async function createRawMaterialLot(formData: FormData) {
       lotNumber,
       kind: "RAW_MATERIAL",
       rawMaterialId,
+      locationId,
       quantity,
     },
   });

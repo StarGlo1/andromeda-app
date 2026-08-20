@@ -40,6 +40,7 @@ function HelpTip({ text }: { text: string }) {
 export function AddMaterialForm({
   categories: initialCategories,
   suppliers: initialSuppliers,
+  locations,
   addRawMaterialAction,
   addCategoryAction,
   addSupplierAction,
@@ -65,6 +66,7 @@ export function AddMaterialForm({
 
   const [supplierId, setSupplierId] = useState("");
   const [showNewSupplier, setShowNewSupplier] = useState(false);
+  const [locationId, setLocationId] = useState("");
   const [newSupplierName, setNewSupplierName] = useState("");
 
   const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -152,6 +154,12 @@ export function AddMaterialForm({
       formData.set("supplierId", supplierId);
     } else {
       formData.delete("supplierId");
+    }
+
+    if (locationId) {
+      formData.set("locationId", locationId);
+    } else {
+      formData.delete("locationId");
     }
 
     startTransition(async () => {
@@ -297,6 +305,24 @@ export function AddMaterialForm({
                 </div>
               </div>
             )}
+          </div>
+
+          <div className="sm:col-span-2">
+            <label className="block text-text-muted text-xs font-medium uppercase mb-1">
+              Location
+            </label>
+            <select
+              value={locationId}
+              onChange={(e) => setLocationId(e.target.value)}
+              className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text focus:outline-none focus:ring-2 focus:ring-brand text-sm"
+            >
+              <option value="">None</option>
+              {locations.map((loc) => (
+                <option key={loc.id} value={loc.id}>
+                  {loc.name}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 

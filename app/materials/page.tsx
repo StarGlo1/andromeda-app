@@ -14,6 +14,7 @@ async function addRawMaterialAction(formData: FormData) {
   const name = String(formData.get("name") || "").trim();
   const categoryId = String(formData.get("categoryId") || "");
   const supplierId = String(formData.get("supplierId") || "") || null;
+  const locationId = String(formData.get("locationId") || "") || null;
   const unit = String(formData.get("unit") || "").trim();
   const barcode = String(formData.get("barcode") || "").trim() || null;
   const quantity = parseFloat(String(formData.get("quantity") || "0")) || 0;
@@ -53,6 +54,7 @@ async function addRawMaterialAction(formData: FormData) {
       imagePath,
       categoryId,
       supplierId,
+      locationId,
       totalQuantity,
       quantity,
       sizePerUnit,
@@ -116,6 +118,7 @@ async function updateAction(formData: FormData) {
   const name = String(formData.get("name") || "").trim();
   const categoryId = String(formData.get("categoryId") || "");
   const supplierId = String(formData.get("supplierId") || "") || null;
+  const locationId = String(formData.get("locationId") || "") || null;
   const unit = String(formData.get("unit") || "").trim();
   const quantity = parseFloat(String(formData.get("quantity") || "0")) || 0;
   const sizePerUnit = parseFloat(String(formData.get("sizePerUnit") || "0")) || 0;
@@ -137,6 +140,7 @@ async function updateAction(formData: FormData) {
       name,
       categoryId,
       supplierId,
+      locationId,
       totalQuantity,
       quantity,
       sizePerUnit,
@@ -168,9 +172,10 @@ async function deleteAction(formData: FormData) {
 }
 
 export default async function MaterialsPage() {
-  const [categories, suppliers, materials] = await Promise.all([
+  const [categories, suppliers, locations, materials] = await Promise.all([
     prisma.category.findMany({ orderBy: { name: "asc" } }),
     prisma.supplier.findMany({ orderBy: { name: "asc" } }),
+    prisma.location.findMany({ orderBy: { name: "asc" } }),
     prisma.rawMaterial.findMany({
       include: { category: true, supplier: true },
       orderBy: { name: "asc" },
@@ -210,6 +215,7 @@ export default async function MaterialsPage() {
       <AddMaterialForm
         categories={categories}
         suppliers={suppliers}
+        locations={locations}
         addRawMaterialAction={addRawMaterialAction}
         addCategoryAction={addCategoryAction}
         addSupplierAction={addSupplierAction}

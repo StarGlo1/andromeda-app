@@ -4,10 +4,11 @@ import { useTransition } from "react";
 import { useToast } from "@/app/context/ToastContext";
 
 interface AddProductFormProps {
+  locations: { id: string; name: string }[];
   addAction: (formData: FormData) => Promise<void>;
 }
 
-export function AddProductForm({ addAction }: AddProductFormProps) {
+export function AddProductForm({ locations, addAction }: AddProductFormProps) {
   const { showToast } = useToast();
   const [isPending, startTransition] = useTransition();
 
@@ -57,6 +58,15 @@ export function AddProductForm({ addAction }: AddProductFormProps) {
       <div>
         <label className="block text-text-muted text-xs font-medium uppercase mb-1">Overhead %</label>
         <input type="number" step="any" name="overheadPercent" placeholder="0" className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm" />
+      </div>
+      <div>
+        <label className="block text-text-muted text-xs font-medium uppercase mb-1">Location</label>
+        <select name="locationId" className="w-full px-3 py-2 bg-bg border border-default rounded-lg text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand text-sm">
+          <option value="">None</option>
+          {locations.map((loc) => (
+            <option key={loc.id} value={loc.id}>{loc.name}</option>
+          ))}
+        </select>
       </div>
       <div>
         <button
