@@ -17,6 +17,7 @@ import {
   Calculator,
   LayoutDashboard,
   Truck,
+  MapPin,
   FileText,
   Settings,
   Sun,
@@ -39,6 +40,7 @@ const NAV_GROUPS = [
     items: [
       { name: "Materials", href: "/materials", icon: Package },
       { name: "Suppliers", href: "/suppliers", icon: Truck },
+      { name: "Locations", href: "/locations", icon: MapPin },
       { name: "Adjustments", href: "/adjustments", icon: ArrowUpDown },
       { name: "Categories", href: "/categories", icon: Tags },
       { name: "Constellation Stock", href: "/consignment", icon: Network },

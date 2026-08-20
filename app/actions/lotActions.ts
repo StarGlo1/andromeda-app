@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { generateLotNumber } from "@/app/lib/lots";
 
 export async function createRawMaterialLot(formData: FormData) {

@@ -48,6 +48,8 @@ model RawMaterial {
   committedQuantity  Float?              @default(0)
   onOrderQuantity    Float?              @default(0)
   imagePath          String?
+  locationId         String?
+  location           Location?           @relation(fields: [locationId], references: [id], onDelete: SetNull)
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
   recipeItems        RecipeItem[]
@@ -73,6 +75,8 @@ model FinishedGood {
   overheadPercent      Float?       @default(0)
   isCoreElement        Boolean      @default(false)
   batchNotes           String?
+  locationId           String?
+  location             Location?    @relation(fields: [locationId], references: [id], onDelete: SetNull)
   createdAt            DateTime     @default(now())
   updatedAt            DateTime     @updatedAt
 
@@ -215,6 +219,8 @@ model Lot {
   quantity       Float?
   rawMaterialId  String?
   finishedGoodId String?
+  locationId     String?
+  location       Location? @relation(fields: [locationId], references: [id], onDelete: SetNull)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -324,4 +330,20 @@ model RecipeVersion {
 
   @@unique([finishedGoodId, versionNumber])
   @@map("recipe_versions")
+}
+
+
+model Location {
+  id           String   @id @default(uuid())
+  name         String
+  address      String?
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  rawMaterials  RawMaterial[]
+  finishedGoods FinishedGood[]
+  lots          Lot[]
+
+  @@map("locations")
 }
